@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- <link rel="stylesheet" th:href="@{/css/header.css(v=${T(java.lang.System).currentTimeMillis()})}"> -->
+<title>WMS 시스템</title>
+<link rel="stylesheet" th:href="@{/css/common.css(v=${T(java.lang.System).currentTimeMillis()})}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet"
+	href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<link rel="stylesheet" th:href="@{/css/location_status.css(v=${T(java.lang.System).currentTimeMillis()})}">
+<script th:src="@{/js/modules/purchase/location/status.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+<script src="/js/loadCSS.js"></script>
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.8.2/css/all.min.css">
+<style>
+</style>
+</head>
+<div
+	th:replace="fragments/header :: commonHeader(#{menu.locationStatus})"></div>
+<body style="position: relative;" >
+	<div class="serviceView">
+		<input type="hidden" class="saveClickMenuId">
+
+		<div class="contentArea">
+			<div class="w_tapArea">
+			</div>
+			<div class="w_titleArea"></div>
+			<div class="w_contentArea">
+				<div class="w_defaultArea">
+				</div>
+			</div>
+
+
+
+		</div>
+
+		<div class="loading-overlay hidden" id="loadingOverlay">
+			<div class="loading-container">
+				<div class="loading-logo">
+					<img alt="" src="/images/wooboTechLogo_ol.png">
+					<h1>WOOBOTECH WMS</h1>
+				</div>
+
+				<div class="main-spinner">
+					<div class="spinner-ring"></div>
+					<div class="spinner-ring"></div>
+					<div class="spinner-ring"></div>
+				</div>
+
+				<div class="loading-text" id="loadingText">시스템을 불러오는 중입니다...</div>
+
+				<div class="loading-subtitle" id="loadingSubtitle">잠시만 기다려주세요
+				</div>
+
+				<div class="progress-container">
+					<div class="progress-bar"></div>
+				</div>
+
+				<div class="loading-dots">
+					<div class="dot"></div>
+					<div class="dot"></div>
+					<div class="dot"></div>
+				</div>
+			</div>
+
+		</div>
+
+		<div class="modal-overlay" id="editModal">
+
+		</div>
+		<!-- service -->
+
+		<div id="positionModal" class="modal">
+			<div class="modal-content">
+				<div class="modal-header">
+					<div class="modal-title">Location</div>
+					<div class ="modal-title" id="modalLocation"></div>
+					<span class="close">&times;</span>
+				</div>
+				<div class="modal-body">
+					<div class="modal-data">							
+						<div class="modal-info">
+							<div class="info-label">Item Code</div>
+							<div class="info-value" id="modalItemCode"></div>
+						</div>
+						<div class="modal-info">
+							<div class="info-label">Item Name</div>
+							<div class="info-value" id="modalItemName"></div>
+						</div>
+						<div class="modal-info">
+							<div class="info-label">Qty</div>
+							<div class="info-value" id="modalCarType"></div>
+						</div>
+						<div class="modal-info">
+							<div class="info-label">Inbound Date</div>
+							<div class="info-value" id="modalInboundDate"></div>
+						</div>
+						<div class="modal-info">
+							<div class="info-label">Storage Date</div>
+							<div class="info-value" id="modalStorageDate"></div>
+						</div>
+						<div class="modal-info">
+							<div class="info-label">LOT</div>
+							<div class="info-value" id="modalLot"></div>
+						</div>
+					</div>					
+				</div>
+			</div>
+		</div>		
+	</div>
+
+	<div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <div th:text="#{info.loading}">로딩중...</div>
+    </div>
+	<script th:src="@{/js/utils/common.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+	<script>
+	</script>
+
+
+</body>
+</html>

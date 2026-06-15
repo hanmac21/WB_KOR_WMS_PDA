@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WMS 시스템 로그인</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" th:href="@{/css/common.css(v=${T(java.lang.System).currentTimeMillis()})}">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        .container {
+            padding: 30px 15px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo-icon {
+            width: 100%;
+            max-width: 300px;
+            height: 80px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-img {
+            width: 100%;
+            max-width: 300px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .logo-text {
+            color: #1e3a8a;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .system-subtitle {
+            color: #6b7280;
+            font-size: 16px;
+            font-weight: 400;
+        }
+
+        .error-message {
+            position: fixed;
+            top: 80px;
+            left: 15px;
+            right: 15px;
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            border: 1px solid #fecaca;
+            z-index: 2000;
+            display: none;
+            animation: slideDown 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+        }
+
+        .login-form {
+            max-width: 400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* 공장 선택 버튼 */
+        .factory-selection {
+            margin-bottom: 15px;
+        }
+
+        /* 공장/창고 선택 버튼 (라디오 형태) */
+        .selection-btn {
+            width: 100%;
+            height: 50px;
+            background: white;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .selection-btn:hover {
+            border-color: #0887c9;
+            background: #f8fafc;
+        }
+
+        .selection-btn.selected {
+            background: #0887c9;
+            color: white;
+            border-color: #0887c9;
+            box-shadow: 0 4px 12px rgba(8, 135, 201, 0.3);
+        }
+
+        .selection-btn.selected:hover {
+            background: #0887c9;
+            border-color: #0887c9;
+        }
+
+        /* 아이디/비밀번호 입력 */
+        .credentials-section {        
+           /*  margin-bottom: 25px; */
+        }
+        /* 언어 선택 */
+        .language-selection {
+            margin-bottom: 25px;
+        }
+
+        .language-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .language-btn {
+            flex: 1;
+            height: 45px;
+            background: white;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .language-btn:hover {
+            border-color: #0887c9;
+            background: #f8fafc;
+        }
+
+        .language-btn.selected {
+            background: #0887c9;
+            color: white;
+            border-color: #0887c9;
+        }
+
+        .language-btn.selected:hover {
+            background: #0887c9;
+            border-color: #0887c9;
+        }
+
+        /* 입력 필드 */
+        .form-group {
+            margin-bottom: 18px;
+            position: relative;
+            display:flex;
+            align-items: center;
+        }
+        .form-group .form-label{
+        	font-size: 18px;
+        	margin-left: auto;
+        }
+        
+        .form-group input{
+        	margin-left: auto;
+        	width: 80%;
+        }
+
+        .form-label {
+            display: block;
+            color: #374151;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .form-input {
+            width: 100%;
+            height: 45px;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #f9fafb;
+            color: #374151;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: white;
+        }
+
+        .form-input::placeholder {
+            color: #9ca3af;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .password-toggle:hover {
+            color: #374151;
+        }
+
+        .login-options {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .remember-me input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #3b82f6;
+        }
+
+        .remember-me label {
+            color: #374151;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .login-btn {
+            width: 100%;
+            height: 50px;
+            background: #059669;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-btn:active {
+            background: #2563eb;
+            transform: scale(0.98);
+        }
+
+        .login-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #ffffff40;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        
+        .update-minimal {
+            text-align: center;
+            padding-top: 15px;
+            margin-top: 10px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .update-minimal a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: normal;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .update-minimal a:hover {
+            opacity: 1;
+            color: #64748b;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 모바일 대응 */
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px 10px;
+            }
+
+            .selection-btn {
+                height: 45px;
+                font-size: 15px;
+            }
+
+            .language-btn {
+                height: 40px;
+                font-size: 13px;
+            }
+
+            .form-input {
+                height: 42px;
+                font-size: 14px;
+            }
+
+            .login-btn {
+                height: 45px;
+                font-size: 15px;
+            }
+
+            .logo-section {
+                margin-bottom: 30px;
+            }
+        }
+
+        /* PDA 최적화 */
+        @media (max-width: 320px) {
+            .container {
+                padding: 15px 8px;
+            }
+
+            .language-row {
+                gap: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 컨텐츠 영역 -->
+    <div class="container">
+        <!-- 로고 섹션 -->
+        <div class="logo-section">
+            <div class="logo-icon">
+                <img src="/images/wb_logo.png" alt="회사 로고" class="logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <span class="logo-text" style="display: none;">WMS</span>
+            </div>
+            <p class="system-subtitle">Warehouse Management System</p>
+        </div>
+
+        <!-- 에러 메시지 (토스트) -->
+        <div id="errorMessage" class="error-message" th:text = "#{login.invalid}">
+            아이디 또는 비밀번호가 올바르지 않습니다.
+        </div>
+
+        <!-- 로그인 폼 -->
+        <form id="loginForm" class="login-form" onsubmit="event.preventDefault(); login();">
+            <!-- 공장 선택 -->
+            <div class="factory-selection">
+                <button type="button" class="selection-btn" data-warehouse="WBTA">WBTA</button>
+                <button type="button" class="selection-btn" data-warehouse="ILLINOIS">ILLINOIS</button>
+            </div>
+
+            <!-- 언어 선택 -->
+            <div class="language-selection">
+                <div class="language-row">
+                    <button type="button" class="language-btn" data-language="en">
+                        English
+                    </button>
+                    <button type="button" class="language-btn" data-language="ko">
+                        한국어
+                    </button>
+                </div>
+            </div>
+			
+			<div class="credentials-section">
+                <!-- 아이디 입력 -->
+                <div class="form-group">
+                    <label for="loginid" class="form-label">ID</label>               
+                    <input type="text" id="loginid" name=loginid class="form-input"  
+                           th:placeholder="#{login.id}" placeholder="아이디를 입력하세요">      
+                </div>
+                <!-- 비밀번호 입력 -->
+                <div class="form-group">
+                    <label for="loginpw" class="form-label">PW</label>
+                    <input type="password" id="loginpw" name="loginpw" class="form-input"
+                           th:placeholder="#{login.pw}" placeholder="비밀번호를 입력하세요">      
+                </div>           
+            </div>
+            <div style="padding:5px; margin-bottom:13px;">
+            	<input type = "checkbox" id = "saveid"><span style="padding:8px; ">Remember ID</span>
+            </div>          
+            <button type="submit" id="loginBtn" class="login-btn">
+                <span id="loadingSpinner" class="loading-spinner"></span>
+                <span id="loginBtnText" th:text = "#{login.login}">로그인</span>
+            </button>
+        </form>
+        
+        <div class="update-minimal">
+            <a href="https://kr.object.ncloudstorage.com/hanmacpds/wbmexwms.apk"> Version Update</a>
+        </div>
+    </div>
+
+    <script>
+    function downloadApk() {
+        console.log('컨트롤러 통해 다운로드');
+        window.location.href = '/download/app';
+    }
+    
+    document.querySelector('.update-minimal a').addEventListener('click', function(e) {
+    	window.open("http://food114.co.kr/appupdate/wbmexwms.apk", '_blank', 'noopener,noreferrer');
+    })
+        let selectedFactory = null;
+        let selectedWarehouse = null;
+        let selectedLanguage = null;
+
+        // 공장/창고 선택 처리 (라디오 방식, 둘 중 하나만 선택)
+        document.querySelectorAll('.selection-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // 기존 선택 해제
+                document.querySelectorAll('.selection-btn').forEach(b => b.classList.remove('selected'));
+
+                // 현재 버튼 선택
+                this.classList.add('selected');
+
+                const value = this.getAttribute('data-warehouse');
+
+                // 공장은 항상 WBTA 고정
+                selectedFactory = 'WBTA';
+
+                // 창고는 ILLINOIS 선택 시에만 값 보유
+                if (value === 'ILLINOIS') {
+                    selectedWarehouse = 'ILLINOIS';
+                } else {
+                    selectedWarehouse = null;
+                }
+
+                // 즉시 저장 (언어 변경으로 리로드 되어도 복원 가능)
+                localStorage.setItem('rememberedFactory', 'WBTA');
+                if (selectedWarehouse === 'ILLINOIS') {
+                    localStorage.setItem('rememberedWarehouse', 'ILLINOIS');
+                } else {
+                    localStorage.removeItem('rememberedWarehouse');
+                }
+
+                console.log('선택 -> factory: WBTA(fixed), warehouse:', selectedWarehouse);
+            });
+        });
+
+        // 언어 선택 처리
+        document.querySelectorAll('.language-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // 기존 선택 해제
+                document.querySelectorAll('.language-btn').forEach(b => b.classList.remove('selected'));
+                
+                // 현재 버튼 선택
+                this.classList.add('selected');
+                selectedLanguage = this.getAttribute('data-language');
+                
+                console.log('선택된 언어:', selectedLanguage);
+                
+                // 언어 변경 시 페이지 새로고침 (URL 파라미터 추가)
+                if (selectedLanguage) {
+                    localStorage.setItem('rememberedLanguage', selectedLanguage);
+                    if (selectedWarehouse === 'ILLINOIS') {
+                        localStorage.setItem('rememberedWarehouse', 'ILLINOIS');
+                    } else {
+                        localStorage.removeItem('rememberedWarehouse');
+                    }
+                    window.location.href = '?lang=' + selectedLanguage;
+                }
+            });
+        });
+
+        // 비밀번호 보기/숨기기 토글
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('passwordToggleIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.textContent = '🔒';
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.textContent = '👁';
+            }
+        }
+
+        function login(){
+            // 유효성 검사
+            // 공장은 항상 WBTA
+            selectedFactory = 'WBTA';
+            
+            if (!selectedLanguage) {
+                showError('Select Language');
+                return;
+            }
+            
+            if($("#loginid").val().trim()==''){
+            	showError('Input ID');
+            	return;
+            }
+            
+            if($("#loginpw").val().trim()==''){
+            	showError('Input Password');
+            	return;
+            }
+            
+            
+            // 현재 세션용 데이터
+            localStorage.setItem('rememberedFactory', selectedFactory);
+            localStorage.setItem('rememberedWarehouse', selectedWarehouse);
+            localStorage.setItem('rememberedLanguage', selectedLanguage);
+            sessionStorage.setItem('currentFactory', selectedFactory);
+            sessionStorage.setItem('currentWarehouse', selectedWarehouse);
+            sessionStorage.setItem('currentLanguage', selectedLanguage);
+            
+            // 언어 파라미터 직접 생성
+            const langParam = selectedLanguage ? `?lang=${selectedLanguage}` : '';
+            
+           /* if(selectedFactory == 'Saltillo'){
+                location.replace('/index' + langParam);
+            } else {
+            	//푸에블라 메뉴도 같은 메뉴로 이동
+            	location.replace('/index' + langParam);
+            	//location.replace('/puebla-menu' + langParam);
+            } */
+            
+            // 로딩 상태 시작
+            setLoadingState(true);
+            hideError();
+            
+            if (!checkNetwork()){
+                setLoadingState(false);
+                return;
+            }
+            
+            $.ajax({
+                type:"POST",
+                url:"/loginCheck",
+                data:{
+                    factory:selectedFactory,
+                    language:selectedLanguage,
+                    loginid:$("#loginid").val(),
+                    loginpw : $("#loginpw").val()
+                },
+                success:function(result){
+                	console.log("result: "+result)
+                    if(result == "success"){
+                        // 선택 정보 저장
+                        localStorage.setItem('rememberedFactory', 'WBTA');
+                        localStorage.setItem('rememberedWarehouse', selectedWarehouse);
+                        localStorage.setItem('rememberedLanguage', selectedLanguage);
+                        const saveCheck = document.getElementById("saveid");
+                        if (saveCheck.checked) {
+                        	 localStorage.setItem('savedid', $("#loginid").val());
+                             localStorage.setItem('savedpw', $("#loginpw").val());
+                          } else {
+                        	  localStorage.removeItem('savedid');
+                        	  localStorage.removeItem('savedpw');
+                          }
+                        
+                        // 현재 세션용 데이터
+                        sessionStorage.setItem('currentFactory', 'WBTA');
+                        sessionStorage.setItem('currentWarehouse', selectedWarehouse);
+                        sessionStorage.setItem('currentLanguage', selectedLanguage);
+                        
+                        // URL 파라미터 유지해서 이동
+                        const currentParams = window.location.search;
+                        if(selectedFactory == 'Saltillo'){
+                            location.replace('/index' + currentParams);
+                        } else {
+                        	location.replace('/index' + langParam);
+                        	//location.replace('/puebla-menu' + currentParams);
+                        }
+                    }else if(result == "idfail"){
+                        showError('Invalid ID');
+                    }else if(result == "pwfail"){
+                    	showError('Incorrect password.');
+                    }else{
+                    	showError('Login Fail');
+                    }
+                    setLoadingState(false);
+                },
+                error:function(request,status, error){
+                    console.log(error);
+                    setLoadingState(false);
+                    if(request.status==200){
+
+                    }else if(request.status==500){
+                        showError('처리도중 에러가 발생하였습니다.');
+                    }else if(request.status==0){
+                        showError('Wi-Fi 또는 데이터 연결이 없습니다.');
+                    }else{
+                        showError("code: " + request.status + " error: " + error);
+                    }
+                }
+            });
+        }
+
+        // 로딩 상태 설정
+        function setLoadingState(isLoading) {
+            const loginBtn = document.getElementById('loginBtn');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const loginBtnText = document.getElementById('loginBtnText');
+            
+            if (isLoading) {
+                loginBtn.disabled = true;
+                loadingSpinner.style.display = 'inline-block';
+                loginBtnText.textContent = '로그인 중...';
+            } else {
+                loginBtn.disabled = false;
+                loadingSpinner.style.display = 'none';
+                loginBtnText.textContent = 'Login';
+            }
+        }
+
+        // 에러 메시지 표시 (토스트)
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            errorElement.style.animation = 'slideDown 0.5s ease';
+            
+            // 3초 후 자동 숨김
+            setTimeout(() => {
+                hideError();
+            }, 3000);
+        }
+
+        // 에러 메시지 숨김
+        function hideError() {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.style.animation = 'slideUp 0.3s ease';
+            
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 3000);
+        }
+
+        // 페이지 로드 시 기억된 정보 복원
+        document.addEventListener('DOMContentLoaded', function() {
+            const rememberedWarehouse = localStorage.getItem('rememberedWarehouse');
+            const rememberedLanguage = localStorage.getItem('rememberedLanguage');
+            const savedId = localStorage.getItem("savedid");		// 아이디 
+            const savedPw = localStorage.getItem("savedpw");		// 비밀번호 
+            if (savedId) {
+              document.getElementById("loginid").value = savedId;
+              document.getElementById("loginpw").value = savedPw;
+              document.getElementById("saveid").checked = true;
+            }
+
+            if (rememberedWarehouse === 'ILLINOIS') {
+                const btn = document.querySelector('.selection-btn[data-warehouse="ILLINOIS"]');
+                if (btn) {
+                    btn.classList.add('selected');
+                    selectedWarehouse = 'ILLINOIS';
+                }
+            } else {
+                // 기본 WBTA 선택
+                const btn = document.querySelector('.selection-btn[data-warehouse="WBTA"]');
+                if (btn) {
+                    btn.classList.add('selected');
+                    selectedWarehouse = null;
+                }
+            }
+
+            // 공장은 항상 WBTA 고정
+            selectedFactory = 'WBTA';
+            localStorage.setItem('rememberedFactory', 'WBTA');
+
+            // 기억된 언어 선택
+            let languageToSet = rememberedLanguage || "en";   // 기본값 영어
+		    const languageBtn = document.querySelector(`[data-language="${languageToSet}"]`);
+		    if (languageBtn) {
+		        languageBtn.classList.add('selected');
+		        selectedLanguage = languageToSet;
+		    }
+        });
+
+        // 사용하지 않는 함수들 제거
+        
+        // checkNetwork 함수
+        function checkNetwork() {
+            if (!navigator.onLine) {
+                showError('인터넷 연결을 확인해주세요.');
+                return false;
+            }
+            return true;
+        }
+    </script>
+</body>
+</html>

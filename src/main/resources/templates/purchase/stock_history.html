@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOT History</title>
+<link rel="stylesheet" th:href="@{/css/common.css(v=${T(java.lang.System).currentTimeMillis()})}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<style>
+
+.info-div{
+	overflow-y: auto;
+}
+.itemInfo-div {
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 3px;
+}
+
+.info-item{
+	display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0px;
+    padding: 4px 0;
+    border-bottom: 1px solid #dee;
+}
+
+.info-item:last-child {
+    margin-bottom: 0;
+}
+
+.info-label {
+    font-weight: bold;
+    color: #333;
+    width: 93px;
+    flex-shrink: 0;
+}
+
+.info-value {
+    color: #333;
+    flex: 1;
+    text-align: center;
+    background: #f8f9fa;
+    border-radius: 4px;
+    margin-left: 10px;
+    padding: inherit;
+}
+
+/* History 컨테이너 */
+.history-div{
+	padding: 20px;
+    background-color: #f8f9fa;
+    max-height: 600px;
+    /* overflow-y: auto; */
+	display:none;
+}
+
+/* 개별 히스토리 카드 */
+.history-card {
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.history-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.history-card:last-child {
+    margin-bottom: 0;
+}
+
+/* 카드 헤더 */
+.history-header {
+    background:#495057;
+    color: white;
+    padding: 12px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+}
+
+.history-header span {
+    display: inline-block;
+    padding: 4px 12px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+}
+
+/* 카드 콘텐츠 영역 */
+.history-items {
+    padding: 8px 10px;
+}
+
+.history-item {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    align-items: start;
+}
+
+/* 개별 항목 상세 */
+.item-detail {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #dee
+}
+
+/* .item-detail:hover {
+    background: #e9ecef;
+    border-left-color: #764ba2;
+} */
+
+.detail-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: 93px;
+}
+
+.detail-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: #212529;
+    word-break: break-word;
+    flex: 1;
+    text-align: left;
+}
+
+.detail-barcodes{
+	width: 70%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 수량 배지 */
+.quantity-badge {
+    display: inline-block;
+    background: #28a745;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Location/Work 필드 특별 스타일 */
+.item-detail:has(.detail-label:contains("Location")) {
+    border-left-color: #fd7e14;
+}
+
+.item-detail:has(.detail-label:contains("Work")) {
+    border-left-color: #dc3545;
+}
+
+/* 빈 상태 표시 */
+.detail-value:contains("-") {
+    color: #adb5bd;
+    font-style: italic;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .history-div {
+    	height: 410px;
+        padding: 0px 7px;
+    }
+    
+    .history-item {
+        grid-template-columns: 1fr;
+        gap: 0px;
+    }
+    
+    .item-detail {
+        padding: 6px;
+    }
+    
+    .history-header {
+        padding: 4px 15px;
+        font-size: 13px;
+    }
+}
+
+/* 스크롤바 스타일링 */
+.history-div::-webkit-scrollbar {
+    width: 6px;
+}
+
+.history-div::-webkit-scrollbar-track {
+    background: #f1f3f4;
+    border-radius: 3px;
+}
+
+.history-div::-webkit-scrollbar-thumb {
+    background: #c1c8cd;
+    border-radius: 3px;
+}
+
+.history-div::-webkit-scrollbar-thumb:hover {
+    background: #a8b2b9;
+}
+
+/* 로딩 애니메이션 */
+.history-card {
+    animation: slideInUp 0.4s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+  </style>
+</head>
+<body data-page="addEntry">
+	<div th:replace="fragments/header :: commonHeader(#{menu.stockHistory})"></div> 
+	<div class="form-container">
+		<div class="form-group">
+            <!-- <label class="form-label">자재 바코드</label> -->
+            <div class="barcode-input">
+            	<span th:text = "#{search.barcode}">바코드 : </span>
+                <input type="text" id="barcodeInput" class="form-input"  autocomplete="off">
+                <button id="scanBtn" class="scan-btn" onclick = "addEntry()" th:text="#{btn.scan}">스캔</button>
+            </div>
+        </div>
+	</div>
+	<div class="form-container info-div">
+		<div class="form-container itemInfo-div">
+			<div class="item-info-header">
+				<div>
+	            	<div class="item-code"></div>
+	                <div class="item-name"></div>
+	            </div>
+		    </div>
+		    <div class="info-grid">
+		      	<div class="info-item">
+					<div class="info-label" th:text = "#{table.barcode}">Barcode</div>
+		            <div class="info-value"><span id = "infoBarcode"></span></div>
+		        </div>
+		      	<div class="info-item">
+					<div class="info-label" th:text = "#{table.oitemcode}">Item Code</div>
+		            <div class="info-value"><span id = "itemcode"></span></div>
+		        </div>
+		        <div class="info-item">
+		            <div class="info-label" th:text = "#{table.itemname}">Item Name</div>
+		            <div class="info-value"><span id = "itemname"></span></div>
+		        </div>
+		        <div class="info-item" id="status-wrap" style="display:none;">
+					<div class="info-label" th:text="#{table.status}">Last Status</div>
+					<div class="info-value"><span id = "laststatus"></span></div>
+				</div> 
+		        <div class="info-item" id="location-wrap" style="display: none;">
+					<div class="info-label" th:text="#{table.location}">Location</div>
+					<div class="info-value"><span id = "location"></span></div>
+				</div>
+			</div>	
+		</div>
+		<div class="form-container history-div">
+		</div>
+	</div>
+	
+	<!-- <div class="form-container">
+		<div class="table-header">
+        </div>
+        <div class="table-scroll-area">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                    	<th th:text = "#{search.storage}">창고</th>
+                        <th th:text = "#{table.itemCode}">품번</th>
+                        <th th:text = "#{table.lot}">LOT</th>
+                        <th th:text = "#{table.no}">순번</th>
+                        <th th:text = "#{table.qty}">수량</th>
+                        <th th:text = "#{btn.delete}">삭제</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTableBody">
+                    동적으로 추가될 데이터
+                </tbody>
+            </table>
+        </div>
+	</div> -->
+    <!-- 푸터 -->
+    <div class="footer">
+    	<!-- <button id="allSendBtn" class="btn-primary" onclick = "saveBarcode()" th:text = "#{btn.saveBarcode}">전체 전송</button> -->
+    </div>
+     <!-- 로딩 스피너 -->
+    <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <div th:text="#{info.loading}">로딩중...</div>
+    </div>
+     <script th:src="@{/js/utils/common.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+    <script th:src="@{/js/modules/purchase/pur_stock_history.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+	<script>
+	function checkNetworkAndMove(url) {
+		if (window.AndroidInterface && !AndroidInterface.isNetworkConnected()) {
+		    AndroidInterface.showNoInternetDialog();
+		    return;
+		}
+		location.href = url;
+	}
+	// 현재페이지만 포커스 갈수 있게 수정
+	['pointerdown', 'click', 'change'].forEach(ev => {
+		  document.addEventListener(ev, function (e) {
+		    if (e.target && e.target.closest('#barcodeInput')) {
+		      // 문서 위임 핸들러(blur 스케줄러)까지 버블링 되지 않게 차단
+		      e.stopPropagation();
+		      // stopImmediatePropagation은 native 이벤트에선 의미 없음, jQuery 델리게이트까지 안 가는 게 핵심
+		    }
+		  }, true); // ← 캡처 단계에서 가로채기
+		});
+	</script>
+</body>
+</html>

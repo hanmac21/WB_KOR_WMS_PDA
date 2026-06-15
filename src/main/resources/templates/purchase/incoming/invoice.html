@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- <link rel="stylesheet" th:href="@{/css/header.css(v=${T(java.lang.System).currentTimeMillis()})}"> -->
+<title>Inbound Detail</title>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link rel="stylesheet" th:href="@{/css/common.css(v=${T(java.lang.System).currentTimeMillis()})}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<style>
+.table-scroll-area {
+    max-height: 450px; /* 스크롤 영역 높이 */
+    overflow-y: auto;
+}
+
+.data-table td:first-child{
+	text-align: center;
+}
+
+.type-select{
+	margin-right: 10px;
+}
+  </style>
+</head>
+<body data-page="addEntry">
+	<div th:replace="fragments/header :: commonHeader(#{menu.incoming.invoice})"></div> 
+	<div class="form-container">
+		<div class="section-header">
+            <!-- <div class="datepicker-group">
+               <span th:text = "#{search.inDate}">입고일 : </span>
+               <input type="text" id="datepicker"  autocomplete='off' placeholder="" readonly>
+            </div>  -->
+            <div class = "storage-selector">
+            	<span th:text="#{table.status}">스캔여부</span>
+            	<select class="type-select">
+           			<option value = 'All'>All</option>
+					<option value = 'Yes' th:text = "#{table.complete}"></option>
+					<option value = 'No' th:text = "#{table.waiting}">X</option>
+		        </select>
+            </div>
+            <div class="action-buttons">
+                <button id="scanBtn" class="scan-btn" onclick="search()" th:text="#{btn.search}">검색</button>
+            </div>
+        </div>	
+	</div>
+	<div class="form-container">
+		<div class="table-header">
+			<span class="item-count" th:utext="#{table.total(${count} ?: 0)}">총 <span id="count">0</span>건</span>			
+			<span class="item-count" th:utext="#{table.totalqty(${totalqty} ?: 0)}">TOTAL QTY <span id="totalqty"></span></span>
+        </div>
+        <div class="table-scroll-area">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th th:text = "#{table.arrivalDate}">도착일</th>
+                        <th th:text = "#{search.invoice}">인보이스</th>
+                        <th th:text = "#{table.qty}">수량</th>
+                        <th th:text = "#{btn.scanqty}">스캔수량</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTableBody">
+                    <!-- 동적으로 추가될 데이터 -->
+                </tbody>
+            </table>
+        </div>
+	</div>
+	
+    <!-- 푸터 -->
+    <div class="footer">
+        <div class="footer-text">WMS v1.0 | <span id="currentDate"></span></div>
+    </div>
+     <!-- 로딩 스피너 -->
+    <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <div th:text="#{info.loading}">로딩중...</div>
+    </div>
+    <script th:src="@{/js/utils/common.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+    <script th:src="@{/js/modules/purchase/incoming/invoice.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+	<script>
+	hideLoading();
+	function checkNetworkAndMove(url) {
+		if (window.AndroidInterface && !AndroidInterface.isNetworkConnected()) {
+		    AndroidInterface.showNoInternetDialog();
+		    return;
+		}
+		location.href = url;
+	}
+	</script>
+</body>
+</html>

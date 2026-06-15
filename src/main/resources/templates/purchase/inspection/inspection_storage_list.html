@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Warehouse Inspection List</title>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link rel="stylesheet" th:href="@{/css/common.css(v=${T(java.lang.System).currentTimeMillis()})}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<style>
+.table-scroll-area {
+    max-height: 450px;
+    overflow-y: auto;
+}
+.data-table {
+    table-layout: fixed;
+    width: 100%;
+}
+.data-table th:nth-child(1),
+.data-table td:nth-child(1) {
+    width: 60%;
+    word-break: break-all;
+    font-size: 0.8em;
+}
+.data-table th:nth-child(2),
+.data-table td:nth-child(2) {
+    width: 15%;
+    text-align: center;
+}
+.data-table th:nth-child(3),
+.data-table td:nth-child(3) {
+    width: 25%;
+    text-align: center;
+}
+</style>
+</head>
+<body>
+	<div th:replace="fragments/header :: commonHeader(#{menu.purchase.inspection.warehouse.list})"></div>
+	<div class="form-container">
+		<div class="section-header">
+            <div class="datepicker-group">
+               <span th:text="#{search.inDate}">날짜 : </span>
+               <input type="text" id="datepicker" autocomplete='off' placeholder="" readonly>
+            </div>
+            <div class="action-buttons">
+                <button id="scanBtn" class="scan-btn" onclick="search()" th:text="#{btn.search}">검색</button>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="storage-selector">
+                <span th:text="#{search.judgment}">판정종류</span>
+                <select class="judgment-select">
+                    <option value="" th:text="#{filter.search.all}">전체</option>
+                    <option value="RETURN" th:text="#{btn.inspection.return}">입고반품</option>
+                    <option value="SCRAP" th:text="#{btn.inspection.dispose}">폐기</option>
+                </select>
+            </div>
+        </div>
+	</div>
+	<div class="form-container">
+		<div class="table-header">
+			<span class="item-count" th:utext="#{table.total(${count} ?: 0)}">총 <span id="count">0</span>건</span>
+			<span class="item-count" th:utext="#{table.totalqty(${totalqty} ?: 0)}">총 수량 <span id="totalqty">0</span>개</span>
+        </div>
+        <div class="table-scroll-area">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th th:text="#{table.barcode}">바코드</th>
+                        <th th:text="#{table.qty}">수량</th>
+                        <th th:text="#{table.judgment}">판정내역</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTableBody">
+                </tbody>
+            </table>
+        </div>
+	</div>
+
+    <div class="footer">
+        <div class="footer-text">WMS v1.0 | <span id="currentDate"></span></div>
+    </div>
+    <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <div th:text="#{info.loading}">로딩중...</div>
+    </div>
+    <script th:src="@{/js/utils/common.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+    <script th:src="@{/js/modules/purchase/inspection/inspection_storage_list.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+	<script>
+	hideLoading();
+	function checkNetworkAndMove(url) {
+		if (window.AndroidInterface && !AndroidInterface.isNetworkConnected()) {
+		    AndroidInterface.showNoInternetDialog();
+		    return;
+		}
+		location.href = url;
+	}
+	</script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>로그인</title>
+<link rel="stylesheet" th:href="@{/css/common.css(v=${T(java.lang.System).currentTimeMillis()})}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<style>
+  </style>
+</head>
+<body data-page="addEntry">
+	<div th:replace="fragments/header :: commonHeader(#{menu.load})"></div> 
+	<div class="form-container">
+		<div class="section-header">
+            <div class="datepicker-group">
+               <span th:text = "#{search.inDate}">입고일 : </span><input type="text" id="datepicker"  autocomplete='off' placeholder="" readonly>
+            </div>
+            <div class="action-buttons">
+                <button id="allCancelBtn" class="btn-action btn-cancel" onclick ="clearAll()" th:text = "#{btn.clear}">전체 취소</button>
+            </div>
+        </div>
+		<div class="form-group">
+            <div class="barcode-input" style= "display:none">
+            	<span th:text = "#{search.barcode}">바코드 : </span>
+                <input type="text" id="barcodeInput" class="form-input" th:placeholder = "#{info.barcode.scan}" autocomplete="off">
+                <button id="scanBtn" class="scan-btn" onclick = "addEntry()" th:text="#{btn.scan}">스캔</button>
+            </div>
+            <div class = "storage-selector">
+            	<span th:text = "#{search.storage}"></span>
+            	<select class=" storage-select1">
+					<option value = 'PRODUCT'>PRODUCT</option>
+		        </select>
+            </div>
+            <div class="storage-selector">
+			  	<span th:text = "#{search.customer}"></span>
+			  	<select class="storage-in" id = "cust"> 
+			  		<option value = '0003_KMIN USA, Inc.'>KMIN USA, Inc.</option>
+			  		<option value = 'A021_WBTM'>WBTM</option>
+			  		<option value = '0001_WOOBOTECH CO.,LTD'>WOOBOTECH CO.,LTD</option>
+			  	</select>
+			</div>
+        </div>
+	</div>
+	<div class="input-section">
+		<div class="barcode-input">
+         	 <span th:text = "#{search.wms}">바코드 </span>
+             <input type="text" id="scanBarcode" class="form-input"  autocomplete="off" readonly>
+         </div>
+         <div class="barcode-input">
+         	<span th:text = "#{search.box}">바코드</span>
+            <input id="scanBarcode2" readonly>
+         </div>
+         <div class="input-group">
+         	<span></span>
+         </div>
+	</div>
+    <!-- 푸터 -->
+    <div class="footer">
+        <button id="allSendBtn" class="btn-primary" onclick = "saveBarcode()" th:text = "#{btn.saveBarcode}">전체 전송</button>
+    </div>
+     <!-- 로딩 스피너 -->
+    <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <div th:text = "#{info.loading}">로딩중...</div>
+    </div>
+    <script th:src="@{/js/utils/common.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+    <script th:src="@{/js/modules/sales/load/load.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+	<script>
+	function checkNetworkAndMove(url) {
+		if (window.AndroidInterface && !AndroidInterface.isNetworkConnected()) {
+		    AndroidInterface.showNoInternetDialog();
+		    return;
+		}
+		location.href = url;
+	}
+	</script>
+</body>
+</html>

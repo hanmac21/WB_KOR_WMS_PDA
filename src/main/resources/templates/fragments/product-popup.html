@@ -1,0 +1,48 @@
+<div th:fragment = "productInfoPopup">
+	<!-- 제품정보 팝업 창 -->
+	<div id = "popupOverlay" class = "popup-container">
+		<div class="popup">
+	        <div class="popup-header">
+	            <h2 class="popup-title" th:text = #{title.modal.itemInfo}>제품 정보</h2>
+	            <button class="close-btn" onclick="closePopup()">&times;</button>
+	        </div>
+	        
+	        <div class="product-info">
+	            <div class="info-item">
+	                <label class="info-label">Item Code</label>
+	                <div class="info-value product-code" id="productCode"></div>
+	            </div>
+	            
+	            <div class="info-item">
+	                <label class="info-label">Item Name</label>
+	                <div class="info-value product-name" id="productName"></div>
+	            </div>	  
+	            
+	            <!-- <div class="info-item">
+	                <label class="info-label">Total Qty</label>
+	                <div class="info-value product-totalQty" id="productTotalQty"></div>
+	            </div>   -->        
+	        </div>
+	        
+	        <!-- <div class="detail-section">
+				<div class="detail-header">
+					<h3 class="detail-title">Inbound List</h3>
+				</div>
+	   
+				<div class="detail-table-container">
+					<table class="detail-table">
+						<thead>
+							<tr>
+			                    <th>INDATE</th>
+			                    <th>QTY</th>
+			                    <th>LOCATION</th>
+			                </tr>
+	            		</thead>
+	            		<tbody id="detailDataBody">
+	            		</tbody>
+	       			</table>
+			    </div>
+			</div>	     -->    	
+	    </div>
+	</div>
+</div>

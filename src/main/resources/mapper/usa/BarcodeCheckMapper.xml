@@ -1,0 +1,752 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="com.example.demo.mapper.usa.BarcodeCheckMapper">
+	<!-- 팔레트가 해체된 경우 모든 메뉴에서 사용 -->
+	<select id = "palletNCheck" resultType = "string">
+		select distinct pbarcode from t_scm_pallet
+		where useyn = 'N' and
+		pbarcode in 
+			<foreach item="barcode" collection="list" open="(" separator="," close=")">
+		        #{barcode}
+		    </foreach>
+	</select>
+	
+	<!-- 제품, 반제품 품번인지 확인 불출에서 사용 -->
+	<select id = "goodsCodeCheck" resultType = "string">
+		select  distinct h.barcode from  v_itemhistory h left join t_mi_item i on h.itemcode = i.itemcode
+		where h.barcode in 
+			<foreach item="barcode" collection="list" open="(" separator="," close=")">
+		        #{barcode}
+		    </foreach>
+		  and (kind = 'BARCODE' or kind = 'PALLET')
+	    and (cmb_itemtype = '001' or cmb_itemtype = '002')
+	</select>
+
+	<!-- 제품001,002, 006 이면 반환해서 제거  제품 생산실적에서 사용  -->
+	<select id = "productionCheck" resultType = "string">
+		select  distinct h.barcode from  v_itemhistory h left join t_mi_item i on h.itemcode = i.itemcode
+		where h.barcode in 
+			<foreach item="barcode" collection="list" open="(" separator="," close=")">
+		        #{barcode}
+		    </foreach>
+		  and (kind = 'BARCODE' or kind = 'PALLET')
+	    and (cmb_itemtype = '001' or cmb_itemtype = '002' or cmb_itemtype = '006')
+	</select>
+	
+	<select id = "c001Check" resultType = "string">
+		select  distinct h.barcode from  v_itemhistory h left join t_mi_item i on h.itemcode = i.itemcode
+		where h.barcode in 
+			<foreach item="barcode" collection="list" open="(" separator="," close=")">
+		        #{barcode}
+		    </foreach>
+		  and (kind = 'BARCODE' or kind = 'PALLET')
+	    and i.itemcode like '%C001%'
+	</select>
+	
+	<!--  반제품006 이면 반환 -->
+	<select id = "semiProductionCheck" resultType = "string">
+		select  distinct h.barcode from  v_itemhistory h left join t_mi_item i on h.itemcode = i.itemcode
+		where h.barcode in 
+			<foreach item="barcode" collection="list" open="(" separator="," close=")">
+		        #{barcode}
+		    </foreach>
+		  and (kind = 'BARCODE' or kind = 'PALLET')
+	    and (cmb_itemtype = '006' )
+	</select>
+
+	<!-- 반제품인데 무상사급 (006 and freeofcharge =1) or 002(상품), 004(원재료), 005(부자재) 면 입고가능 -->
+	<select id = "incomingCodeCheck" resultType = "string">
+		select  distinct h.barcode from  v_itemhistory h left join t_mi_item i on h.itemcode = i.itemcode
+		where h.barcode in 
+			<foreach item="barcode" collection="list" open="(" separator="," close=")">
+		        #{barcode}
+		    </foreach>
+	    and ((cmb_itemtype =  006 and freeofcharge = 1 ) or cmb_itemtype = '002' or cmb_itemtype = '004'  or cmb_itemtype = '005')
+	</select>
+	
+	<!-- 004(원재료), 005(부자재), 006(반제품 )이면 출고제한  -->
+	<select id = "materialCodeCheck" resultType = "string">
+		select  distinct h.barcode from  v_itemhistory h left join t_mi_item i on h.itemcode = i.itemcode
+		where h.barcode in 
+			<foreach item="barcode" collection="list" open="(" separator="," close=")">
+		        #{barcode}
+		    </foreach>
+		 and (cmb_itemtype = '004' or cmb_itemtype = '005' or cmb_itemtype = '006')
+	</select>
+	
+	<select id = "unpackCheck" resultType = "string">
+		select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and labeltype = 'Unpack' and useyn = 'N'
+	</select>
+	
+	<select id = "notRegistered" resultType = "string">
+		select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	</select>
+
+	<select id = "forIncoming" resultType = "string">
+		select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	    and laststatus between 1 and 9
+	</select>
+
+	<select id = "alreadyIncoming" resultType = "string">
+		select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	    <![CDATA[and laststatus >=10]]>
+	</select>
+	
+	<select id = "factoryMoving" resultType = "string">
+		select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	    <![CDATA[and laststatus =5]]>
+	</select>
+	
+	<select id = "alreadyLoad" resultType = "String">
+		select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	    <![CDATA[and laststatus=50]]>
+	</select>
+
+	<select id = "alreadyOutbound" resultType = "String">
+		select t.barcode from t_wms_outbound t
+		where t.barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+			#{barcode}
+		</foreach>
+		and useyn ='Y'
+		AND t.iid = (
+			SELECT MAX(t2.iid)
+			FROM t_wms_outbound t2
+			WHERE t2.barcode = t.barcode
+		)
+		AND t.source != 'LOADRETURN'
+	</select>
+
+	<select id = "alreadyLoadReturn" resultType = "String">
+		select t.barcode from t_wms_outbound t
+		where t.barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+			#{barcode}
+		</foreach>
+		and useyn ='Y'
+		AND t.source = 'LOADRETURN'
+	</select>
+
+	<select id = "alreadyStockmoveSending" resultType = "String">
+		select barcode from v_itemhistory
+		where barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+			#{barcode}
+		</foreach>
+		and useyn ='Y'
+		and laststatus = 15
+
+	</select>
+
+	<select id = "alreadyWIPReady" resultType = "String">
+		select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	    <![CDATA[and laststatus =35]]>
+	</select>
+	
+	<select id = "alreadyWIP" resultType = "String">
+		select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	    <![CDATA[and laststatus =40]]>
+	</select>
+	
+	<select id = "factoryCheck" resultType = "string">
+		select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	    and laststatus between 10 and 29
+	    <!-- and lastfactory = #{factory} --> <!-- 250919 안정화된후에 추후 조건 추가할 예정 -->
+	</select>
+	
+	
+	<!-- 출고반품, 불출반납 용  --> 
+	<select id = "notStorageCheck" resultType = "String">
+		select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	    and laststatus between 10 and 29
+	</select>
+	
+	<!-- 해당창고에 이미 있는지 확인  입고 적용 -->
+	<select id ="storageCheckIn" resultType = "string">
+		select distinct barcode from V_STOCKINFO
+		where upper(factory) = upper(#{factory}) and upper(storage) = upper(#{storage})
+		and barcode in 
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+		<!-- select barcode from t_wms_location
+		where factory = #{factory} and storage = #{storage}
+		and barcode in 
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y' -->
+	</select>
+	<!-- 해당 공장에 이미 잇는지 확인 공장이동 적용  -->
+	<select id ="factoryCheckIn" resultType = "string">
+		select distinct barcode from V_STOCKINFO
+		where upper(factory) = upper(#{factory})
+		and barcode in 
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	</select>
+	
+	
+	<!-- 실사시 이미 재고로 잡힌건지 확인, 바코드실사, 로케이션 실사 -->
+	<select id = "forStockCount" resultType = "String">
+		select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	    and laststatus between 10 and 29
+	</select>
+
+	<select id = "storageCheck" resultType = "string">
+		<!-- select distinct barcode from V_ITEMHISTORY
+			where barcode in
+			<foreach item="barcode" collection="list" open="(" separator="," close=")">
+		        #{barcode}
+		    </foreach>
+		    and storage = #{storage}
+		    AND KIND = 'LOCATION'
+		    and useyn = 'Y' -->
+		<!-- select distinct barcode from t_wms_location
+		where barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and storage = #{storage}
+	    and useyn = 'Y' -->
+	   <!--  and rownum =1  -->
+	   select distinct barcode from V_STOCKINFO
+	   where barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and upper(storage) = upper(#{storage})
+	</select>
+	
+	<!-- 파트바코드가 location에 있는지 확인 팔레트생성에서 사용 -->
+	<select id = "partLocationCheck" resultType = "string">
+		select distinct barcode from t_wms_location 
+		where barcode in 
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn = 'Y' 
+	</select>
+	
+	<!-- 파트바코드가 해당공장에 있는지 location에 있는지 확인 팔레트생성에서 사용 -->
+	<select id = "partLocationFactoryCheck" resultType = "string">
+		select distinct barcode from t_wms_location 
+		where barcode in 
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and upper(factory) != upper(#{factory})
+	    and useyn = 'Y' 
+	</select>
+	
+	<!-- 파트바코드가 해당 창고에 있는지 location에 있는지 확인 팔레트생성에서 사용 -->
+	<select id = "partLocationStorageCheck" resultType = "string">
+		select distinct barcode from t_wms_location 
+		where barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	   and upper(storage) != upper(#{storage})
+	   and useyn = 'Y'
+	</select>
+	
+	<!-- 입고시 같은 공장에 잇는지 확인 -->
+	<select id = "inputFactoryCheck" resultType = "string">
+		select distinct barcode from v_stockinfo 
+		where barcode in 
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and upper(factory) != upper(#{factory}) 
+		<!-- select distinct barcode from t_wms_location
+		where barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	   and factory != #{factory} 
+	    and useyn = 'Y' -->
+	</select>
+	
+	<!-- 입고시 같은 창고에 잇는지 확인 -->
+	<select id = "inputStorageCheck" resultType = "string">
+		select distinct barcode from v_stockinfo 
+		where barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	   and upper(storage) != upper(#{storage})
+		<!-- select distinct barcode from t_wms_location
+		where barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	   and (storage != #{storage} or storage is null)
+	    and useyn = 'Y' -->
+	</select>
+	
+	<select id = "barcodeLocation" resultType = "string">
+		select distinct barcode from t_wms_location
+		where barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn = 'Y'
+	</select>
+
+	<select id = "barcodeStockInfo" resultType = "string">
+		select distinct barcode from v_stockinfo
+		where barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	</select>
+
+	<select id = "barcodeWorkStockInfo" resultType = "string">
+		select distinct barcode from v_workstockinfo
+		where barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	</select>
+	
+	<select id = "palletExist" resultType = "string">
+		select DISTINCT bbarcode 
+		from t_scm_pallet
+		where bbarcode IN
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	     and useyn = 'Y'
+	</select>
+	
+	
+	<select id = "wipreturnCheck" resultType = "string">
+		 SELECT t.barcode
+		  FROM (
+		    SELECT a.barcode,
+		           a.source,
+		           ROW_NUMBER() OVER (PARTITION BY a.barcode ORDER BY a.iid DESC) AS rn
+		    FROM t_wms_workmove a
+		    WHERE  a.barcode in
+			<foreach item="barcode" collection="list" open="(" separator="," close=")">
+		        #{barcode}
+		    </foreach>
+			    ) t
+		  WHERE t.rn = 1
+		    AND t.source = 'WIPRETURN'
+	</select>
+	
+	<select id = "semiProduction" resultType = "string">
+		select distinct(a.pbarcode)
+		from t_scm_pallet a 
+		left outer join t_scm_barcode b 
+		on a.bbarcode = b.barcode 
+		where a.pbarcode in 
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and b.labeltype = 'Semi-Production'
+		union all
+		select barcode
+		from t_scm_barcode  
+		where barcode in 
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and labeltype = 'Semi-Production'
+		<!-- select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	    labeltype = 'Semi-Production' -->
+	</select>
+
+	<select id = "semiProductionBarcodeProductionCheck" resultType = "string">
+		select distinct(a.pbarcode)
+		from t_scm_pallet a 
+		left outer join t_scm_barcode b 
+		on a.bbarcode = b.barcode 
+		where a.pbarcode in 
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and b.labeltype = 'Semi-Production'
+	    and a.laststatus = 10
+		union all
+		select barcode
+		from t_scm_barcode  
+		where barcode in 
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and labeltype = 'Semi-Production'
+	    and laststatus = 10
+		<!-- select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	    labeltype = 'Semi-Production' -->
+	</select>
+	
+	<select id = "productionBarcodeProductionCheck" resultType = "string">
+		select distinct(a.pbarcode)
+		from t_scm_pallet a 
+		left outer join t_scm_barcode b 
+		on a.bbarcode = b.barcode 
+		where a.pbarcode in 
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and (b.labeltype = 'Production' or b.labeltype = 'Semi-Production')
+	    and a.laststatus = 10
+		union all
+		select barcode
+		from t_scm_barcode  
+		where barcode in 
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and (labeltype = 'Production' or labeltype = 'Semi-Production')
+	    and laststatus = 10
+	</select>
+	
+	<select id = "sendingCheck" resultType = "string">
+		 SELECT t.barcode
+		  FROM (
+		    SELECT a.barcode,
+		           a.source,
+		           ROW_NUMBER() OVER (PARTITION BY a.barcode ORDER BY a.iid DESC) AS rn
+		    FROM t_wms_factorymove a
+		    WHERE  a.barcode in
+			<foreach item="barcode" collection="list" open="(" separator="," close=")">
+		        #{barcode}
+		    </foreach>
+		    and a.useyn = 'Y'
+			    ) t
+		  WHERE t.rn = 1
+		    AND t.source = 'SENDING'
+	</select>
+	
+	<select id = "receivingCheck" resultType = "string">
+		 SELECT t.barcode
+		  FROM (
+		    SELECT a.barcode,
+		           a.source,
+		           ROW_NUMBER() OVER (PARTITION BY a.barcode ORDER BY a.iid DESC) AS rn
+		    FROM t_wms_factorymove a
+		    WHERE  a.barcode in
+			<foreach item="barcode" collection="list" open="(" separator="," close=")">
+		        #{barcode}
+		    </foreach>
+			    ) t
+		  WHERE t.rn = 1
+		    AND t.source = 'RECEIVING'
+	</select>
+	
+	<!-- 반제품 바코드 추출 -->
+	<select id = "">
+		SELECT i.CMB_ITEMTYPE
+		FROM T_MI_ITEM i
+		     INNER JOIN T_SCM_BARCODE b 
+		        ON i.ITEMCODE = b.ITEMCODE
+		     INNER JOIN T_SCM_PALLET p 
+		        ON p.ITEMCODE = b.ITEMCODE
+		WHERE b.BARCODE in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	</select>
+	
+	<!-- 불량바코드체크 -->
+	<select id = "errorBarcodeCheck" resultType = "string">
+		SELECT barcode
+		from t_scm_barcode
+		WHERE BARCODE in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    <![CDATA[and laststatus < 90]]>
+	</select>
+
+	<select id = "alreadyError" resultType = "string">
+		SELECT barcode
+		from t_scm_barcode
+		WHERE BARCODE in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    <![CDATA[and laststatus = 91]]>
+	</select>
+	
+	<!-- 작업장 체크 -->
+	<select id = "wccodeCheck" resultType = "String">
+		select distinct barcode from T_WMS_WORKLOCATION
+		where (UPPER(FACTORY) != upper(#{workfactory}) or upper(storage) !=upper(#{workstorage}))
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	</select>
+	
+	
+	<!-- 평택 출고 체크 -->
+	<select id = "ptCheck" resultType = "String">
+		select barcode from t_mex_scm_out@ptlink
+		where invoice_no = #{memo}
+		and useyn = 'Y'
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	</select>
+	
+	<!-- // 피딩에서 사용 해당작업장에 있는 것만 사용가능 -->
+	<select id = "workLocationCheck" resultType = "String">
+		select distinct barcode from t_wms_worklocation
+		where useyn = 'Y'
+		and source = 'WIPINPUT'
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	</select>
+
+	<!-- // 생산품이동에서 사용 작업장내에 Y, PRODUCTION -->
+	<select id = "workLocationY" resultType = "String">
+		select distinct barcode from t_wms_worklocation
+		where useyn = 'Y'
+		and source = 'PRODUCTION'
+		and upper(storage) = upper(#{wstorage})
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	</select>
+	<!-- work테이블에 있는지 확인 생산품이동에서 사용  -->
+	<select id = "workCheck" resultType = "String">
+		select distinct barcode from t_wms_work
+		where useyn = 'Y'
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	</select>
+	
+	<!-- 작업장에 있는지 확인 작업장에 있는걸 반환, 작업장 예외입고에서 사용 -->
+	<select id = "existWorkLocation" resultType = "String">
+		select distinct barcode from v_workstockinfo
+		where barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	</select>
+	
+	<!-- 레드케이지에 없는걸 반환 -->
+	<select id = "redcageCheck" resultType = "String">
+		select distinct barcode from v_stockinfo
+		where storage != 'REDCAGE'
+		AND barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	</select>
+	
+	<!-- 레드케이지에 있는지 확인 -->
+	<select id = "redcageExistCheck" resultType = "String">
+		select distinct barcode from v_stockinfo
+		where storage = 'REDCAGE'
+		AND barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	</select>
+	
+	<!-- // 불량라벨을 반환 -->
+	<select id = "defectiveCheck" resultType = "String">
+		select distinct barcode from t_scm_barcode where labeltype = 'DEFECTIVE'
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+            #{barcode}
+        </foreach>
+	</select>
+
+
+    <!-- 이미 판정된라벨인지 체크 -->
+	<select id = "inspectionCheck" resultType = "String">
+		select distinct barcode2 from t_wms_inspection where useyn = 'Y' and
+		(barcode2 in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+			#{barcode}
+		</foreach>
+		OR barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+			#{barcode}
+		</foreach>
+		)
+	</select>
+	
+	<select id = "lotCheck" resultType = "String">
+        select distinct barcode from t_scm_barcode
+        where barcode in
+        <foreach item="barcode" collection="list" open="(" separator="," close=")">
+            #{barcode}
+        </foreach>
+	</select>
+
+	<select id = "check91" resultType = "String">
+		select distinct barcode from v_itemhistory
+		where barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+			#{barcode}
+		</foreach>
+		AND laststatus>=90
+	</select>
+	
+	<insert id = "makeBarcode">
+		insert into t_scm_barcode (barcode,kind,madate,sdate,itemcode,itemname,qty,totalqty,ymdhms,useyn,custname,labeltype,LASTSTATUS,LASTQTY, oitemcode, LASTFACTORY, FACTORY)
+		values(#{barcode},'WMS', #{date}, #{date}, #{itemcode}, #{itemname}, #{qty}, #{qty},TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'), 'Y','WOOBOTECH', 'PDA',#{laststatus}, #{qty}, #{oitemcode},'WBTA', 'WBTA')
+	</insert>
+	<!-- <select id = "wipOk" resultType = "string">
+		select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	    and laststatus = 40
+	</select>
+	
+	<select id = "outputOk" resultType = "string">
+		select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	    and laststatus = 50
+	</select>
+
+	<select id = "receivingOk" resultType = "string">
+		select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	    and laststatus = 50
+	</select>
+		
+	<select id = "forIncomingReturn" resultType = "string">
+		select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	    and laststatus in (10,20)
+	</select> -->
+
+	<select id="itemcodeCheck" resultType="string">
+		SELECT DISTINCT ITEMCODE FROM T_SCM_BARCODE
+		WHERE BARCODE IN
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+			#{barcode}
+		</foreach>
+	</select>
+	
+	<select id = "alreadyIncomingReturn" resultType = "String">
+		SELECT BARCODE FROM T_WMS_INBOUND
+		WHERE BARCODE IN
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+			#{barcode}
+		</foreach>
+		AND USEYN = 'Y'
+		AND SOURCE = 'INCOMINGRETURN'
+	</select>
+
+</mapper>
+
+
+
+
+

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="com.example.demo.mapper.usa.LoginMapper">
+	<select id="loginChk" resultType="int">
+		select count(*)
+		from t_wms_user
+		where UPPER(ks_id) = UPPER(#{loginid})
+		and ks_passwd = #{loginpw}
+	</select>
+	
+	<select id="selectLoginVO" resultType="com.example.demo.vo.LoginVO">
+		select ks_id
+		, ks_sabun
+		, ks_name
+		, ks_inuser
+		, ks_passwd
+		from t_wms_user
+		where UPPER(ks_id) = UPPER(#{loginid})
+	</select>
+	
+	<!--<select id="getUserMenuAccess" resultType = 'map'>
+		SELECT
+		    PURCHASE,
+		    &#45;&#45; FABRIC,
+		    PRODUCTION,
+		    SALES,
+		    QUALITY
+		FROM T_WMS_USER_MENU_ACCESS
+		WHERE ID = #{loginid}
+	</select>-->
+</mapper>

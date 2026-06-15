@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- <link rel="stylesheet" th:href="@{/css/header.css(v=${T(java.lang.System).currentTimeMillis()})}"> -->
+<title>로그인</title>
+<link rel="stylesheet" th:href="@{/css/common.css(v=${T(java.lang.System).currentTimeMillis()})}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+<style>
+  </style>
+</head>
+<body>
+	<div class= 'header-div'th:replace="fragments/header :: commonHeader(#{menu.movement})"></div> 
+	<div class="container">
+        <!-- <div class="section-title" th:text = "#{menu.purchase.title}">구매 메뉴</div> -->
+        <div class="menu-grid">
+            <button  id = "warehouse" class="sub-menu-item incoming" onclick="checkNetworkAndMove('/purchase/movement/warehouse')" th:text="#{menu.movement.warehouse}">
+                Movement-Warehouse
+            </button>
+            <button  id = "warehouse_out" class="sub-menu-item incoming" onclick="checkNetworkAndMove('/purchase/movement/warehouseout/out')" th:text="#{menu.movement.warehouseout.out}">
+                ILLINOIS
+            </button>
+            <button  id = "warehouse_in" class="sub-menu-item incoming" onclick="checkNetworkAndMove('/purchase/movement/warehouseout/in')" th:text="#{menu.movement.warehouseout.in}">
+                ILLINOIS
+            </button>
+            <button  class="sub-menu-item incoming" onclick="checkNetworkAndMove('/purchase/movement/warehouse-detail')" th:text="#{menu.movement.warehouse.detail}">
+                Movement-Warehouse - Detail
+            </button>   
+            <button  class="sub-menu-item incoming" onclick="checkNetworkAndMove('/purchase/movement/warehouse-summary')" th:text="#{menu.movement.warehouse.summary}">
+                Movement-Warehouse - Summary
+            </button>   
+        </div>
+    </div>
+
+    <!-- 푸터 -->
+    <div class="footer">
+        <div class="footer-text">WMS v1.0 | <span id="currentDate"></span></div>
+    </div>
+    
+     <!-- 로딩 스피너 -->
+    <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <div th:text= "#{info.loading}">로딩중...</div>
+    </div>
+    <script th:src="@{/js/utils/common.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+	<script>
+	hideLoading();
+	(function() {
+	    if (sessionStorage.getItem('currentWarehouse') === 'ILLINOIS') {
+	        var el = document.getElementById('warehouse');
+	        if (el) el.style.display = 'none';
+	    }
+	})();
+	window.addEventListener("pageshow", function(event) {
+	    hideLoading();
+	});
+	function checkNetworkAndMove(url) {
+		showLoading();
+		if (window.AndroidInterface && !AndroidInterface.isNetworkConnected()) {
+		    AndroidInterface.showNoInternetDialog();
+		    hideLoading();
+		    return;
+		}
+		location.href = url;
+	}
+	</script>
+</body>
+</html>

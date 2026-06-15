@@ -1,0 +1,117 @@
+@charset "UTF-8";
+
+* {
+  box-sizing: border-box;
+}
+html, body {
+	margin: 0;
+	padding: 0;
+	height: 100%;
+	font-family: 'Arial', sans-serif;
+	background: #f2f4f8;
+}
+
+#header{
+	display:flex;
+	width:100%;
+}
+
+.header-left, .header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.wrapper {
+	height: 100%;
+	display: flex;
+	align-items: center;
+	flex-direction: column;
+	padding: 20px;
+}
+
+.login-container {
+	width: 100%;
+	max-width: 500px;
+	background: white;
+	padding: 30px 30px;
+	border-radius: 12px;
+	box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+	text-align: center;
+}
+
+.login-form input[type="text"],
+.login-form input[type="password"] {
+	width: 100%;
+	padding: 10px;
+	margin: 5px 0;
+	border: 1px solid #ccc;
+	border-radius: 6px;
+	font-size: 20px;
+}
+	
+
+.logo img {
+	width: 200px;
+	vertical-align: middle;
+}
+
+
+h2 {
+	font-size: 16px;
+	margin: 20px 0;
+	color: #333;
+}
+
+.options {
+	text-align: left;
+	margin: 10px 0 10px;
+	font-size: 17px;
+	color: #555;
+}
+
+button {
+	width: 100%;
+	padding: 15px;
+	background-color: #003366;
+	color: white;
+	border: none;
+	border-radius: 6px;
+	font-size: 25px;
+	font-weight: bold;
+	cursor: pointer;
+	transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #001f4d;
+}
+
+.header-left, .header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.menu-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  padding-top: 60px; /* header 높이만큼 여유 줌 */
+  box-sizing: border-box;
+}
+@media only screen and (max-width: 490px){
+	
+	
+}
+@media only screen and (min-width: 490px){
+	.wrapper {
+	  justify-content: center;
+	}
+	
+	.login-form input[type="text"],
+	.login-form input[type="password"] {
+	  padding: 14px;
+	  margin: 10px 0;
+	}
+	
+}

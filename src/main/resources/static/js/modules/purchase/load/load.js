@@ -1,0 +1,364 @@
+let manualTouch = false;
+$(document).ready(function () {
+    hideLoading();
+    var today = new Date();
+
+    function dateFormat(date) {
+        let month = date.getMonth() + 1;
+        let day = date.getDate();
+
+        month = month >= 10 ? month : '0' + month;
+        day = day >= 10 ? day : '0' + day;
+
+        return date.getFullYear() + '-' + month + '-' + day;
+    }
+
+    today = dateFormat(today);
+
+    $.datepicker.setDefaults({
+        dateFormat: 'yy-mm-dd',
+        prevText: '이전 달',
+        nextText: '다음 달',
+        monthNames: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
+        monthNamesShort: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
+        dayNames: ['일', '월', '화', '수', '목', '금', '토'],
+        dayNamesShort: ['일', '월', '화', '수', '목', '금', '토'],
+        dayNamesMin: ['일', '월', '화', '수', '목', '금', '토'],
+        showMonthAfterYear: true,
+        yearSuffix: '년',
+        changeMonth: true,
+        changeYear: true,
+        showButtonPanel: true,
+        currentText: '오늘 날짜',
+        onClose: function (dateText, inst) {
+            focusWithoutKeyboard();
+            if ($(window.event.target).hasClass('ui-datepicker-current')) {
+                $(this).datepicker('setDate', new Date());
+
+            }
+        }
+    });
+    $("#datepicker").datepicker();
+    $("#datepicker").datepicker("setDate", new Date());
+
+    $(document).on('click', '.ui-datepicker-current', function () {
+        const today = new Date();
+        $("#datepicker").datepicker("setDate", today);
+
+        // 오늘 날짜 설정 후 키보드 안뜨게 포커스
+        if (typeof focusWithoutKeyboard === 'function') {
+            $("#datepicker").datepicker("hide");
+            focusWithoutKeyboard();
+        }
+    });
+
+    // 창고 기본값 변경 (ILLINOIS 창고 선택 시 OUTSIDE 우선)
+    const _storedWarehouse = (localStorage.getItem("rememberedWarehouse") || "").trim();
+    const _defaultStorage = _storedWarehouse === 'ILLINOIS' ? "OUTSIDE" : "PRODUCT";
+    $(".storage-select").val(_defaultStorage).trigger("change").prop("disabled", true);
+
+    renderTable();
+
+    const savedBarcodes = JSON.parse(localStorage.getItem("barcodeListOut") || "[]");
+    if (savedBarcodes.length > 0) {
+        const first = savedBarcodes[0];
+        const detectedShipTo = first.startsWith("[)>") ? "ADNT" : "LEAR";
+        $(".shipto-select").val(detectedShipTo);
+    }
+
+    $('.shipto-select').on('change', function () {
+        const barcodeList = JSON.parse(localStorage.getItem("barcodeListOut") || "[]");
+        if (barcodeList.length > 0) {
+            $(this).val($(this).data('prev'));
+            Utils.showAlert(m("warning.shipto.locked"), 'warning');
+        } else {
+            $(this).data('prev', $(this).val());
+        }
+    }).each(function () {
+        $(this).data('prev', $(this).val());
+    });
+
+$('#barcodeInput').on('touchstart mousedown', function () {
+        manualTouch = true;
+    });
+
+    $('#barcodeInput').on('blur', function () {
+        $('#barcodeInput').attr('readonly', true);
+        inputMode = 'readonly';
+    });
+
+    $(document).on('touchend', function (e) {
+        if (window.focusTimeout) clearTimeout(window.focusTimeout);
+
+        if ($(e.target).is('#barcodeInput')) {
+            window.focusTimeout = setTimeout(function () {
+                const $input = $('#barcodeInput');
+                if ($input.length) {
+                    $input.focus();
+                    if (!manualTouch) {
+                        focusWithoutKeyboard();
+                    }
+                    manualTouch = false;
+                }
+            }, 500);
+        }
+    });
+
+})
+
+function addEntry() {			// 로컬스토리지 저장
+    const barcodeInput = document.getElementById('barcodeInput');
+    const barcode = barcodeInput.value.trim();
+
+    if (!barcode) {
+        Utils.showAlert('바코드를 입력해주세요.');
+        return;
+    }
+
+    // 로딩 표시
+    showLoading();
+
+    if (inputMode === 'manual') {
+        if (barcode) {
+            $('#barcodeInput').val('');
+            $('#barcodeInput').attr('readonly', true);
+            inputMode = 'readonly';
+        }
+    } else {
+        console.warn("현재 스캔 모드입니다.");
+    }
+
+    // 인보이스 바코드 제외 (이 화면은 단순 파트 스캔용)
+    if (barcode.includes("$$") || barcode.includes(":CY[")) {
+        let audio = new Audio('/sounds/buzzer.wav');
+        audio.play();
+        $("#barcodeInput").val("");
+        hideLoading();
+        Utils.showAlert(`${m("warning.barcode.invalid")}<br>${m("warning.check")}`, "warning");
+        return;
+    }
+
+    // 모든 거래처 파트바코드 허용
+    // ADIENT: [)> 시작 + | 포함
+    // TRANSYS: [)> 시작 + : 포함
+    // LEAR/WMS: 쉼표 5파트(WMSUSA 끝) 또는 P타입
+    // 박스바코드: 언더스코어 6파트
+    const isValidBarcode =
+        (barcode.startsWith("[)>") && barcode.includes("|")) ||
+        (barcode.startsWith("[)>") && barcode.includes(":")) ||
+        barcode.split(",")[4] === "WMSUSA" ||
+        barcode.split(",")[3] === "WMSUSA" ||
+        barcode.split("_").length === 6;
+
+    if (isValidBarcode) {
+        let stored = [];
+
+        if (window.localStorage && localStorage.getItem("barcodeListOut")) {
+            stored = JSON.parse(localStorage.getItem("barcodeListOut"));
+        } else {
+            stored = [];
+        }
+
+        if (stored.includes(barcode)) {
+            console.log("barcode : " + barcode)
+            let audio = new Audio('/sounds/buzzer2.wav');
+            audio.play();
+            $("#barcodeInput").val("");
+            Utils.showAlert(`${barcode}<br>${m("warning.barcode.duplicate")}`);
+            hideLoading();
+            return;
+        } else {
+            let audio = new Audio('/sounds/complete.wav');
+            audio.play();
+
+            stored.push(barcode);
+            localStorage.setItem("barcodeListOut", JSON.stringify(stored));
+            $("#barcodeInput").val("");
+            renderTable();
+            hideLoading();
+            Utils.showAlert(`${barcode}<br>${m("info.barcode.saved")}`, "#008000", barcode)
+        }
+    } else {
+        let audio = new Audio('/sounds/buzzer.wav');
+        audio.play();
+        $("#barcodeInput").val("");
+        hideLoading();
+        Utils.showAlert(`${m("warning.barcode.invalid")}<br>${m("warning.check")}`, "warning")
+        return;
+    }
+}
+
+function saveBarcode() {					// 전체전송
+    // 중복 방지: 이미 저장 중이면 바로 종료
+    console.log("isaving : " + isSaving);
+    if (isSaving) {
+        console.log("⚠ 중복 클릭 방지됨");
+        return;
+    }
+    isSaving = true;
+
+    const barcodeList = JSON.parse(localStorage.getItem("barcodeListOut") || "[]");
+
+    if (barcodeList.length === 0) {
+        Utils.showAlert(m("warning.barcode.noneToSave"), 'warning');
+        focusWithoutKeyboard()
+        isSaving = false;
+        return;
+    }
+
+    let data = {
+        date: $("#datepicker").val(),
+        barcode: barcodeList,
+        source: "LOAD",
+        main: "OUT",
+        kind: "LOAD",
+        storage: $(".storage-select").val(),
+        shipTo: $(".shipto-select").val(),
+        factory: localStorage.getItem('rememberedFactory'),
+        memo: "",
+        invoiceno : ""
+    }
+
+    Utils.showConfirm(m("confirm.send.all"), () => {
+            showLoading();
+            $.ajax({
+                url: `/purchase/insOutputAll`,
+                method: 'POST',
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function (result) {
+                    let response = result.response;
+                    console.log("response : " + response)
+                    if (response === "success") {
+                        localStorage.removeItem('barcodeListOut');
+                        $("#dataTableBody").empty();
+                        $("#count").text("0");
+                        Utils.showAlert(m("info.barcode.sent"), "info");
+                        playSound('complete');
+                    } else {
+                        const barcodeHtml = makeBarcodesClickable(result.barcode);
+                        showAlert("", barcodeHtml + `<br>${m(result.response)}`, "warning");
+                        highlightErrorRows(result.barcode);		// 에러바코드 배경 빨간색으로 바꿔주는 함수
+
+                        playSound('error')
+                    }
+                    hideLoading();
+                },
+                error: function (request, status, error) {
+                    console.log(error);
+                    if (request.status == 200) {
+
+                    } else if (request.status == 500) {
+                        Utils.showAlert(m("error.generic"), 'warning');
+                    } else if (request.status == 0) {
+                        Utils.showAlert(m("error.offline"), 'warning');
+                    }
+                    if (request.status === 401) {
+                        Utils.showAlert("Your session has expired. Please log in again.", 'warning');
+                        window.location.href = "/login";
+                    } else {
+                        Utils.showAlert("code: " + request.status + "<br>message: " + request.responseText + "<br>error: " + error, "warning");
+                    }
+                    hideLoading();
+                },
+                complete: function () {
+                    hideLoading();
+                    // ❗ AJAX 끝나면 초기화
+                    isSaving = false;
+                    console.log("isaving false 1 : " + isSaving);
+                }
+            });
+        },
+        () => {
+            Utils.showAlert(m("success.cancel.sendAll"), "#008000");
+            isSaving = false;
+            hideLoading();
+        })
+}
+
+function renderTable() {		//테이블그리기
+    console.log("테이블그리기")
+    let table = $("#dataTableBody");
+    let barcodeArray = [];
+
+    if (typeof localStorage !== 'undefined' && localStorage.getItem("barcodeListOut")) {
+        barcodeArray = JSON.parse(localStorage.getItem("barcodeListOut"));
+    } else {
+        barcodeArray = [];
+    }
+    table.empty();
+    for (let i = 0; i < barcodeArray.length; i++) {
+        let barcodeOneArr = barcodeArray[i].split(",");
+        let barcodeStr = barcodeArray[i];	// 전체 문자열
+        let tbody = "";
+        if (barcodeOneArr.length === 5 && (barcodeStr.endsWith("MEX") || barcodeStr.endsWith("USA"))) {	// 정상 바코드
+            tbody = `<tr class = "bar_` + barcodeArray[i] + ` bar-row" data-barcode="${barcodeArray[i]}">
+							<td>` + barcodeOneArr[0] + `</td>
+							<td>` + Number(barcodeOneArr[3]) + `</td>
+							<td><button class="delete-btn" onclick="deleteEntry('` + barcodeArray[i] + `')">${m("btn.delete")}</button></td>
+						</tr>`
+        }else if (barcodeOneArr[0][0] === "P" && (barcodeStr.endsWith("MEX") || barcodeStr.endsWith("USA"))) {
+            tbody = `<tr class = "bar_` + barcodeArray[i] + ` bar-row" data-barcode="${barcodeArray[i]}">
+							<td>(P)` + barcodeOneArr[1] + `</td>
+							<td>` + Number(barcodeOneArr[2]) + `</td>
+							<td><button class="delete-btn" onclick="deleteEntry('` + barcodeArray[i] + `')">${m("btn.delete")}</button></td>
+						</tr>`
+        } else if(barcodeStr.split("_").length == 6){
+            tbody = `<tr class = "bar_` + barcodeArray[i] + ` bar-row" data-barcode="${barcodeArray[i]}">
+                            <td>` + barcodeStr.split("_")[3] + `</td>
+                            <td>` + Number(barcodeStr.split("_")[4]) + `</td>
+                            <td><button class="delete-btn" onclick="deleteEntry('` + barcodeArray[i] + `')">${m("btn.delete")}</button></td>
+                        </tr>`
+        } else if (barcodeStr.startsWith("[)>") && barcodeStr.includes("|")) {
+            // ADIENT: [)>|06|P{itemCode}|Q{qty}|...
+            let barcodeParts = barcodeArray[i].split("|");
+            console.log("barcodeParts:", barcodeParts);
+            let itemcode = barcodeParts[2] ? barcodeParts[2].substring(1) : "";
+            let qty = barcodeParts[3] ? barcodeParts[3].substring(1) : "0";
+            tbody = `<tr class = "bar_` + barcodeArray[i] + ` bar-row" data-barcode="${barcodeArray[i]}">
+							<td>` + itemcode + `</td>
+							<td>` + Number(qty) + `</td>
+							<td><button class="delete-btn" onclick="deleteEntry('` + barcodeArray[i] + `')">${m("btn.delete")}</button></td>
+						</tr>`
+        } else if (barcodeStr.startsWith("[)>") && barcodeStr.includes(":")) {
+            // TRANSYS: [)>*06:{serial}:P{itemCode}:5Q30:...  → parts[3]="5Q30", Q로 split 후 [1]이 수량
+            const parts = barcodeStr.split(":");
+            const itemCodePart = parts[2] || "";
+            const qtyPart = parts[3] || "";
+            const itemcode = itemCodePart.startsWith("P") ? itemCodePart.substring(1) : itemCodePart;
+            const qty = qtyPart.includes("Q") ? qtyPart.split("Q")[1] : "0";
+            tbody = `<tr class = "bar_` + barcodeArray[i] + ` bar-row" data-barcode="${barcodeArray[i]}">
+							<td>` + itemcode + `</td>
+							<td>` + Number(qty) + `</td>
+							<td><button class="delete-btn" onclick="deleteEntry('` + barcodeArray[i] + `')">${m("btn.delete")}</button></td>
+						</tr>`
+        }
+        table.prepend(tbody);
+    }
+    $("#count").text(+barcodeArray.length)
+}
+
+function deleteEntry(bar) {		// localstorage에서 특정데이터 삭제
+    let className = "bar_" + bar;
+    console.log("삭제 바코드 : " + bar)
+    Utils.showConfirm(m("confirm.delete.item"), () => {
+        let barcodeArray = JSON.parse(localStorage.getItem("barcodeListOut") || "[]");
+        let newArray = barcodeArray.filter(item => item.toString().trim() !== bar.toString().trim());
+        localStorage.setItem("barcodeListOut", JSON.stringify(newArray));
+        $("." + CSS.escape(className)).remove();
+        $("#count").text(newArray.length)
+        Utils.showAlert(m("success.deleted"), 'success');
+    })
+    focusWithoutKeyboard()
+
+}
+
+function clearAll() {			//localstorage 전체삭제
+    Utils.showConfirm(m("confirm.delete.all"), () => {
+        localStorage.removeItem("barcodeListOut");
+        $("#dataTableBody").empty();
+        $("#count").text("0")
+        Utils.showAlert("전체 삭제되었습니다.", "success");
+    })
+    focusWithoutKeyboard()
+}

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>로그인</title>
+<link rel="stylesheet" th:href="@{/css/common.css(v=${T(java.lang.System).currentTimeMillis()})}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<style>
+  </style>
+</head>
+<body data-page="addEntry">
+	<div th:replace="fragments/header :: commonHeader(#{menu.purchase.inspection.warehouse})"></div>
+	<div class="form-container">
+		<div class="section-header">
+            <div class="datepicker-group">
+               <span th:text = "#{search.inDate}">입고일 : </span><input type="text" id="datepicker"  autocomplete='off' placeholder="입고일" readonly>
+            </div>
+            <div class="action-buttons">
+                
+                <button id="allCancelBtn" class="btn-action btn-cancel" onclick ="clearAll()" th:text = "#{btn.clearAll}">전체 취소</button>
+            </div>
+        </div>
+		<div class="form-group">
+            <div class = "storage-selector">
+            	<span th:text="#{search.storage}">창고</span>
+            	<select class="storage-select">
+            			<option value = 'Material'>Material</option>
+						<option value = 'Fabric'>Fabric</option>
+						<option value = 'Side seat'>Side seat</option>
+						<option value = 'Outside'>Outside</option>
+		        </select>
+            </div>
+            <div class="barcode-input">
+            <span th:text = "#{search.barcode}">바코드 : </span>
+                <input type="text" id="barcodeInput" class="form-input" th:placeholder = "#{info.barcode.scan}" autocomplete="off">
+                <button id="scanBtn" class="scan-btn" onclick = "addEntry()" th:text="#{btn.scan}">스캔</button>
+            </div>
+        </div>
+	</div>
+	<div class="form-container">
+		<div class="table-header">
+            <span class="item-count" th:utext="#{table.total(${count} ?: 0)}">총 <span id="count">0</span>건</span>
+			<span class="item-count" th:utext="#{table.totalqty(${totalqty} ?: 0)}">TOTAL QTY <span id="totalqty"></span></span>
+        </div>
+        <div class="table-scroll-area">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                    	<!-- <th th:text = "#{search.storage}">창고</th> -->
+                        <th th:text = "#{table.itemCode}">품번</th>
+                        <th th:text = "#{table.qty}">수량</th>
+                        <th th:text = "#{btn.delete}">삭제</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTableBody">
+                    <!-- 동적으로 추가될 데이터 -->
+                </tbody>
+            </table>
+        </div>
+	</div>
+    <!-- 푸터 -->
+    <div class="footer">
+        <div style="display:flex; gap:8px;">
+            <button id="returnBtn" class="btn-primary" style="flex:1; margin-top:0;" onclick="saveBarcode('RETURN')" th:text="#{btn.inspection.return}">입고반품</button>
+            <button id="disposeBtn" class="btn-primary" style="flex:1; margin-top:0; background:#ef4444;" onclick="saveBarcode('SCRAP')" th:text="#{btn.inspection.dispose}">폐기</button>
+        </div>
+    </div>
+     <!-- 로딩 스피너 -->
+    <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <div th:text="#{info.loading}">로딩중...</div>
+    </div>
+     <script th:src="@{/js/utils/common.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+    <script th:src="@{/js/modules/purchase/inspection/inspection_storage.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+	<script>
+	function checkNetworkAndMove(url) {
+		if (window.AndroidInterface && !AndroidInterface.isNetworkConnected()) {
+		    AndroidInterface.showNoInternetDialog();
+		    return;
+		}
+		location.href = url;
+	}
+	</script>
+</body>
+</html>

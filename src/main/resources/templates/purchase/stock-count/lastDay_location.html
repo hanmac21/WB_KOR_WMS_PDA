@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>로그인</title>
+<link rel="stylesheet" th:href="@{/css/common.css(v=${T(java.lang.System).currentTimeMillis()})}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<!-- CSS 관련된건 나중에 너무 길어지면 파일로 따로 빼겟습니다 (지웅) -->
+<style>
+	.location-table th {
+		background: #f1f5f9;
+		color: #374151;
+		font-weight: 600;
+		padding: 12px 10px;
+		text-align: center;
+		border-bottom: 1px solid #e5e7eb;
+	}
+
+	.location-table td {
+		padding: 12px 10px;
+		text-align: center;
+		border-bottom: 1px solid #f1f5f9;
+		color: #374151;
+	}
+
+	.location-table tbody tr:hover {
+		background: #f8fafc;
+	}
+
+	.location-table tbody tr:last-child td {
+		border-bottom: none;
+	}
+
+	.form-container input {
+		height: 30px;
+		padding: 8px 10px;
+		border: 1px solid #d1d5db;
+		border-radius: 4px;
+		font-size: 14px;
+		background: #f9fafb;
+		color: #374151;
+		text-align: center;
+	}
+
+
+	.form-container input:focus {
+		outline: none;
+		border-color: #3b82f6;
+		background: white;
+	}
+
+	.location-selector {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		width: 100%;
+		max-width: 500px;
+	}
+
+	/* 상단 Factory, Storage 큰 select 박스들 */
+	.location-main-selectors {
+		width:100%;
+		gap: 10px;
+		margin-bottom:5px;
+	}
+
+	.location-select {
+		width: 60px;
+		padding: 8px 5px;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		background-color: white;
+		font-size: 12px;
+		color: #333;
+		cursor: pointer;
+		text-align: center;
+	}
+
+	.location-select:focus {
+		outline: none;
+		border-color: #007bff;
+		box-shadow: 0 0 0 1px rgba(0, 123, 255, 0.1);
+	}
+
+	/* 반응형 디자인 */
+	@media (max-width: 768px) {
+		.location-main-selectors {
+			flex-direction: column;
+			gap: 5px;
+		}
+
+		.location-select {
+			width: 45px;
+			padding: 6px 2px;
+			font-size: 11px;
+		}
+	}
+
+	.scan-btn{
+		height: 32px;
+		padding: 0 12px;
+		border: none;
+		border-radius: 4px;
+		font-size: 12px;
+		font-weight: 500;
+		cursor: pointer;
+	}
+
+	.scan-btn {
+		background: #059669;
+		color: white;
+	}
+
+	.scan-btn:active {
+		background: #047857;
+	}
+
+	#datepicker{
+		height:30px;
+		margin-right: 0;
+	}
+
+
+	/* 모바일 대응 */
+	@media (max-width: 480px) {
+		.location-table th,
+		.location-table td {
+			padding: 10px 8px;
+			font-size: 13px;
+		}
+
+		.form-container > div {
+			gap: 6px;
+		}
+
+		.location-selector {
+			gap: 2px;
+			padding: 6px;
+		}
+
+		.location-select {
+			height: 40px;
+			font-size: 11px;
+			padding: 4px 6px;
+		}
+
+		#locationPart1,
+		#locationPart2,
+		#locationPart3{
+			width:32%;
+			height:40px;
+			font-size:15px;
+		}
+
+		/*#locationPart3,
+        #locationPart4,
+        #locationPart5,
+        #locationPart6 {
+            flex: 0 0 40px;
+            width:23.7%;
+            font-size: 25px;
+        }*/
+
+		.scan-btn{
+			height: 28px;
+			padding: 0 8px;
+			font-size: 11px;
+		}
+
+	}
+	.datepicker_btnArea {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 5px;
+	}
+	#clearBtn, #scanBtn{
+		width:55px;
+	}
+	.form-group {
+		margin-bottom: -8px;
+	}
+	.table-scroll-area {
+		max-height: 250px;
+		overflow-y: auto;
+	}
+
+	.table-header {
+		background: #f8fafc;
+		padding: 7px 15px;
+		border-bottom: 1px solid #e5e7eb;
+		position: sticky;
+		top: 0;
+		z-index: 10;
+	}
+	.data-table td:first-child{
+		text-align: center;
+		font-size: 13px;
+	}
+	.data-table td:nth-child(2){
+		text-align: left;
+		font-size: 19px;
+	}
+
+	.data-table td:nth-child(3){
+		text-align: right;
+		font-size: 19px;
+	}
+</style>
+</head>
+<body data-page="addEntry">
+	<div
+		th:replace="fragments/header :: commonHeader(#{menu.stockCount.lastDay.location})"></div>
+	<div class="form-container">
+		<div class="section-header">
+		</div>
+		<div class="form-group">
+			<div class="datepicker-group">
+				<span th:text="#{search.inDate}">입고일 : </span><input type="text"
+					id="datepicker" autocomplete='off' placeholder="입고일" disabled>
+				<div class="datepicker_btnArea">
+					<input type="checkbox" class="datepicker_btnRealStock" style ="display:none"/>
+					<button id="clearBtn" class="scan-btn" onclick="clearForm()"
+					th:text="#{btn.clear}">초기화</button>
+				</div>
+			</div>
+			<div class="barcode-input">
+				<span th:text="#{search.barcode}">바코드 : </span> <input type="text"
+					id="barcodeInput" class="form-input"
+					th:placeholder="#{info.barcode.scan}" autocomplete="off">
+				<button id="scanBtn" class="scan-btn" onclick="addEntry()"
+					th:text="#{btn.scan}">스캔</button>
+			</div>
+		</div>
+	</div>
+	
+	<div class= "form-container location-div">
+		<div class="form-group">
+			<div class="location-selector">
+				 <div class="location-main-selectors">
+					 <select id="locationPart1" class="location-select">
+						 <option value = 'WBTA'>WBTA</option>
+					 </select>
+					 <select id="locationPart2" class="location-select">
+						 <option value = 'MATERIAL'>MATERIAL</option>
+						 <option value = 'PRODUCT'>PRODUCT</option>
+					 </select>
+					 <select id="locationPart3" class="location-select">
+						 <option value=""></option>
+						 <option th:each="item : ${rack}"
+						         th:value="${item}"
+						         th:text="${item}">
+						 </option>
+					 </select>
+				 </div>
+				<!--<div class="location-detail-selectors">
+					<select id="locationPart4"
+						class="location-select">
+						<option value=""></option>
+						<option th:each="item : ${module}" th:value="${item}"
+							th:text="${item}"></option>
+					</select>
+					<select id="locationPart5"
+						class="location-select">
+						<option value=""></option>
+						<option th:each="item : ${levelcode}" th:value="${item}"
+							th:text="${item}"></option>
+					</select>
+					<select id="locationPart6"
+						class="location-select">
+						<option value=""></option>
+						<option th:each="item : ${position}" th:value="${item}"
+							th:text="${item}"></option>
+					</select>
+				</div>-->
+			</div>
+		</div>
+	</div>
+	<div class="form-container location-div">
+		<div class="table-header">
+			<span class="item-count" th:utext="#{table.total(${count} ?: 0)}"><span id="count"></span></span>
+			<span class="item-count" th:utext="#{table.totalqty(${totalqty} ?: 0)}">TOTAL QTY <span id="totalqty"></span></span>
+			
+        </div>
+        <div class="table-scroll-area">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th th:text = "#{table.no}">순번</th>
+                        <th th:text = "#{table.itemCode}">품번</th>
+                        <th th:text = "#{table.qty}">수량</th>
+                        <th th:text = "#{btn.delete}">삭제</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTableBody">
+                    <!-- 동적으로 추가될 데이터 -->
+                </tbody>
+            </table>
+        </div>
+	</div>
+	<div class="footer">
+        <button id="storageBtn" class="btn-primary" onclick="saveLocation0()" th:text="#{locationStorage.btn.saveLocation}">적재 완료</button>
+    </div>
+
+	<!-- 로딩 스피너 -->
+	<div id="loading" class="loading hidden">
+		<div class="spinner"></div>
+		<div th:text="#{info.loading}">로딩중...</div>
+	</div>
+	<script
+		th:src="@{/js/utils/common.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+	<script
+		th:src="@{/js/modules/purchase/stock-count/lastDay_location.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+	<script>
+	function checkNetworkAndMove(url) {
+		if (window.AndroidInterface && !AndroidInterface.isNetworkConnected()) {
+		    AndroidInterface.showNoInternetDialog();
+		    return;
+		}
+		location.href = url;
+	}
+
+	</script>
+</body>
+</html>

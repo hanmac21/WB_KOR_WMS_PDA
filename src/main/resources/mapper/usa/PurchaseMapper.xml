@@ -1,0 +1,4281 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="com.example.demo.mapper.usa.PurchaseMapper">
+
+
+
+	<select id = "barcodeYN" resultType = "string">
+		select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	</select>
+	
+	<select id = "forIncoming" resultType = "string">
+		select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	    and laststatus between 1 and 9
+	</select>
+	
+	<select id = "wipOk" resultType = "string">
+		select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	    and laststatus = 40
+	</select>
+	
+	<select id = "outputOk" resultType = "string">
+		select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	    and laststatus = 50
+	</select>
+
+	<select id = "receivingOk" resultType = "string">
+		select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	    and laststatus = 50
+	</select>
+		
+	<select id = "forIncomingReturn" resultType = "string">
+		select barcode from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn ='Y'
+	    and laststatus in (10,20)
+	</select>
+	<select id = "palletInfoUnload"  resultType = "com.example.demo.vo.PalletDetailVO">
+		select
+		    custcode,
+		    custname,
+		    sum(to_number(qty)) as qty,
+		    itemcode,
+		    sdate,
+		    (
+		        select bdate 
+		        from t_scm_pallet 
+		        where pbarcode = #{barcode}
+		        order by bdate
+		        fetch first 1 rows only
+		    ) as lotdate
+		from t_scm_pallet
+		where pbarcode = #{barcode}
+		and useyn = 'Y'
+		<!-- and ROWNUM = 1  파트 QTY로 들어감-->
+		group by custcode, custname, itemcode, pbarcode,sdate
+	</select>
+	
+	<select id = "palletInfo"  resultType = "com.example.demo.vo.PalletDetailVO">
+		select 
+		    custcode,
+		    custname,
+		    sum(to_number(qty)) as qty,
+		    itemcode,
+		    sdate,
+		    (
+		        select bdate 
+		        from t_scm_pallet 
+		        where pbarcode = #{barcode}
+		        order by bdate
+		        fetch first 1 rows only
+		    ) as lotdate
+		from t_scm_pallet
+		where pbarcode = #{barcode}
+		and useyn = 'Y'
+		<!-- and ROWNUM = 1  파트 QTY로 들어감-->
+		group by custcode, custname, itemcode, pbarcode, sdate
+	</select>
+	<select id = "partInfo" resultType = "com.example.demo.vo.PalletDetailVO">
+		select qty, itemcode from t_scm_barcode where barcode = #{barcode} and rownum = 1
+	</select>
+	<select id = "locationInfo"  resultType = "com.example.demo.vo.PalletDetailVO">
+		select storage, factory from v_stockinfo
+		where barcode = #{pbarcode} and rownum = 1
+	</select>
+	<insert id = "insPalletBarcode">
+		insert into t_scm_pallet 
+		(pbarcode, sdate, bbarcode, loginid, itemcode, custcode, custname, bdate, qty,scmmex,laststatus, lastfactory, laststorage, factory, lastqty, oqty, ymdhms)
+		select
+		#{pbarcode},sdate,#{barcode},#{loginid},itemcode, custcode, custname, bdate, #{qty},scmmex, laststatus, lastfactory, laststorage, factory,#{lastqty},#{qty}, TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+		from t_scm_pallet where pbarcode = #{pbarcode} and useyn = 'Y' and rownum =1
+	</insert>
+	<update id = "updatePalletQtyInfo">
+		update t_scm_pallet set
+		lastqty = #{lastqty}
+		where pbarcode = #{pbarcode}
+	</update>
+	<update id = "updatePalletQtyLocation">
+		update t_wms_location set
+		qty = #{lastqty}
+		where barcode = #{pbarcode}
+		and useyn = 'Y'
+	</update>
+	<!-- <select id ="palletInfo" resultType = "com.example.demo.vo.PalletDetailVO">
+		select itemcode,
+		sum(to_number(qty)) as qty,
+		mdate,
+		 (
+	        select bdate 
+	        from t_scm_pallet 
+	        where pbarcode = #{barcode}
+	        order by bdate
+	        fetch first 1 rows only
+	    ) as lotdate
+		from t_scm_pallet
+		where pbarcode = #{barcode}
+		and useyn = 'Y'
+		and ROWNUM = 1
+		group by cucode, cname, itemcode, pbarcode,mdate
+	</select> -->
+
+
+	
+	<insert id = "insRealStock">
+		insert into t_wms_realstock
+		(sdate, barcode , qty, loginid, ymdhms, pbarcode, type, itemcode, lotdate, storage, scantype, location, factory, source)
+		values
+		( #{date}, #{barcode},#{qty} , #{loginid}, TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'), #{pbarcode}, #{type}, #{itemcode},#{lotdate}, #{storage},#{scantype}, #{location},#{factory},#{stocksource})
+	</insert>
+	
+	<!-- stock 테이블에 insert -->
+	<insert id = "insStock">
+		insert into t_wms_stock (
+			sdate, 
+			kind, 
+			barcode, 
+			inqty, 
+			outqty, 
+			qty,
+			
+			factory,
+			storage,
+			factory2,
+			storage2,
+			
+			itemcode,
+			loginid,
+			insdate,
+			ymdhms,
+			
+			location,
+			location2,
+			
+			workcenter,
+			mainkind,
+			oldlocation
+		) values ( 
+			#{date}, 
+			#{kind},
+			#{barcode},
+			#{qty},
+			0,
+			#{qty}, 
+			
+			#{factory},
+			#{storage},
+			'',
+			'',
+			
+			#{itemcode},
+			#{loginid},
+			#{date},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'), 
+			
+			#{location}, 
+			'',
+			
+			'',
+			'LOAD',
+			#{previousLocation}
+		)
+	</insert>
+	
+	<select id = "existInbound" parameterType="list"  resultType = "string">
+		select DISTINCT  barcode
+		from t_wms_inbound
+		where barcode IN
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn = 'Y'
+	</select>
+	
+	<select id = "palletExistIn" resultType = "string"> 
+		select pbarcode
+		from  t_scm_pallet
+		WHERE 
+	        pbarcode IN
+	        <foreach item="barcode" collection="list" open="(" separator="," close=")">
+	            #{barcode}
+	        </foreach>
+	        and useyn = 'Y'
+	</select>
+	
+	<select id = "existScm" resultType = "string"> 
+		select barcode
+		from  t_scm_barcode
+		WHERE 
+	        barcode IN
+	        <foreach item="barcode" collection="list" open="(" separator="," close=")">
+	            #{barcode}
+	        </foreach>
+	        and useyn = 'Y'
+	</select>
+	
+	<select id = "selectpbBarcode" resultType = "string"> 
+		select bbarcode
+		from  t_scm_pallet
+		WHERE pbarcode = #{barcode}
+		  AND useyn = 'Y'
+	        
+	</select>
+	
+	<!-- <select id = "mexExistIn" resultType = "string"> 
+		select barcode
+		WHERE 
+	        barcode IN
+	        <foreach item="barcode" collection="list" open="(" separator="," close=")">
+	            #{barcode}
+	        </foreach>
+	</select> -->
+	
+	<!-- 팔레트 바코드 생성 -->
+	<select id = "mexScmExist" resultType = "string">
+		select barcode
+		from  t_scm_barcode
+		WHERE barcode IN
+	    <foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn = 'Y'
+	</select>
+	
+	<select id = "palletExist" resultType = "string">
+		select DISTINCT bbarcode 
+		from t_scm_pallet
+		where bbarcode IN
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	     and useyn = 'Y'
+	</select>
+	
+	
+	<select id= "selectPalletSeq" resultType = "string">
+		select pbarcode from t_scm_pallet
+		where sdate = #{date} order by pbarcode desc
+		FETCH FIRST 1 ROWS ONLY
+	</select>
+	<select id = "canMakePallet" resultType = "string">
+		SELECT barcode 
+		FROM t_scm_barcode
+		WHERE barcode IN
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and laststatus between 10 and 29
+	</select>
+	<select id = "getBarcodeStatus" resultType = "int">
+		SELECT min(laststatus) AS status
+		FROM t_scm_barcode
+		WHERE barcode IN
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	</select>
+	<insert id ="makePalletBarcode">
+		insert into t_scm_pallet
+		(pbarcode, sdate , bbarcode, ymdhms, loginid,itemcode, custcode,custname, bdate, seq, qty, scmmex,laststatus, lastfactory, laststorage,factory,labeltype,oqty, lastqty)
+		values
+		( #{pbarcode},#{date}, #{barcode}, TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'), #{loginid},#{itemcode}, #{cucode},#{cname}, #{bdate}, #{seq}, #{qty}, #{scmmex},#{laststatus},#{factory},#{storage},#{factory},'NewPallet', #{qty},#{lastqty})
+	</insert>
+	
+	<select id = "palletManagementSearch" resultType = "map">
+		select pbarcode, sum(qty) as qty
+		from t_scm_pallet 
+		where pbarcode = #{barcode}
+		and useyn = 'Y'
+		group by pbarcode
+	</select>
+	
+	<select id = "getPartQty" resultType = "String">
+		select lastqty from t_scm_barcode 
+        where barcode = #{barcode}
+        and useyn = 'Y'
+        and rownum = 1
+	</select>
+	
+	<update id = "partAdjustmentUpdatePart" >
+        update t_scm_barcode set lastqty = #{qty}
+        where barcode = #{barcode} and useyn = 'Y'
+     </update>
+
+	<update id = "partAdjustmentItemcodeUpdatePart" >
+		update t_scm_barcode set itemcode = #{adjustItemcode}, itemname = #{adjustItemname}
+		where barcode = #{barcode} and useyn = 'Y'
+	</update>
+	
+	<select id = "palletUnboundSearch" resultType = "map">
+		select bbarcode as pbarcode, qty
+		from t_scm_pallet 
+		where pbarcode = #{barcode}
+		and useyn = 'Y'
+	</select>
+	<!-- 팔레트 바코드 생성 끝 -->
+
+	<select id="partItemnameSearch" resultType="map">
+		SELECT ITEMCODE, ITEMNAME
+		FROM T_MI_ITEM
+		WHERE UPPER(ITEMCODE) LIKE '%' || UPPER(#{itemcode}) || '%'
+		ORDER BY ITEMCODE
+	</select>
+
+	<select id = "partInfoSearch" resultType = "map">
+		select l.barcode, l.itemcode, i.spec as oitemcode, i.itemname, l.qty from t_wms_location l
+		left join t_mi_item i on l.itemcode = i.itemcode
+		where l.barcode = #{barcode}
+		and l.useyn = 'Y'
+	</select>
+	
+	<select id = "getPartInfoForAdjust" resultType = "map">
+		select factory, storage, itemcode from t_wms_location where barcode = #{barocde} and useyn = 'Y'
+	</select>
+	
+	<!-- 파트 조정 수량만큼 예외출고 -->
+	<insert id = "insOutputExceptionDiffQty">
+		INSERT INTO t_wms_outbound (
+   	 		sdate,
+   	 		ymdhms, 
+   	 		loginid, 
+   	 		itemcode, 
+   	 		
+   	 		qty, 
+   	 		
+   	 		source, 
+   	 		storage,
+   	 		factory,
+   	 		invoiceno,
+   	 		source2,
+			barcode,
+   	 		custcode,
+   	 		
+   	 		custname
+   	 	)  
+   	 	VALUES  (
+   	    	TO_CHAR(SYSDATE,'YYYY-MM-DD'),
+   	 		TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	#{loginid},  
+   	    	#{itemcode}, 
+   	    	
+   	    	#{diffqty}, 
+   	    	
+   	    	#{source},
+   	    	#{storage},
+   	    	#{factory},
+   	    	#{invoiceno},
+   	    	#{source2},
+			'QUANTITYCHANGE_' || TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	(SELECT CUSTCODE FROM 
+   	    		(SELECT CUSTCODE 
+   	    			FROM T_SM_SALECUSTPRICE 
+   	    			WHERE ITEMCODE = #{itemcode} 
+   	    			ORDER BY CONDATE DESC
+   	    		) WHERE ROWNUM = 1
+   	    	),
+   	    	
+   	    	(SELECT cu_sangho FROM c_cust WHERE CU_CODE = (SELECT CUSTCODE FROM (SELECT CUSTCODE FROM T_SM_SALECUSTPRICE WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC) WHERE ROWNUM = 1))
+   	    )
+	</insert>
+	
+	<insert id="insInboundExceptionDiffQty" parameterType="map">
+  		INSERT INTO t_wms_inbound (
+   	 		sdate,
+   	 		ymdhms, 
+   	 		loginid,
+   	 		itemcode, 
+   	 		
+   	 		qty, 
+   	 		
+   	 		source, 
+   	 		storage,
+   	 		factory,
+   	 		invoiceno,
+   	 		source2,
+			barcode,
+   	 		custcode,
+   	 		
+   	 		custname
+   	 	)  
+   	 	VALUES  (
+   	    	TO_CHAR(SYSDATE,'YYYY-MM-DD'),
+   	 		TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	#{loginid},
+   	    	#{itemcode}, 
+   	    	
+   	    	#{diffqty}, 
+   	    	
+   	    	#{source},
+   	    	#{storage},
+   	    	#{factory},
+   	    	#{invoiceno},
+   	    	#{source2},
+			'QUANTITYCHANGE_' || TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	(SELECT
+			  NVL(( SELECT custcode  FROM ( SELECT custcode  FROM t_mi_price_buycust  WHERE itemcode = #{itemcode}  ORDER BY condate DESC )WHERE ROWNUM = 1 ), '') AS CUSTCODE
+			FROM DUAL),
+			
+			(SELECT cu_sangho
+			          FROM c_cust
+			         WHERE cu_code = (
+			         NVL(( SELECT custcode  FROM ( SELECT custcode  FROM t_mi_price_buycust  WHERE itemcode = #{itemcode}  ORDER BY condate DESC )WHERE ROWNUM = 1 ), '')
+			  ))
+   	    )
+	</insert>
+
+	<!-- 파트 품번 조정 예외출고 -->
+	<insert id = "insOutputExceptionNowItemcode">
+		INSERT INTO t_wms_outbound (
+			sdate,
+			ymdhms,
+			loginid,
+			itemcode,
+
+			qty,
+
+			source,
+			storage,
+			factory,
+			invoiceno,
+			source2,
+			custcode,
+
+			custname
+		)
+		VALUES  (
+			TO_CHAR(SYSDATE,'YYYY-MM-DD'),
+			TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+			#{loginid},
+			#{itemcode},
+
+			#{qty},
+
+			#{source},
+			#{storage},
+			#{factory},
+			#{invoiceno},
+			#{source2},
+			(SELECT CUSTCODE
+			FROM(
+				SELECT CUSTCODE
+				FROM T_SM_SALECUSTPRICE
+				WHERE ITEMCODE = #{itemcode}
+				ORDER BY CONDATE DESC
+			) WHERE ROWNUM = 1
+			),
+
+			(SELECT cu_sangho FROM c_cust WHERE CU_CODE = (SELECT CUSTCODE FROM (SELECT CUSTCODE FROM T_SM_SALECUSTPRICE WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC) WHERE ROWNUM = 1))
+		)
+	</insert>
+
+	<insert id="insInboundExceptionNewItemcode" parameterType="map">
+		INSERT INTO t_wms_inbound (
+			sdate,
+			ymdhms,
+			loginid,
+			itemcode,
+
+			qty,
+
+			source,
+			storage,
+			factory,
+			invoiceno,
+			source2,
+			custcode,
+
+			custname
+		)
+		VALUES  (
+			TO_CHAR(SYSDATE,'YYYY-MM-DD'),
+			TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+			#{loginid},
+			#{adjustItemcode},
+
+			#{qty},
+
+			#{source},
+			#{storage},
+			#{factory},
+			#{invoiceno},
+			#{source2},
+			NVL((SELECT CUSTCODE FROM T_MI_PRICE_BUYCUST WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC FETCH FIRST 1 ROW ONLY), ''),
+			(SELECT	cu_sangho FROM c_cust WHERE cu_code = (
+				NVL(
+					(SELECT CUSTCODE FROM T_MI_PRICE_BUYCUST WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC FETCH FIRST 1 ROW ONLY)
+				, '')
+			))
+		)
+	</insert>
+
+	<insert id = "insAdjustLog">
+		insert into t_wms_adjustment
+		(sdate,ymdhms, factory, storage, barcode, oqty, qty, source, source2, memo, loginid)
+		values
+		(
+			TO_CHAR(SYSDATE,'YYYY-MM-DD'),
+   	 		TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	 		#{factory},
+   	 		#{storage}, #{barcode},#{oqty}, #{qty}, #{source2}, #{source}, #{invoiceno}, #{loginid})
+	</insert>
+
+	<insert id = "insAdjustItemcodeLog">
+		insert into t_wms_adjustment(
+			sdate,
+			ymdhms,
+			factory,
+			storage,
+			barcode,
+			qty,
+			oitemcode,
+			itemcode,
+			source,
+			memo,
+			loginid
+		) values (
+			TO_CHAR(SYSDATE,'YYYY-MM-DD'),
+			TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+			#{factory},
+			#{storage},
+			#{barcode},
+			#{qty},
+			#{itemcode},
+			#{adjustItemcode},
+			#{source2},
+			#{invoiceno},
+			#{loginid}
+		)
+	</insert>
+	
+	<update id = "partQtyUpdate" >
+        update t_scm_barcode set lastqty = #{qty}
+        where barcode = #{barcode} and useyn = 'Y'
+     </update>
+	<update id = "partAdjustmentUpdate" >
+		update t_wms_location set qty = #{qty}
+		where barcode = #{barcode} and useyn = 'Y'
+	</update>
+	<update id = "partAdjustmentItemcodeUpdate" >
+		update t_wms_location set itemcode = #{adjustItemcode}
+		where barcode = #{barcode} and useyn = 'Y'
+	</update>
+	<!-- Location 적재 -->
+	<select id = "selFactory" resultType = "string">
+		select distinct factory from t_wms_warehouse order by factory desc
+	</select>
+	<select id = "selStorage" resultType = "string">
+		select distinct storage from t_wms_warehouse order by storage
+	</select>
+	<select id = "selRack" resultType = "string">
+		select distinct rack from t_wms_warehouse where rack is not null  order by rack
+	</select>
+	<select id = "selModule" resultType = "string">
+		SELECT DISTINCT module FROM t_wms_warehouse where module is not null ORDER BY CAST(module AS INTEGER)
+	</select>
+	<select id = "selLevelCode" resultType = "string">
+		select distinct levelcode from t_wms_warehouse where levelcode is not null order by levelcode
+	</select>
+	<select id = "selPosition" resultType = "string">
+		select distinct position from t_wms_warehouse where position is not null order by position
+	</select>
+	<select id = "selCar" resultType = "string">
+		SELECT DISTINCT B.SUBNAME_CH AS CAR FROM T_MI_ITEM A LEFT JOIN T_MI_TYPESUB B ON A.CARNO = B.SUBCODE AND B.TYPECODE = 'MI041' ORDER BY B.SUBNAME_CH
+	</select>
+	
+	<select id = "selectQty" resultType ='string'>
+		select qty 
+		from t_scm_barcode
+	</select>
+	
+	<select id = "selItemLocation" resultType="com.example.demo.vo.ItemLocationVO"><!-- 제품위치  -->
+		select 
+			l.iid,
+			l.indate,
+			l.barcode,
+			l.itemcode,
+			i.itemname,
+			l.location,
+			l.qty,
+			(select sum(to_number(qty))
+		     from t_wms_location
+		     where useyn = 'Y'
+		       and itemcode = l.itemcode) as total_qty
+		from t_wms_location l 
+		left join t_mi_item i
+		on l.itemcode = i.itemcode
+		where useyn = 'Y'
+		and l.itemcode = #{itemcode} 
+	</select>
+	
+	<select id = "existItem" resultType="int"><!-- 이미 존재하는지 확인  -->
+		select count(*)
+		from t_wms_location
+		where barcode in 
+		<foreach item="barcode" collection="barcode" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+		and useyn = 'Y'
+		<!-- 250908 렉이 있는지 없는지로 구분 -->
+		and (rack is not null or rack != '-')
+	</select>
+	
+	<select id = "existLocation" resultType="int"><!-- 이미 존재하는지 확인  -->
+		select count(*)
+		from t_wms_location
+		where location = #{location}
+		and useyn = 'Y'
+	</select>
+	
+	<select id = "getPreviousLocation" resultType="string">
+		SELECT location
+		FROM t_wms_location
+		WHERE BARCODE = #{barcode}
+		  AND USEYN = 'Y'
+		  fetch first 1 rows only
+	</select>
+
+	<select id = "getPreviousStorage" resultType="string">
+		SELECT STORAGE
+		FROM T_WMS_LOCATION
+		WHERE BARCODE = #{barcode}
+		AND USEYN = 'Y'
+		FETCH FIRST 1 ROWS ONLY
+	</select>
+	
+	<update id = "removeBarcode">
+		update t_wms_location
+		set useyn = 'N',
+		memo_d = #{dmemo},
+		ymdhms_d=TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+		where barcode = #{barcode}
+		and useyn = 'Y'
+	</update>
+	
+	<update id = "removeLocation">
+		update t_wms_location
+		set useyn = 'N',
+		memo_d = #{dmemo},
+		ymdhms_d=TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+		where location = #{location}
+		and useyn = 'Y'
+	</update>
+	
+	<update id = "removeWorkLocationBarcode">
+		update t_wms_worklocation
+		set useyn = 'N',
+		memo_d = #{dmemo},
+		ymdhms_d=TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+		where barcode = #{barcode}
+		and useyn = 'Y'
+	</update>
+	
+	<insert id = "insWorkLocationBasic">
+		insert into t_wms_worklocation (indate, ymdhms, location, barcode, itemcode, 
+		qty, loginid, factory, storage, source,okyn)
+		values(
+			#{date},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			UPPER(#{location}),
+			#{barcode},
+			#{itemcode},
+			#{qty},
+			#{loginid},
+			UPPER(#{factory}),
+			UPPER(#{storage}),
+			#{source},
+			#{okyn}
+		)
+	</insert>
+	
+	<insert id = "insWorkLocationFeeding">
+		insert into t_wms_worklocation (indate,ymdhms, location, barcode, itemcode, qty, loginid, factory, storage,rack,module, levelcode, position, source)
+		values(
+			#{date},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			UPPER(#{location}),
+			#{barcode},
+			#{itemcode},
+			#{qty},
+			#{loginid},
+			UPPER(#{factory}),
+			UPPER(#{storage}),
+			#{rack},
+			#{module},
+			#{levelcode},
+			#{position},
+			#{source}
+		)
+	</insert>
+	<insert id = "insSelectLocation">
+		insert into t_wms_location
+		(
+			sdate,
+			ymdhms,
+			location,
+			barcode,
+			itemcode,
+			qty,
+			memo,
+			loginid,
+			factory,
+			storage,
+			rack,
+			module,
+			levelcode,
+			position,
+			source,
+			okyn)
+		select
+			#{date},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			factory||'-'||#{storage},
+			barcode,
+			itemcode,
+			qty,
+			'-',
+			#{loginid},
+			factory,
+			#{storage},
+			'-',
+			'-',
+			'-',
+			'-',
+			#{source},
+			okyn
+		from t_wms_location
+		where location = #{location}
+		and useyn = 'Y'
+	</insert>
+	<insert id = "selectLocationSave">
+		insert into t_wms_location
+		(
+			sdate,
+			ymdhms,
+			location,
+			barcode,
+			itemcode,
+			qty,
+			memo,
+			loginid,
+			factory,
+			storage,
+			rack,
+			module,
+			levelcode,
+			position,
+			source)
+		select 
+			#{date},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{location},
+			b.barcode,
+			b.itemcode,
+			b.qty,
+			'-',
+			#{loginid},
+			#{factory},
+			#{storage},
+			#{rack},
+			#{module},
+			#{levelcode},
+			#{position},
+			#{source}
+		from t_scm_pallet p join t_scm_barcode b
+        on b.barcode = p.bbarcode
+        and p.useyn = 'Y'
+		where p.pbarcode= #{barcode}
+		AND NOT EXISTS ( SELECT 1 FROM t_wms_location x WHERE x.barcode = b.barcode AND x.location = #{location} AND x.sdate = #{date} and useyn = 'Y')
+	</insert>
+	<insert id = "saveLocation">
+		insert into t_wms_location
+		(
+			sdate,
+			ymdhms,
+			location,
+			barcode,
+			itemcode,
+			qty,
+			memo,
+			loginid,
+			factory,
+			storage,
+			rack,
+			module,
+			levelcode,
+			position,
+			source,
+			okyn)
+		values(
+			#{date},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{location},
+			#{barcode},
+			#{itemcode},
+			#{qty},
+			#{memo},
+			#{loginid},
+			#{factory},
+			#{storage},
+			#{rack},
+			#{module},
+			#{levelcode},
+			#{position},
+			#{source},
+			#{okyn}
+		)
+		
+	</insert>
+
+	<insert id = "saveLocationOKYN">
+		insert into t_wms_location
+		(
+			sdate,
+			ymdhms,
+			location,
+			barcode,
+			itemcode,
+			qty,
+			memo,
+			loginid,
+			factory,
+			storage,
+			rack,
+			module,
+			levelcode,
+			position,
+			source,
+			okyn)
+		values(
+			#{date},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{location},
+			#{barcode},
+			#{itemcode},
+			#{qty},
+			#{memo},
+			#{loginid},
+			#{factory},
+			#{storage},
+			#{rack},
+			#{module},
+			#{levelcode},
+			#{position},
+			#{source},
+			#{okyn}
+		)
+		
+	</insert>
+	
+	<insert id = "basicLocation">
+		insert into t_wms_location
+		(
+			sdate,
+			ymdhms,
+			location,
+			barcode,
+			itemcode,
+			qty,
+			loginid,
+			factory,
+			storage,
+			RACK,
+			source)
+		values(
+			#{date},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{location},
+			#{barcode},
+			#{itemcode},
+			#{qty},
+			#{loginid},
+			#{factory},
+			#{storage},
+			#{rack},
+			#{source}
+		)
+		
+	</insert>
+	
+	<!-- Location 적재 끝 -->
+	<select id = "existWorkmove" resultType = "string">
+		select barcode
+		from t_wms_workmove
+		where barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn = 'Y'
+	</select>
+	
+	<insert id ="stockInsertUnload">
+		INSERT INTO t_wms_stock (
+   	 		sdate,
+   	 		kind, 
+   	 		barcode, 
+   	 		inqty,
+   	 		outqty,
+   	 		qty,
+   	 		itemcode,
+   	 		ymdhms,
+   	 		factory,
+   	 		storage,
+   	 		factory2,
+   	 		storage2,
+   	 		mainkind,
+   	 		loginid,
+   	 		insdate,
+   	 		location,
+   	 		location2
+   	 	)  
+   	 	VALUES  (
+   	    	#{date}, 
+   	    	#{kind},
+   	    	#{barcode},
+   	    	0,
+   	    	0,
+   	    	#{qty},
+   	    	#{itemcode},
+   	    	TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	#{factory},
+   	    	'',
+   	    	'',
+   	    	#{storage},
+   	    	#{main},
+   	    	#{loginid},
+   	    	#{date},
+   	    	#{location1},
+   	    	#{location}
+   	    )
+	</insert>
+	<!-- 공정불출 -->
+	
+	<select id ="searchRoomcode" resultType = "string">
+		SELECT location
+          FROM (
+            SELECT t.location
+            FROM t_wms_location t
+            WHERE t.barcode = #{barcode}
+            ORDER BY t.iid DESC, t.ymdhms DESC
+          )
+          WHERE ROWNUM = 1
+	</select>
+
+	<select id ="searchRoomcodeY" resultType = "string">
+		SELECT location
+          FROM (
+            SELECT t.location
+            FROM t_wms_location t
+            WHERE t.barcode = #{barcode} and useyn = 'Y'
+            ORDER BY t.iid DESC, t.ymdhms DESC
+          )
+          WHERE ROWNUM = 1
+	</select>
+
+	<select id ="searchRoomcodeyn" resultType = "string">
+		SELECT location
+          FROM (
+            SELECT t.location
+            FROM t_wms_location t
+            WHERE t.barcode = #{barcode} AND USEYN = 'Y'
+            ORDER BY t.iid DESC, t.ymdhms DESC
+          )
+          WHERE ROWNUM = 1
+	</select>
+	
+	<select id = "searchPallet" resultType = "string">
+		select pbarcode
+		from t_scm_pallet
+		where bbarcode = #{barcode}
+		and useyn = 'Y'
+	</select>
+	
+	<update id = "locationIssue">
+		update t_wms_location
+		set useyn = 'N',
+		ymdhms_d = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+		memo_d = #{dmemo}
+		where barcode = #{barcode}
+		and useyn = 'Y'
+	</update>
+	<select id = "palletBarcodeCheck" resultType = "string">
+		select DISTINCT bbarcode
+		from t_scm_pallet
+		where useyn = 'Y'
+		and bbarcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	</select>
+	
+	<insert id = "insStockMinus">
+		INSERT INTO t_wms_stock (
+   	 		sdate,
+   	 		kind, 
+   	 		barcode, 
+   	 		inqty,
+   	 		outqty,
+   	 		qty,
+   	 		itemcode,
+   	 		ymdhms,
+   	 		location,
+   	 		mainkind,
+   	 		insuser,
+   	 		insdate,
+   	 		workcenter,
+   	 		factory,
+   	 		storage
+   	 	)  
+   	 	VALUES  (
+   	    	#{date}, 
+   	    	#{kind},
+   	    	#{barcode},
+   	    	0,
+   	    	#{qty},
+   	    	#{qty},
+   	    	#{itemcode},
+   	    	TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	#{roomcode},
+   	    	#{main},
+   	    	#{loginid},
+   	    	TO_CHAR(SYSDATE,'YYYY-MM-DD'),
+   	    	#{wccode},
+   	    	#{factory},
+   	    	#{storage}
+   	    )
+	</insert>
+	
+	<insert id = "insStockUnpack">
+		INSERT INTO t_wms_stock (
+   	 		sdate,
+   	 		kind, 
+   	 		barcode, 
+   	 		inqty,
+   	 		outqty,
+   	 		qty,
+   	 		itemcode,
+   	 		ymdhms,
+   	 		location,
+   	 		mainkind,
+   	 		insuser,
+   	 		insdate,
+   	 		factory,
+   	 		storage
+   	 	)  
+   	 	VALUES  (
+   	    	#{date}, 
+   	    	#{kind},
+   	    	#{barcode},
+   	    	0,
+   	    	#{qty},
+   	    	#{qty},
+   	    	#{itemcode},
+   	    	TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	#{location},
+   	    	#{main},
+   	    	#{loginid},
+   	    	TO_CHAR(SYSDATE,'YYYY-MM-DD'),
+   	    	#{factory},
+   	    	#{storage}
+   	    )
+	</insert>
+
+	<insert id = "insStockUnpackplus">
+		INSERT INTO t_wms_stock (
+   	 		sdate,
+   	 		kind, 
+   	 		barcode, 
+   	 		outqty,
+   	 		inqty,
+   	 		qty,
+   	 		itemcode,
+   	 		ymdhms,
+   	 		location,
+   	 		mainkind,
+   	 		insuser,
+   	 		insdate,
+   	 		factory,
+   	 		storage
+   	 	)  
+   	 	VALUES  (
+   	    	TO_CHAR(SYSDATE,'YYYY-MM-DD'), 
+   	    	#{kind},
+   	    	#{barcode},
+   	    	0,
+   	    	#{qty},
+   	    	#{qty},
+   	    	#{itemcode},
+   	    	TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	#{location},
+   	    	#{main},
+   	    	#{loginid},
+   	    	TO_CHAR(SYSDATE,'YYYY-MM-DD'),
+   	    	#{factory},
+   	    	#{storage}
+   	    )
+	</insert>
+	
+	<insert id = "insWorkStockPlus">
+		INSERT INTO t_wms_workstock (
+   	 		sdate,
+   	 		kind, 
+   	 		barcode, 
+   	 		inqty,
+   	 		outqty,
+   	 		qty,
+   	 		itemcode,
+   	 		ymdhms,
+   	 		location,
+   	 		mainkind,
+   	 		insuser,
+   	 		insdate,
+   	 		workcenter,
+   	 		factory,
+   	 		storage
+   	 	)  
+   	 	VALUES  (
+   	    	#{date}, 
+   	    	#{kind},
+   	    	#{barcode},
+   	    	#{qty},
+   	    	0,
+   	    	#{qty},
+   	    	#{itemcode},
+   	    	TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	#{roomcode},
+   	    	#{main},
+   	    	#{loginid},
+   	    	TO_CHAR(SYSDATE,'YYYY-MM-DD'),
+   	    	#{wccode},
+   	    	#{factory},
+   	    	#{storage}
+   	    )
+	</insert>
+	
+	<insert id = "saveWorkmove">
+		insert into t_wms_workmove
+		(
+			indate,
+			ymdhms,
+			barcode,
+			itemcode,
+			roomcode,
+			factory,
+			wccode,
+			qty,
+			loginid,
+			source,
+			storage
+		)
+		values(
+			#{date},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{barcode},
+			#{itemcode},
+			#{roomcode},
+			upper(#{factory}),
+			upper(#{wccode}),
+			#{qty},
+			#{loginid},
+			#{kind},
+			#{storage}
+		)
+		
+	</insert>
+
+	<insert id = "saveWorkmovePuebla">
+		insert into t_wms_workmove
+		(
+			indate,
+			ymdhms,
+			barcode,
+			itemcode,
+			roomcode,
+			factory,
+			wccode,
+			qty,
+			loginid,
+			source,
+			storage
+		)
+		values(
+			#{date},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{barcode},
+			#{itemcode},
+			#{roomcode},
+			#{factory},
+			#{wccode},
+			#{qty},
+			#{loginid},
+			#{kind},
+			#{storage}
+		)
+		
+	</insert>
+	
+	<select id = "stockTableCheck" resultType ="String">
+		select barcode
+		from t_wms_stock
+		where  barcode IN
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn = 'Y'
+	    and mainkind = #{mainkind} 
+	</select>
+	
+	<!-- 예외 입고 재고테이블에 존재 하는지 -->
+	<select id = "findExistingInStock" resultType = "String">
+		select barcode
+		from t_wms_stock
+		where  barcode IN
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn = 'Y'
+	    and kind !='ExceptionIN'
+	</select>
+	
+	<!-- 이미 입고 되었는지 -->
+	<select id = "findInbound" resultType = "String">
+		select barcode
+		from t_wms_inbound
+		where  barcode IN
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn = 'Y'
+	    and source = "ExceptionIN"
+	</select>
+	
+	<!-- 입고 insert -->
+	<insert id="insInbound" parameterType="map">
+  		INSERT INTO t_wms_inbound (
+   	 		sdate,
+   	 		barcode, 
+   	 		ymdhms, 
+   	 		loginid,
+   	 		itemcode, 
+   	 		bdate, 
+   	 		seq, 
+   	 		qty, 
+
+   	 		source, 
+   	 		storage,
+   	 		factory,
+   	 		invoiceno,
+   	 		custcode,
+   	 		
+   	 		custname,
+			oitemcode
+   	 	)  
+   	 	VALUES  (
+   	    	#{date}, 
+   	    	#{barcode}, 
+   	 		TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	#{loginid},
+   	    	#{itemcode}, 
+   	    	#{bdate},
+   	    	#{seq},
+   	    	#{qty}, 
+
+   	    	#{source},
+   	    	#{storage},
+   	    	#{factory},
+   	    	#{memo},
+   	    	NVL((SELECT CUSTCODE FROM T_MI_PRICE_BUYCUST WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC FETCH FIRST 1 ROW ONLY), ''),
+			(SELECT
+			     cu_sangho
+				FROM c_cust
+				WHERE cu_code = (NVL((SELECT CUSTCODE FROM T_MI_PRICE_BUYCUST WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC FETCH FIRST 1 ROW ONLY), ''))),
+			#{oitemcode}
+   	    )
+	</insert>
+	
+	<!-- 재고실사 예외입고  -->
+	<insert id="insInboundException" parameterType="map">
+  		INSERT INTO t_wms_inbound (
+   	 		sdate,
+   	 		barcode, 
+   	 		ymdhms, 
+   	 		loginid,
+   	 		itemcode, 
+   	 		bdate, 
+   	 		seq, 
+   	 		qty, 
+
+   	 		source, 
+   	 		storage,
+   	 		factory,
+   	 		source2,
+   	 		custcode,
+   	 		
+   	 		custname,
+   	 		okyn,
+			oitemcode
+   	 	)  
+   	 	VALUES  (
+   	    	#{date}, 
+   	    	#{barcode}, 
+   	 		TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	#{loginid},
+   	    	#{itemcode}, 
+   	    	#{bdate},
+   	    	#{seq},
+   	    	#{qty},
+   	    	#{source},
+   	    	#{storage},
+   	    	#{factory},
+   	    	#{source2},
+			NVL((SELECT CUSTCODE FROM T_MI_PRICE_BUYCUST WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC FETCH FIRST 1 ROW ONLY), ''),
+			(SELECT
+				 cu_sangho
+			 FROM c_cust
+			 WHERE cu_code = (NVL((SELECT CUSTCODE FROM T_MI_PRICE_BUYCUST WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC FETCH FIRST 1 ROW ONLY), ''))),
+			  #{okyn},
+			#{oitemcode}
+   	    )
+	</insert>
+	
+	<insert id="insInboundException2" parameterType="map">
+  		INSERT INTO t_wms_inbound (
+   	 		sdate,
+   	 		barcode, 
+   	 		ymdhms, 
+   	 		loginid,
+   	 		itemcode, 
+   	 		bdate, 
+   	 		seq, 
+   	 		qty, 
+
+   	 		source, 
+   	 		storage,
+   	 		factory,
+   	 		invoiceno,
+   	 		source2,
+   	 		custcode,
+   	 		
+   	 		custname,
+			oitemcode
+   	 	)  
+   	 	VALUES  (
+   	    	#{date}, 
+   	    	#{barcode}, 
+   	 		TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	#{loginid},
+   	    	#{itemcode}, 
+   	    	#{bdate},
+   	    	#{seq},
+   	    	#{qty}, 
+
+   	    	#{source},
+   	    	#{storage},
+   	    	#{factory},
+   	    	#{memo},
+   	    	#{source2},
+			NVL((SELECT CUSTCODE FROM T_MI_PRICE_BUYCUST WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC FETCH FIRST 1 ROW ONLY), ''),
+			(SELECT
+			cu_sangho
+			FROM c_cust
+			WHERE cu_code = (NVL((SELECT CUSTCODE FROM T_MI_PRICE_BUYCUST WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC FETCH FIRST 1 ROW ONLY), ''))),
+			#{oitemcode}
+   	    )
+	</insert>
+	
+	<insert id="insInboundExceptionN" parameterType="map">
+  		INSERT INTO t_wms_inbound (
+  			useyn,
+   	 		sdate,
+   	 		barcode, 
+   	 		ymdhms, 
+   	 		loginid,
+   	 		itemcode, 
+   	 		bdate, 
+   	 		seq, 
+   	 		qty, 
+   	 		source,
+   	 		storage,
+   	 		factory,
+   	 		source2,
+   	 		custcode,
+   	 		
+   	 		custname,
+   	 		okyn
+   	 	)  
+   	 	VALUES  (
+   	 		'N',
+   	    	#{date}, 
+   	    	#{barcode}, 
+   	 		TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	#{loginid},
+   	    	#{itemcode}, 
+   	    	#{bdate},
+   	    	#{seq},
+   	    	#{qty}, 
+   	    	#{source},
+   	    	#{storage},
+   	    	#{factory},
+   	    	#{source2},
+			NVL((SELECT CUSTCODE FROM T_MI_PRICE_BUYCUST WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC FETCH FIRST 1 ROW ONLY), ''),
+			(SELECT
+			cu_sangho
+			FROM c_cust
+			WHERE cu_code = (NVL((SELECT CUSTCODE FROM T_MI_PRICE_BUYCUST WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC FETCH FIRST 1 ROW ONLY), ''))),
+			  #{okyn}
+   	    )
+	</insert>
+	
+	<!--  입고 Stock insert -->
+	<insert id="insStockInbound" parameterType="map">
+  		INSERT INTO t_wms_stock (
+   	 		sdate,
+   	 		kind, 
+   	 		barcode, 
+   	 		inqty,
+   	 		outqty,
+   	 		qty,
+   	 		itemcode,
+   	 		ymdhms,
+   	 		factory,
+   	 		storage,
+   	 		mainkind,
+   	 		loginid,
+   	 		insdate
+   	 	)  
+   	 	VALUES  (
+   	    	#{date}, 
+   	    	#{source},
+   	    	#{barcode},
+   	    	#{qty},
+   	    	0,
+   	    	#{qty},
+   	    	#{itemcode},
+   	    	TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	#{factory},
+   	    	#{storage},
+   	    	#{main},
+   	    	#{loginid},
+   	    	#{date}
+   	    )
+	</insert>
+	
+	
+	
+	<!-- 예외 입고 내역 조회 - Detail -->
+	<select id="searchexceptionInputDetail" resultType = "map">
+		select 
+			a.oitemcode as itemcode,
+			to_number(a.qty) as qty,
+			nvl(b.location,' ') as location,
+			a.storage,
+			substr(a.ymdhms,9,6) as time,
+			a.invoiceno 
+		from t_wms_inbound a 
+		left outer join t_wms_location b on a.barcode = b.barcode and b.useyn = 'Y'
+		where a.sdate = #{date}
+		  and a.source = 'INCOMINGEXCEPTION'
+		  and a.factory = #{factory}
+		  and a.storage = #{storage}
+		  and a.useyn = 'Y'
+		order by a.ymdhms desc
+	</select>
+		
+	<!-- 예외 출고 재고테이블에 존재 하는지 -->
+	<select id = "findExistingOutStock" resultType = "String">
+		select barcode
+		from t_wms_stock
+		where  barcode IN
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn = 'Y'
+	    and kind !='ExceptionOUT'
+	</select>
+	
+	<!-- 이미 출고되었는지 -->
+	<select id = "findOutbound" resultType = "String">
+		select barcode
+		from t_wms_outbound
+		where  barcode IN
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn = 'Y'
+	    and source = "ExceptionOUT"
+	</select>
+	
+	<!-- 출고 insert -->
+	<insert id="insOutput" parameterType="map">
+  		INSERT INTO t_wms_outbound (
+   	 		sdate,
+   	 		barcode, 
+   	 		ymdhms, 
+   	 		loginid, 
+   	 		itemcode, 
+   	 		
+   	 		bdate, 
+   	 		seq, 
+   	 		qty, 
+   	 		scmmex, 
+   	 		type,
+   	 		
+   	 		source, 
+   	 		source2,
+   	 		storage,
+   	 		factory,
+   	 		invoiceno,
+   	 		custcode,
+   	 		
+   	 		custname,
+			oitemcode
+   	 	)  
+   	 	VALUES  (
+   	    	#{date}, 
+   	    	#{barcode}, 
+   	 		TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	#{loginid},  
+   	    	#{itemcode}, 
+   	    	
+   	    	#{bdate},
+   	    	#{seq},
+   	    	#{qty}, 
+   	    	#{scmmex}, 
+   	    	#{type},
+   	    	
+   	    	#{source},
+   	    	#{source2},
+   	    	#{storage},
+   	    	#{factory},
+   	    	#{memo},
+			#{custcode},
+			#{custname},
+   	    	<!--(SELECT CUSTCODE FROM
+   	    		(SELECT CUSTCODE
+   	    			FROM T_SM_SALECUSTPRICE
+   	    			WHERE ITEMCODE = #{itemcode}
+   	    			ORDER BY CONDATE DESC
+   	    		) WHERE ROWNUM = 1
+   	    	),
+   	    	
+   	    	(SELECT cu_sangho FROM c_cust WHERE CU_CODE = (SELECT CUSTCODE FROM (SELECT CUSTCODE FROM T_SM_SALECUSTPRICE WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC) WHERE ROWNUM = 1)),-->
+			#{oitemcode}
+   	    )
+	</insert>
+	
+	<insert id="insOutputException2" parameterType="map">
+  		INSERT INTO t_wms_outbound (
+   	 		sdate,
+   	 		barcode, 
+   	 		ymdhms, 
+   	 		loginid, 
+   	 		itemcode, 
+   	 		
+   	 		bdate, 
+   	 		seq, 
+   	 		qty, 
+   	 		scmmex, 
+   	 		type,
+   	 		
+   	 		source, 
+   	 		storage,
+   	 		factory,
+   	 		invoiceno,
+   	 		source2,
+   	 		custcode,
+   	 		
+   	 		custname
+   	 	)  
+   	 	VALUES  (
+   	    	#{date}, 
+   	    	#{barcode}, 
+   	 		TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	#{loginid},  
+   	    	#{itemcode}, 
+   	    	
+   	    	#{bdate},
+   	    	#{seq},
+   	    	#{qty}, 
+   	    	#{scmmex}, 
+   	    	#{type},
+   	    	
+   	    	#{source},
+   	    	#{storage},
+   	    	#{factory},
+   	    	#{memo},
+   	    	#{source2},
+   	    	(SELECT CUSTCODE FROM 
+   	    		(SELECT CUSTCODE 
+   	    			FROM T_SM_SALECUSTPRICE 
+   	    			WHERE ITEMCODE = #{itemcode} 
+   	    			ORDER BY CONDATE DESC
+   	    		) WHERE ROWNUM = 1
+   	    	),
+   	    	
+   	    	(SELECT cu_sangho FROM c_cust WHERE CU_CODE = (SELECT CUSTCODE FROM (SELECT CUSTCODE FROM T_SM_SALECUSTPRICE WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC) WHERE ROWNUM = 1))
+   	    )
+	</insert>
+	
+	<insert id="insOutboundException" parameterType="map">
+  		INSERT INTO t_wms_outbound (
+   	 		sdate,
+   	 		barcode, 
+   	 		ymdhms, 
+   	 		loginid, 
+   	 		itemcode, 
+   	 		
+   	 		bdate, 
+   	 		seq, 
+   	 		qty, 
+
+   	 		
+   	 		source, 
+   	 		storage,
+   	 		factory,
+   	 		source2,
+   	 		custcode,
+   	 		
+   	 		custname,
+   	 		okyn,
+			oitemcode
+   	 	)  
+   	 	VALUES  (
+   	    	#{date}, 
+   	    	#{barcode}, 
+   	 		TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	#{loginid},  
+   	    	#{itemcode}, 
+   	    	
+   	    	#{bdate},
+   	    	#{seq},
+   	    	#{qty}, 
+
+   	    	
+   	    	#{source},
+   	    	#{storage},
+   	    	#{factory},
+   	    	#{source2},
+   	    	(SELECT CUSTCODE FROM 
+   	    		(SELECT CUSTCODE 
+   	    			FROM T_SM_SALECUSTPRICE 
+   	    			WHERE ITEMCODE = #{itemcode} 
+   	    			ORDER BY CONDATE DESC
+   	    		) WHERE ROWNUM = 1
+   	    	),
+   	    	
+   	    	(SELECT cu_sangho FROM c_cust WHERE CU_CODE = (SELECT CUSTCODE FROM (SELECT CUSTCODE FROM T_SM_SALECUSTPRICE WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC) WHERE ROWNUM = 1)),
+   	    	#{okyn},
+			#{oitemcode}
+   	    )
+	</insert>
+	<insert id="insOutboundExceptionN" parameterType="map">
+  		INSERT INTO t_wms_outbound (
+  			useyn,
+   	 		sdate,
+   	 		barcode, 
+   	 		ymdhms, 
+   	 		loginid, 
+   	 		itemcode, 
+   	 		
+   	 		bdate, 
+   	 		seq, 
+   	 		qty, 
+
+   	 		source, 
+   	 		storage,
+   	 		factory,
+   	 		source2,
+   	 		custcode,
+   	 		
+   	 		custname,
+   	 		okyn
+   	 	)  
+   	 	VALUES  (
+   	 		'N',
+   	    	#{date}, 
+   	    	#{barcode}, 
+   	 		TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	#{loginid},  
+   	    	#{itemcode}, 
+   	    	
+   	    	#{bdate},
+   	    	#{seq},
+   	    	#{qty}, 
+
+   	    	#{source},
+   	    	#{storage},
+   	    	#{factory},
+   	    	#{source2},
+   	    	(SELECT CUSTCODE FROM 
+   	    		(SELECT CUSTCODE 
+   	    			FROM T_SM_SALECUSTPRICE 
+   	    			WHERE ITEMCODE = #{itemcode} 
+   	    			ORDER BY CONDATE DESC
+   	    		) WHERE ROWNUM = 1
+   	    	),
+   	    	
+   	    	(SELECT cu_sangho FROM c_cust WHERE CU_CODE = (SELECT CUSTCODE FROM (SELECT CUSTCODE FROM T_SM_SALECUSTPRICE WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC) WHERE ROWNUM = 1)),
+   	    	#{okyn}
+   	    )
+	</insert>
+	
+	<!-- 출고 Stock insert -->
+	<insert id="insertStockOutput" parameterType="map">
+  		INSERT INTO t_wms_stock (
+   	 		sdate,
+   	 		kind, 
+   	 		barcode, 
+   	 		inqty,
+   	 		outqty,
+   	 		qty,
+   	 		itemcode,
+   	 		ymdhms,
+   	 		mainkind,
+   	 		loginid,
+   	 		insdate,
+   	 		factory,
+   	 		storage
+   	 	)  
+   	 	VALUES  (
+   	    	#{date}, 
+   	    	#{kind},
+   	    	#{barcode},
+   	    	0,
+   	    	#{qty},
+   	    	#{qty},
+   	    	#{itemcode},
+   	    	TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	#{main},
+   	    	#{loginid},
+   	    	TO_CHAR(SYSDATE,'YYYY-MM-DD'),
+   	    	#{factory},
+   	    	#{storage}
+   	    )
+	</insert>
+	
+	<!-- 출고반품 -->
+	<insert id="insOutputReturn" parameterType="map">
+  		INSERT INTO t_wms_outbound (
+   	 		sdate,
+   	 		barcode, 
+   	 		ymdhms, 
+   	 		loginid, 
+   	 		itemcode, 
+   	 		bdate, 
+   	 		seq, 
+   	 		qty, 
+   	 		source,
+   	 		storage,
+   	 		factory,
+   	 		CUSTCODE,
+   	 		CUSTNAME,
+			OITEMCODE
+   	 	)  
+   	 	VALUES  (
+   	    	#{date}, 
+   	    	#{barcode}, 
+   	 		TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	#{loginid},  
+   	    	#{itemcode}, 
+   	    	#{bdate},
+   	    	#{seq},
+   	    	#{qty}, 
+   	    	'LOADRETURN',
+   	    	#{storage},
+   	    	#{factory},
+   	    	(SELECT CUSTCODE FROM 
+   	    		(SELECT CUSTCODE 
+   	    			FROM T_SM_SALECUSTPRICE 
+   	    			WHERE ITEMCODE = #{itemcode} 
+   	    			ORDER BY CONDATE DESC
+   	    		) WHERE ROWNUM = 1
+   	    	),
+   	    	
+   	    	(SELECT cu_sangho FROM c_cust WHERE CU_CODE = (SELECT CUSTCODE FROM (SELECT CUSTCODE FROM T_SM_SALECUSTPRICE WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC) WHERE ROWNUM = 1)),
+			#{oitemcode}
+   	    )
+	</insert>
+	
+	<insert id="insertStockOutputReturn" parameterType="map">
+  		INSERT INTO t_wms_stock (
+   	 		sdate,
+   	 		kind, 
+   	 		barcode, 
+   	 		inqty,
+   	 		outqty,
+   	 		qty,
+   	 		itemcode,
+   	 		ymdhms,
+   	 		mainkind,
+   	 		loginid,
+   	 		insdate,
+   	 		factory,
+   	 		storage
+   	 	)  
+   	 	VALUES  (
+   	    	#{date}, 
+   	    	#{kind},
+   	    	#{barcode},
+   	    	#{qty},
+   	    	0,
+   	    	#{qty},
+   	    	#{itemcode},
+   	    	TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	#{main},
+   	    	#{loginid},
+   	    	#{date},
+   	    	#{factory},
+   	    	#{storage}
+   	    )
+	</insert>
+	
+	<!-- 예외 출고 내역 조회 - Detail -->
+	<select id="searchexceptionOutputDetail" resultType = "map">
+		select 
+			a.oitemcode as itemcode,
+			to_number(a.qty) as qty,
+			nvl(b.location,' ') as location,
+			a.storage,
+			substr(a.ymdhms,9,6) as time,
+			a.invoiceno
+		from t_wms_outbound a 
+		left outer join t_wms_location b on a.barcode = b.barcode  
+		where a.sdate = #{date}
+		and a.factory = #{factory}
+		and a.storage = #{storage}
+		and a.source = 'LOADEXCEPTION'
+		and a.useyn = 'Y'
+		order by a.ymdhms desc
+	</select>
+	
+	<select id = "existWipReturn" resultType = "String">
+		select barcode
+		from t_wms_stock
+		where  barcode IN
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn = 'Y'
+	    and kind ='wipreturn'
+	</select>
+	
+	<select id = "searchWccode" resultType = "String">
+		select wccode
+		from t_wms_workmove 
+		where barcode = #{barcode}
+		and useyn = 'Y'
+		and source = 'WIPINPUT'
+		and rownum = 1
+	</select>
+	
+	<insert id = "wipReturn">
+		insert into t_wms_stock
+		(
+			sdate,
+			kind,
+			barcode,
+			inqty,
+			qty,
+			factory,
+			storage,
+			itemcode, 
+			insuser,
+			insdate,
+			ymdhms,
+			location2,
+			workcenter
+		)
+		values
+		(
+			#{date},
+			#{kind},
+			#{barcode},
+			#{inqty},
+			#{qty},
+			#{factory},
+			#{storage},
+			#{itemcode},
+			#{loginid},
+			#{date},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{location2},
+			#{wccode}
+		)
+		
+	</insert>
+		
+	<insert id = "wipReturnWorkstock">
+		insert into t_wms_workstock
+		(
+			sdate,
+			kind,
+			barcode,
+			outqty,
+			qty,
+			factory,
+			storage,
+			itemcode, 
+			insuser,
+			insdate,
+			ymdhms,
+			workcenter,
+			mainkind,
+			location
+		)
+		values
+		(
+			#{date},
+			#{kind},
+			#{barcode},
+			#{inqty},
+			#{qty},
+			#{factory},
+			#{storage},
+			#{itemcode},
+			#{loginid},
+			TO_CHAR(SYSDATE,'YYYY-MM-DD'),
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{wccode},
+			'WIP',
+			#{factory}||'-'||#{storage}
+		)
+	</insert>
+	
+	<insert id = "wipReturnWorkmove">
+		insert into t_wms_workmove
+		(
+			indate,
+			barcode,
+			itemcode,
+			roomcode,
+			loginid,
+			ymdhms,
+			qty,
+			source,
+			factory,
+			storage,
+			wccode
+		)
+		values(
+			#{date},
+			#{barcode},
+			#{itemcode},
+			#{factory}||'-'||#{storage},
+			#{loginid},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{qty},
+			'WIPRETURN',
+			#{factory},
+			#{storage},
+			#{wccode}
+		)
+		
+	</insert>
+	
+	<insert id = 'unpack'>
+		insert into t_wms_unpack
+		(
+			sdate,
+			barcode,
+			qty,
+			loginid,
+			ymdhms,
+			type,
+			itemcode,
+			lotdate,
+			storage,
+			location,
+			factory
+		)
+		values
+		(
+			#{date},
+			#{barcode},
+			#{qty},
+			#{loginid},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{type},
+			#{itemcode},
+			#{lotdate},
+			#{storage},
+			#{location},
+			#{factory}
+		)
+		
+	</insert>
+	<!-- 공정불출 끝-->
+	
+	<!-- <select id="pur_location_checkInbound" parameterType="string" resultType="int">
+		SELECT COUNT(*)
+		FROM T_WMS_INBOUND 
+		WHERE barcode = #{barcode}
+	</select> -->
+	
+	<insert id="pur_location_insert_inbound" parameterType="map">
+		INSERT INTO T_WMS_INBOUND
+		(indate, barcode, ymdhms, loginid, username, itemcode, bdate, seq, qty, scmmex, type,  source, custcode)
+	    VALUES
+	    (
+	    	#{date},
+	    	#{barcode},
+	    	TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+	    	#{loginId},
+	    	'username',
+	    	#{itemcode},
+	    	#{bdate},
+	    	#{seq},
+	    	#{qty},
+	    	'WMSMEX',
+	    	#{type},
+	    	'LOCAL',
+	    	<choose>
+	            <when test='type == "box"'>
+	                (select c.cno
+	                   from t_scm_barcode c
+	                  where c.barcode = #{barcode})
+	            </when>
+	            <when test='type == "pallet"'>
+	                (select max(c.cucode)
+	                   from t_scm_pallet c
+	                  where c.pbarcode = #{barcode})
+	            </when>
+	        </choose>
+	    )
+	</insert>
+	
+<!-- 	<insert id="pur_location_insert_realStock" parameterType="map">
+		INSERT INTO T_WMS_REALSTOCK 
+		(SDATE, BARCODE, QTY, LOGINID, YMDHMS, PRINT_YN, ITEMCODE, TYPE, scantype )
+		VALUES 
+		(
+			#{date},
+			#{barcode},
+			#{qty},
+			#{loginId},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			'N',
+			#{itemcode},
+			#{type},
+			#{scantype}
+		)
+	</insert> -->
+	
+	
+	 <!-- LOCATION 현황 -->
+    
+	<!-- 🔹 **1. RACK 목록 조회** -->
+    <!-- 🔹 **1. RACK 목록 조회 (총 저장소 범위 포함)** -->
+    <select id="selectRackList" parameterType="map" resultType="map">
+		SELECT 
+		    w.RACK AS RACKID,
+		    'RACK ' || w.RACK AS RACKNAME,
+		    w.STORAGE,
+		    w.FACTORY AS AREA,
+		    COALESCE(stats.TOTALCAPACITY, 0) AS TOTALCAPACITY,
+		    COALESCE(stats.CURRENTCOUNT, 0) AS CURRENTCOUNT_old,
+		    COALESCE(stats.UTILIZATIONRATE, 0) AS UTILIZATIONRATE,
+		    COALESCE(stats.TOTALQTY, 0) AS TOTALQTY,
+		    stats.LASTUPDATED,
+		    COALESCE(stats.TOTAL_STORAGE_CAPACITY, 0) AS TOTAL_STORAGE_CAPACITY,
+		   <!--  COALESCE(stats.ACTUAL_UTILIZATIONRATE, 0) AS ACTUAL_UTILIZATIONRATE, -->
+          	nvl(CURRENTCOUNT,0) as CURRENTCOUNT
+		FROM (
+		    SELECT factory, storage, rack 
+		    FROM t_wms_warehouse 
+          	WHERE 1=1
+          	<!-- 저장소 필터 -->
+			<if test="storage != null and storage != 'default'">
+				AND UPPER(STORAGE) = UPPER(#{storage})
+			</if>
+          
+          	<!-- 공장 필터 -->
+          	<if test="factory != null and factory != 'default'">
+            	AND UPPER(FACTORY) = UPPER(#{factory})
+          	</if>
+          
+		    GROUP BY factory, storage, rack
+		) w
+		LEFT JOIN (
+		    SELECT 
+		        l.RACK,
+		        l.STORAGE,
+		        l.FACTORY,
+		        COUNT(*) AS TOTALCAPACITY,
+		        COUNT(CASE WHEN l.BARCODE IS NOT NULL AND LENGTH(TRIM(l.BARCODE)) > 0 AND l.USEYN = 'Y' THEN 1 END) AS CURRENTCOUNT_old,
+		        ROUND(
+		            COUNT(CASE WHEN l.BARCODE IS NOT NULL AND LENGTH(TRIM(l.BARCODE)) > 0 AND l.USEYN = 'Y' THEN 1 END) * 100.0 / COUNT(*), 0
+		        ) AS UTILIZATIONRATE,
+		        SUM(CASE WHEN l.BARCODE IS NOT NULL AND LENGTH(TRIM(l.BARCODE)) > 0 AND l.USEYN = 'Y' 
+		                 THEN TO_NUMBER(NVL(l.QTY, '0')) 
+		                 ELSE 0 END) AS TOTALQTY,
+		        MAX(CASE WHEN l.YMDHMS_D IS NOT NULL AND LENGTH(TRIM(l.YMDHMS_D)) > 0 THEN l.YMDHMS_D ELSE l.YMDHMS END) AS LASTUPDATED,
+		        (SELECT COUNT(*) FROM t_wms_warehouse w2 
+		         WHERE upper(w2.FACTORY) = upper(l.FACTORY)
+		           AND upper(w2.STORAGE) = upper(l.STORAGE) 
+		           AND w2.RACK = l.RACK) AS TOTAL_STORAGE_CAPACITY,
+		           (select count(count(rack)) from t_wms_location b where l.rack = b.rack and useyn = 'Y' and l.storage = b.storage and b.factory = l.factory group by factory,storage,rack,module,levelcode,position) AS CURRENTCOUNT,
+		           
+		        ROUND(
+		            COUNT(CASE WHEN l.BARCODE IS NOT NULL AND LENGTH(TRIM(l.BARCODE)) > 0 AND l.USEYN = 'Y' THEN 1 END) * 100.0 / 
+		            (SELECT COUNT(*) FROM t_wms_warehouse w2 
+		             WHERE upper(w2.FACTORY) = upper(l.FACTORY)
+		               AND upper(w2.STORAGE) = upper(l.STORAGE) 
+		               AND w2.RACK = l.RACK), 0
+		        ) AS ACTUAL_UTILIZATIONRATE
+		    FROM t_wms_location l
+		    WHERE l.USEYN = 'Y'
+			<!-- 키워드 검색 -->
+          <if test="keyword != null and keyword != ''">
+              <choose>
+                <when test="searchType == 'searchVal-car'">
+                 and UPPER(NVL(l.BARCODE, '')) LIKE '%' || UPPER(#{keyword}) || '%'
+                </when>
+                <when test="searchType == 'searchVal-product'">
+                 and UPPER(NVL(l.ITEMCODE, '')) LIKE '%' || UPPER(#{keyword}) || '%'
+                </when>
+                <otherwise>
+                  and (UPPER(NVL(l.LOCATION, '')) LIKE '%' || UPPER(#{keyword}) || '%' OR 
+                   UPPER(NVL(l.BARCODE, '')) LIKE '%' || UPPER(#{keyword}) || '%' OR
+                   UPPER(NVL(l.ITEMCODE, '')) LIKE '%' || UPPER(#{keyword}) || '%' OR
+                   UPPER(NVL(l.MEMO, '')) LIKE '%' || UPPER(#{keyword}) || '%' OR
+                   UPPER(NVL(l.RACK, '')) LIKE '%' || UPPER(#{keyword}) || '%')
+                </otherwise>
+              </choose>
+          </if>
+			GROUP BY l.RACK, l.STORAGE, l.FACTORY
+			) stats ON upper(w.FACTORY) = upper(stats.FACTORY)
+			        AND upper(w.STORAGE) = upper(stats.STORAGE) 
+			        AND w.RACK = stats.RACK
+			ORDER BY upper(w.FACTORY), upper(w.STORAGE), TOTALCAPACITY DESC, w.RACK
+    </select>
+    <select id="selectWorkRackList" parameterType="map" resultType="map">
+		SELECT 
+		    w.RACK AS RACKID,
+		    'RACK ' || w.RACK AS RACKNAME,
+		    w.STORAGE,
+		    w.FACTORY AS AREA,
+		    COALESCE(stats.TOTALCAPACITY, 0) AS TOTALCAPACITY,
+		    COALESCE(stats.CURRENTCOUNT, 0) AS CURRENTCOUNT_old,
+		    COALESCE(stats.UTILIZATIONRATE, 0) AS UTILIZATIONRATE,
+		    COALESCE(stats.TOTALQTY, 0) AS TOTALQTY,
+		    stats.LASTUPDATED,
+		    COALESCE(stats.TOTAL_STORAGE_CAPACITY, 0) AS TOTAL_STORAGE_CAPACITY,
+          	nvl(CURRENTCOUNT,0) as CURRENTCOUNT
+		FROM (
+		    SELECT factory, storage, rack 
+		    FROM t_wms_warehouse 
+          	WHERE 1=1
+          	<!-- 저장소 필터 -->
+			<if test="storage != null and storage != 'default'">
+				AND UPPER(STORAGE) = UPPER(#{storage})
+			</if>
+          
+          	<!-- 공장 필터 -->
+          	<if test="factory != null and factory != 'default'">
+            	AND UPPER(FACTORY) = UPPER(#{factory})
+          	</if>
+          
+		    GROUP BY factory, storage, rack
+		) w
+		LEFT JOIN (
+		    SELECT 
+		        l.RACK,
+		        l.STORAGE,
+		        l.FACTORY,
+		        COUNT(*) AS TOTALCAPACITY,
+		        COUNT(CASE WHEN l.BARCODE IS NOT NULL AND LENGTH(TRIM(l.BARCODE)) > 0 AND l.USEYN = 'Y' THEN 1 END) AS CURRENTCOUNT_old,
+		        ROUND(
+		            COUNT(CASE WHEN l.BARCODE IS NOT NULL AND LENGTH(TRIM(l.BARCODE)) > 0 AND l.USEYN = 'Y' THEN 1 END) * 100.0 / COUNT(*), 0
+		        ) AS UTILIZATIONRATE,
+		        SUM(CASE WHEN l.BARCODE IS NOT NULL AND LENGTH(TRIM(l.BARCODE)) > 0 AND l.USEYN = 'Y' 
+		                 THEN TO_NUMBER(NVL(l.QTY, '0')) 
+		                 ELSE 0 END) AS TOTALQTY,
+		        MAX(CASE WHEN l.YMDHMS_D IS NOT NULL AND LENGTH(TRIM(l.YMDHMS_D)) > 0 THEN l.YMDHMS_D ELSE l.YMDHMS END) AS LASTUPDATED,
+		        (SELECT COUNT(*) FROM t_wms_warehouse w2 
+		         WHERE upper(w2.FACTORY) = upper(l.FACTORY) 
+		           AND upper(w2.STORAGE) = upper(l.STORAGE)
+		           AND w2.RACK = l.RACK) AS TOTAL_STORAGE_CAPACITY,
+		           (select count(count(rack)) from t_wms_worklocation b where l.rack = b.rack and useyn = 'Y' and l.storage = b.storage and b.factory = l.factory group by factory,storage,rack,module,levelcode,position) AS CURRENTCOUNT,
+		           
+		        ROUND(
+		            COUNT(CASE WHEN l.BARCODE IS NOT NULL AND LENGTH(TRIM(l.BARCODE)) > 0 AND l.USEYN = 'Y' THEN 1 END) * 100.0 / 
+		            (SELECT COUNT(*) FROM t_wms_warehouse w2 
+		             WHERE w2.FACTORY = l.FACTORY 
+		               AND w2.STORAGE = l.STORAGE 
+		               AND w2.RACK = l.RACK), 0
+		        ) AS ACTUAL_UTILIZATIONRATE
+		    FROM t_wms_worklocation l
+		    WHERE l.USEYN = 'Y'
+			<!-- 키워드 검색 -->
+          <if test="keyword != null and keyword != ''">
+              <choose>
+                <when test="searchType == 'searchVal-car'">
+                 and UPPER(NVL(l.BARCODE, '')) LIKE '%' || UPPER(#{keyword}) || '%'
+                </when>
+                <when test="searchType == 'searchVal-product'">
+                 and UPPER(NVL(l.ITEMCODE, '')) LIKE '%' || UPPER(#{keyword}) || '%'
+                </when>
+                <otherwise>
+                  and (UPPER(NVL(l.LOCATION, '')) LIKE '%' || UPPER(#{keyword}) || '%' OR 
+                   UPPER(NVL(l.BARCODE, '')) LIKE '%' || UPPER(#{keyword}) || '%' OR
+                   UPPER(NVL(l.ITEMCODE, '')) LIKE '%' || UPPER(#{keyword}) || '%' OR
+                   UPPER(NVL(l.MEMO, '')) LIKE '%' || UPPER(#{keyword}) || '%' OR
+                   UPPER(NVL(l.RACK, '')) LIKE '%' || UPPER(#{keyword}) || '%')
+                </otherwise>
+              </choose>
+          </if>
+			GROUP BY l.RACK, l.STORAGE, l.FACTORY
+			) stats ON upper(w.FACTORY) = upper(stats.FACTORY)
+			        AND upper(w.STORAGE) = upper(stats.STORAGE)
+			        AND w.RACK = stats.RACK
+			ORDER BY upper(w.FACTORY), upper(w.STORAGE), w.RACK
+    </select>
+	
+<!-- 🔹 **2. RACK 기본 정보 조회** -->
+    <select id="selectRackInfo" parameterType="map" resultType="map">
+        SELECT 
+            RACK AS RACKID,
+            'RACK ' || RACK AS RACKNAME,
+            STORAGE,
+            FACTORY AS AREA,
+            COUNT(*) AS TOTALCAPACITY,
+            COUNT(CASE WHEN BARCODE IS NOT NULL AND LENGTH(TRIM(BARCODE)) > 0 AND USEYN = 'Y' THEN 1 END) AS CURRENTCOUNT,
+            ROUND(
+                COUNT(CASE WHEN BARCODE IS NOT NULL AND LENGTH(TRIM(BARCODE)) > 0 AND USEYN = 'Y' THEN 1 END) * 100.0 / COUNT(*), 0
+            ) AS UTILIZATIONRATE,
+            SUM(CASE WHEN BARCODE IS NOT NULL AND LENGTH(TRIM(BARCODE)) > 0 AND USEYN = 'Y' 
+                     THEN TO_NUMBER(NVL(QTY, '0')) 
+                     ELSE 0 END) AS TOTALQTY,
+            MAX(CASE WHEN YMDHMS_D IS NOT NULL AND LENGTH(TRIM(YMDHMS_D)) > 0 THEN YMDHMS_D ELSE YMDHMS END) AS LASTUPDATED,
+            (select max(to_number(module)) as module from t_wms_warehouse b where upper(a.storage) = upper(b.storage) and upper(a.factory) = upper(b.factory) and a.rack = b.rack) as modules
+        FROM t_wms_location a
+        WHERE UPPER(RACK) = UPPER(#{rackId})
+          
+          <!-- 저장소 필터 (선택사항) -->
+          <if test="storage != null and storage != 'default'">
+            AND UPPER(STORAGE) = UPPER(#{storage})
+          </if>
+          
+          <!-- 공장 필터 (선택사항) -->
+          <if test="factory != null and factory != 'default'">
+            AND FACTORY = #{factory}
+          </if>
+
+        GROUP BY RACK, STORAGE, FACTORY
+    </select>
+    <select id="selectWorkRackInfo" parameterType="map" resultType="map">
+        SELECT 
+            RACK AS RACKID,
+            'RACK ' || RACK AS RACKNAME,
+            STORAGE,
+            FACTORY AS AREA,
+            COUNT(*) AS TOTALCAPACITY,
+            COUNT(CASE WHEN BARCODE IS NOT NULL AND LENGTH(TRIM(BARCODE)) > 0 AND USEYN = 'Y' THEN 1 END) AS CURRENTCOUNT,
+            ROUND(
+                COUNT(CASE WHEN BARCODE IS NOT NULL AND LENGTH(TRIM(BARCODE)) > 0 AND USEYN = 'Y' THEN 1 END) * 100.0 / COUNT(*), 0
+            ) AS UTILIZATIONRATE,
+            SUM(CASE WHEN BARCODE IS NOT NULL AND LENGTH(TRIM(BARCODE)) > 0 AND USEYN = 'Y' 
+                     THEN TO_NUMBER(NVL(QTY, '0')) 
+                     ELSE 0 END) AS TOTALQTY,
+            MAX(CASE WHEN YMDHMS_D IS NOT NULL AND LENGTH(TRIM(YMDHMS_D)) > 0 THEN YMDHMS_D ELSE YMDHMS END) AS LASTUPDATED,
+            (select max(to_number(module)) as module from t_wms_warehouse b where upper(a.storage) = upper(b.storage) and upper(a.factory) = upper(b.factory) and a.rack = b.rack) as modules
+        FROM t_wms_worklocation a
+        WHERE UPPER(RACK) = UPPER(#{rackId})
+          
+          <!-- 저장소 필터 (선택사항) -->
+          <if test="storage != null and storage != 'default'">
+            AND UPPER(STORAGE) = UPPER(#{storage})
+          </if>
+          
+          <!-- 공장 필터 (선택사항) -->
+          <if test="factory != null and factory != 'default'">
+            AND UPPER(FACTORY) = UPPER(#{factory})
+          </if>
+
+        GROUP BY RACK, STORAGE, FACTORY
+    </select>
+
+    <!-- 🔹 **3. RACK 상세 포지션 정보 조회** -->
+    <select id="selectRackDetail" parameterType="map" resultType="map">
+		SELECT
+			T.*,
+
+			/* MODULE */
+			--C.SUBNAME_CH AS RACKID,
+			RACK AS RACKID,
+			CEIL(RN / 8) AS MODULENUM,
+
+			/* LEVEL */
+			CASE FLOOR(MOD(RN - 1, 8) / 2)
+			WHEN 0 THEN 'A'
+			WHEN 1 THEN 'B'
+			WHEN 2 THEN 'C'
+			WHEN 3 THEN 'D'
+			END AS LEVELNAME,
+
+			/* POSITION */
+			MOD(RN - 1, 2) + 1 AS POSITIONNUM,
+
+			/* 최종 LOCATION 문자열 */
+			AREA || '-' ||
+			STORAGE  || '-' ||
+			C.SUBNAME_CH || '-' ||
+			CEIL(RN / 8) || '-' ||
+			CASE FLOOR(MOD(RN - 1, 8) / 2)
+			WHEN 0 THEN 'A'
+			WHEN 1 THEN 'B'
+			WHEN 2 THEN 'C'
+			WHEN 3 THEN 'D'
+			END || '-' ||
+			(MOD(RN - 1, 2) + 1) AS LOCATION,
+			'occupied' AS POSITIONSTATUS
+
+		FROM (
+			SELECT
+				L.IID,L.SDATE,L.USEYN,L.YMDHMS,L.BARCODE,L.ITEMCODE,L.QTY,L.MEMO,L.LOGINID,L.FACTORY AS AREA,L.STORAGE,L.SOURCE,L.OKYN,L.RACK,
+				ROW_NUMBER() OVER (ORDER BY YMDHMS) AS RN
+			FROM t_wms_location L
+			INNER JOIN T_MI_ITEM B ON L.ITEMCODE = B.ITEMCODE
+			INNER JOIN t_mi_typesub C ON B.carno = C.subcode AND C.typecode = 'MI041'
+			WHERE UPPER(C.SUBNAME_CH) = #{rackId}
+			AND UPPER(STORAGE) = UPPER(#{storage})
+			AND UPPER(L.FACTORY) = #{factory}
+			AND USEYN = 'Y'
+		) T
+		INNER JOIN T_MI_ITEM B ON T.ITEMCODE = B.ITEMCODE
+		INNER JOIN t_mi_typesub C ON B.carno = C.subcode AND C.typecode = 'MI041'
+		ORDER BY RN
+        <!--SELECT
+            IID,
+            SDATE,
+            USEYN,
+            YMDHMS,
+            YMDHMS_D,
+            MEMO_D,
+            LOCATION,
+            BARCODE,
+            ITEMCODE,
+            &lt;!&ndash; QTY, &ndash;&gt;
+            MEMO,
+            LOGINID,
+            
+            &#45;&#45; 분리된 컬럼들 직접 사용
+            STORAGE,
+            FACTORY AS AREA,
+            RACK AS RACKID,
+            MODULE AS MODULENUM,
+            LEVELCODE AS LEVELNAME,
+            POSITION AS POSITIONNUM,
+            
+           &lt;!&ndash;   BARCODE 파싱 (콤마로 구분된 복합 정보)
+            REGEXP_SUBSTR(NVL(BARCODE, ''), '[^,]+', 1, 1) AS BARCODEMAIN,
+            REGEXP_SUBSTR(NVL(BARCODE, ''), '[^,]+', 1, 2) AS BARCODEDATE,
+            REGEXP_SUBSTR(NVL(BARCODE, ''), '[^,]+', 1, 3) AS BARCODESEQ,
+            REGEXP_SUBSTR(NVL(BARCODE, ''), '[^,]+', 1, 4) AS BARCODEWEIGHT,
+            REGEXP_SUBSTR(NVL(BARCODE, ''), '[^,]+', 1, 5) AS BARCODECOMPANY, &ndash;&gt;
+            
+            CASE 
+                WHEN BARCODE IS NOT NULL AND LENGTH(TRIM(BARCODE)) > 0 AND USEYN = 'Y' THEN 'occupied'
+                ELSE 'empty'
+            END AS POSITIONSTATUS,
+            
+            &#45;&#45; 날짜 포맷팅 (오라클 방식)
+            CASE 
+                WHEN YMDHMS IS NOT NULL AND LENGTH(TRIM(YMDHMS)) = 14 THEN 
+                    TO_CHAR(TO_DATE(YMDHMS, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS')
+                ELSE NULL
+            END AS FORMATTEDYMDHMS,
+            CASE 
+                WHEN YMDHMS_D IS NOT NULL AND LENGTH(TRIM(YMDHMS_D)) = 14 THEN 
+                    TO_CHAR(TO_DATE(YMDHMS_D, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS')
+                ELSE NULL
+            END AS FORMATTEDYMDHMS_D,
+            (select carno from t_mi_item t where t.itemcode = l.itemcode) as itemcode_mi,
+            (select itemname from t_mi_item t where t.itemcode = l.itemcode) as itemname_mi,
+            &lt;!&ndash; (select subname from t_mi_typesub s where s.subcode = (select carno from t_mi_item t where t.itemcode = l.itemcode)) as carname, &ndash;&gt;
+            &lt;!&ndash; (select indate from t_wms_inbound b where b.barcode = l.barcode) as indate_wms, &ndash;&gt;
+            (select sum(qty) from t_wms_location k where l.location = k.location and useyn = 'Y') || ' (' || (select count(qty) from t_wms_location k where l.location = k.location and useyn = 'Y') || ')'  as carname,
+            (select count(qty) from t_wms_location k where l.location = k.location and useyn = 'Y') as cnt
+
+        FROM t_wms_location l
+        WHERE UPPER(RACK) = UPPER(#{rackId})
+          
+          &lt;!&ndash; 저장소 필터 (선택사항) &ndash;&gt;
+          <if test="storage != null and storage != 'default'">
+            AND UPPER(STORAGE) = UPPER(#{storage})
+          </if>
+          
+          &lt;!&ndash; 공장 필터 (선택사항) &ndash;&gt;
+          <if test="factory != null and factory != 'default'">
+            AND FACTORY = #{factory}
+          </if>
+          AND USEYN = 'Y'
+        ORDER BY 
+            MODULE,                    &#45;&#45; 모듈 순 (숫자 정렬)
+            CASE LEVELCODE             &#45;&#45; 레벨 순 (D>C>B>A)
+                WHEN 'D' THEN 1
+                WHEN 'C' THEN 2  
+                WHEN 'B' THEN 3
+                WHEN 'A' THEN 4
+                ELSE 5
+            END,
+            POSITION                   &#45;&#45; 포지션 순 (숫자 정렬)-->
+    </select>
+    <select id="selectWorkRackDetail" parameterType="map" resultType="map">
+        SELECT 
+            IID,
+            INDATE,
+            USEYN,
+            YMDHMS,
+            YMDHMS_D,
+            MEMO_D,
+            LOCATION,
+            BARCODE,
+            ITEMCODE,
+            MEMO,
+            LOGINID,
+            
+            -- 분리된 컬럼들 직접 사용
+            STORAGE,
+            FACTORY AS AREA,
+            RACK AS RACKID,
+            MODULE AS MODULENUM,
+            LEVELCODE AS LEVELNAME,
+            POSITION AS POSITIONNUM,
+            
+            CASE 
+                WHEN BARCODE IS NOT NULL AND LENGTH(TRIM(BARCODE)) > 0 AND USEYN = 'Y' THEN 'occupied'
+                ELSE 'empty'
+            END AS POSITIONSTATUS,
+            
+            -- 날짜 포맷팅 (오라클 방식)
+            CASE 
+                WHEN YMDHMS IS NOT NULL AND LENGTH(TRIM(YMDHMS)) = 14 THEN 
+                    TO_CHAR(TO_DATE(YMDHMS, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS')
+                ELSE NULL
+            END AS FORMATTEDYMDHMS,
+            CASE 
+                WHEN YMDHMS_D IS NOT NULL AND LENGTH(TRIM(YMDHMS_D)) = 14 THEN 
+                    TO_CHAR(TO_DATE(YMDHMS_D, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS')
+                ELSE NULL
+            END AS FORMATTEDYMDHMS_D,
+            (select carno from t_mi_item t where t.itemcode = l.itemcode) as itemcode_mi,
+            (select itemname from t_mi_item t where t.itemcode = l.itemcode) as itemname_mi,
+            (select sum(qty) from t_wms_worklocation k where l.location = k.location and useyn = 'Y') || ' (' || (select count(qty) from t_wms_worklocation k where l.location = k.location and useyn = 'Y') || ')'  as carname,
+            (select count(qty) from t_wms_worklocation k where l.location = k.location and useyn = 'Y') as cnt
+
+        FROM t_wms_worklocation l
+        WHERE UPPER(RACK) = UPPER(#{rackId})
+          
+          <!-- 저장소 필터 (선택사항) -->
+          <if test="storage != null and storage != 'default'">
+            AND UPPER(STORAGE) = UPPER(#{storage})
+          </if>
+          
+          <!-- 공장 필터 (선택사항) -->
+          <if test="factory != null and factory != 'default'">
+            AND UPPER(FACTORY) = UPPER(#{factory})
+          </if>
+          AND USEYN = 'Y'
+        ORDER BY 
+            MODULE,                    -- 모듈 순 (숫자 정렬)
+            CASE LEVELCODE             -- 레벨 순 (D>C>B>A)
+                WHEN 'D' THEN 1
+                WHEN 'C' THEN 2  
+                WHEN 'B' THEN 3
+                WHEN 'A' THEN 4
+                ELSE 5
+            END,
+            POSITION                   -- 포지션 순 (숫자 정렬)
+    </select>
+
+    <!-- 🔹 **4. 전체 창고 통계 조회** -->
+    <select id="selectWarehouseStatistics" resultType="map">
+        SELECT 
+            -- 전체 RACK 수
+            COUNT(DISTINCT RACK) AS TOTALRACKS,
+            
+            -- 전체 포지션 수
+            COUNT(*) AS TOTALPOSITIONS,
+            
+            -- 점유된 포지션 수
+            COUNT(CASE WHEN BARCODE IS NOT NULL AND LENGTH(TRIM(BARCODE)) > 0 AND USEYN = 'Y' THEN 1 END) AS OCCUPIEDPOSITIONS,
+            
+            -- 전체 적재율
+            ROUND(
+                COUNT(CASE WHEN BARCODE IS NOT NULL AND LENGTH(TRIM(BARCODE)) > 0 AND USEYN = 'Y' THEN 1 END) * 100.0 / COUNT(*), 0
+            ) AS OVERALLUTILIZATIONRATE,
+            
+            -- 전체 수량 (VARCHAR2 → NUMBER 변환)
+            SUM(CASE WHEN BARCODE IS NOT NULL AND LENGTH(TRIM(BARCODE)) > 0 AND USEYN = 'Y' 
+                     THEN TO_NUMBER(NVL(QTY, '0')) 
+                     ELSE 0 END) AS TOTALQTY,
+            
+            -- 최종 업데이트 시간
+            MAX(CASE WHEN YMDHMS_D IS NOT NULL AND LENGTH(TRIM(YMDHMS_D)) > 0 THEN YMDHMS_D ELSE YMDHMS END) AS LASTUPDATED
+            
+        FROM t_wms_location 
+    </select>	
+	
+	<select id="checkLocationRow" parameterType="map"  resultType="int">
+		SELECT COUNT(*) FROM T_WMS_LOCATION
+		WHERE 
+			upper(FACTORY) =upper(#{factory})
+			AND upper(STORAGE) = upper(#{storage})
+			AND RACK = #{rackId}
+	</select>		
+	<select id="checkWorkLocationRow" parameterType="map"  resultType="int">
+		SELECT COUNT(*) FROM T_WMS_WORKLOCATION
+		WHERE 
+			UPPER(FACTORY) = UPPER(#{factory})
+			AND STORAGE = #{storage}
+			AND RACK = #{rackId}
+	</select>		
+		
+	<select id="selectLocationDetail" resultType = "map">
+		select distinct
+			a.itemcode,
+			b.itemname,
+			a.qty,
+			a.sdate as locDate,
+			NVL(c.sdate, '-') as sDate,
+			substr(a.barcode,15,6) as LOT,
+			d.subname_ch as car,
+			a.barcode,
+			a.location as location,
+			B.SPEC AS OITEMCODE
+		  from t_wms_location a
+		  left outer join t_mi_item b on a.itemcode=b.itemcode
+		  <!-- left outer join t_wms_inbound c on a.barcode = c.barcode and c.useyn = 'Y'  입고가 2번 됐을때 같은 바코드인데 여러건이 나오는 현상때문에 수정-->
+		  left outer join (
+		       select barcode, sdate
+		       from (
+		            select c.*,
+		                   row_number() over(partition by barcode order by iid desc) rn
+		            from t_wms_inbound c
+		            where c.useyn = 'Y'
+		       ) 
+		       where rn = 1
+		) c on a.barcode = c.barcode
+		  left outer join t_mi_typesub d on b.carno = d.subcode and d.typecode = 'MI041' 
+		 where a.barcode =  #{barcode}
+		   and a.useyn = 'Y'
+		 order by a.barcode asc
+	</select>	
+	<select id="selectWorkLocationDetail" resultType = "map">
+		select distinct
+			a.itemcode,
+			b.itemname,
+			a.qty,
+			a.indate as locDate,
+			NVL(c.indate, '-') as inDate,
+			substr(a.barcode,15,6) as LOT,
+			d.subname_ch as car,
+			a.barcode,
+			a.location as location
+		  from t_wms_worklocation a
+		  left outer join t_mi_item b on a.itemcode=b.itemcode
+		  <!-- left outer join t_wms_inbound c on a.barcode = c.barcode and c.useyn = 'Y'  입고가 2번 됐을때 같은 바코드인데 여러건이 나오는 현상때문에 수정-->
+		  left outer join (
+		       select barcode, indate
+		       from (
+		            select c.*,
+		                   row_number() over(partition by barcode order by iid desc) rn
+		            from t_wms_workinbound c
+		            where c.useyn = 'Y'
+		       ) 
+		       where rn = 1
+		) c on a.barcode = c.barcode
+		  left outer join t_mi_typesub d on b.carno = d.subcode and d.typecode = 'MI041' 
+		 where a.location =  #{location}
+		   and a.useyn = 'Y'
+		 order by a.barcode asc
+	</select>	
+	
+	<!-- 제품정보 -->
+	<select id = "getItemInfo" resultType = "map">
+		select itemname,
+		itemcode
+		from t_mi_item
+		where itemcode = UPPER(#{itemcode})
+		
+	</select>	
+	<!-- 제품정보 -->
+	<select id = "getItemInfo2" resultType = "map">
+		<!-- SELECT 
+          a.pname,
+          a.pno,
+          b.indate,
+          SUM(b.qty) OVER ( PARTITION BY a.pno ) AS totalqty,
+          b.qty,
+          NVL(b.storage,'') || '-' || NVL(b.rack,'') || '-' || NVL(b.module,'') || '-' ||
+          NVL(b.levelcode,'') || '-' || NVL(b.position,'') AS location,a.barcode,          
+          a.madate
+      FROM (
+          SELECT barcode,pno,  pname, madate
+          FROM t_scm_barcode
+          WHERE pno = #{pno}
+          and useyn = 'Y'
+      ) a
+      inner JOIN t_wms_location b
+        ON b.barcode = a.barcode
+       AND b.useyn   = 'Y'
+      ORDER BY b.indate, location -->
+      select a.sdate,a.qty,a.location
+      from t_wms_location a
+         where a.itemcode = UPPER(#{itemcode})
+       AND a.useyn   = 'Y' AND FACTORY= #{factory}
+      ORDER BY sdate desc, location
+	</select>
+
+	<!-- 팔레트 -->
+	<select id = "getPalletInfo" resultType = "map">
+		select 
+		    sdate,
+		    pbarcode,    
+		    bbarcode    
+		from t_scm_pallet
+		where pbarcode = #{barcode}
+		order by bbarcode
+	</select>
+	
+	<!-- 파트 -->
+	<select id = "getPartInfo" resultType = "map">
+		select  
+		    sdate,
+		    pbarcode,    
+		    bbarcode    
+		from t_scm_pallet
+		where pbarcode in (
+			select pbarcode
+			from t_scm_pallet
+			where bbarcode = #{barcode}
+			and useyn = 'Y'
+		)
+		order by bbarcode
+	</select>
+	
+	<!-- 재고실사 - 나열형 -->
+	<select id="searchInventoryDetail" resultType="map">
+		 SELECT            
+	         scantype,  
+	         a.sdate,
+            c.subname_ch AS car,
+			b.spec as oitemcode,
+            b.itemname,
+            a.qty,
+            a.type,
+            a.barcode,
+            a.location,
+            a.lotdate,
+            ymdhms
+        FROM   t_wms_realstock a
+            LEFT OUTER JOIN t_mi_item b 
+                 ON a.itemcode = b.itemcode AND deldate = ' '
+            LEFT OUTER JOIN t_mi_typesub c 
+                 ON b.carno = c.subcode 
+                AND c.typecode = 'MI041'
+        where 1=1			
+        and useyn = 'Y' 
+        <if test ="sdate != null and sdate != ''">
+          	and a.sdate = #{sdate}
+        </if>      
+        <if test = "factory != null and factory != ''">
+          	and factory = #{factory}
+        </if>  
+        <if test = "storage != null and storage != ''">
+			and storage = #{storage}
+        </if>
+        <if test = "scantype != null and scantype != '' and scantype != 'All'">
+        	and a.scantype = #{scantype}
+        </if>
+        order by iid desc
+	</select>
+	
+	<!-- 재고실사 - 집계형 -->
+	<select id="searchInventorySummary" resultType="map">
+			SELECT 
+	         a.SDATE,
+	         a.itemcode,
+	         a.STORAGE,
+	         a.FACTORY,
+	         SUM(a.QTY) as sumqty,
+	         a.scantype 
+	       FROM T_WMS_REALSTOCK a
+	       LEFT OUTER JOIN t_mi_item b 
+	                 ON a.itemcode = b.itemcode
+	            LEFT OUTER JOIN t_mi_typesub c 
+	                 ON b.carno = c.subcode 
+	                AND c.typecode = 'MI041'
+	      WHERE a.useyn = 'Y'
+		<if test ="sdate != null and sdate != ''">
+          	and a.sdate = #{sdate}
+        </if>      
+        <if test = "factory != null and factory != ''">
+          	and a.factory = #{factory}
+        </if>  
+        <if test = "storage != null and storage != ''">
+			and a.storage = #{storage}
+        </if>
+        <if test = "itemcode != null and itemcode != ''">
+        	and a.itemcode = #{itemCode}
+        </if>
+        <if test = "scantype != null and scantype != '' and scantype != 'All'">
+        	and a.scantype = #{scantype}
+        </if>
+		GROUP BY a.SDATE, a.itemcode, a.STORAGE, a.FACTORY, a.scantype		
+		
+	</select>
+	
+	<!-- 언팩 리스트 조회 -->
+	<select id="searchUnpack" resultType ="map">
+		SELECT
+		    b.itemcode,
+		    qty,
+		    completeyn as yn,
+		    nvl((select sum(qty) from t_scm_barcode aa where a.barcode = aa.unpackbarcode and useyn = 'Y'),0) as scanqty, 
+		    print_qty,
+		    ymdhms  
+		  FROM t_wms_unpack a 
+		  LEFT OUTER JOIN t_mi_item b ON a.itemcode = b.itemcode 
+		  LEFT OUTER JOIN t_mi_typesub c ON b.carno = c.subcode AND c.typecode = 'MI041' 
+		 WHERE sdate = #{date}
+		 and factory = #{factory}
+		 and useyn = 'Y'
+		 ORDER BY iid DESC
+	</select>
+	
+	<!-- 공정 불출 리스트 조회 - 미도착 -->
+	<select id="searchWIPInputNotArrived" resultType ="map">
+		SELECT A.INDATE,A.FACTORY,A.STORAGE,A.WCCODE,A.BARCODE,A.ITEMCODE,A.LOGINID,A.YMDHMS,B.ITEMNAME,C.SUBNAME_CH AS CAR,TO_NUMBER(A.QTY) AS QTY,A.ROOMCODE,
+		(SELECT SUM(QTY) FROM T_WMS_WORKMOVE AA WHERE A.BARCODE = AA.BARCODE AND SOURCE = 'WIPINPUT' AND AA.USEYN = 'Y' AND AA.INDATE = A.INDATE) AS SCANQTY,
+		(SELECT SUM(AA.QTY) FROM T_WMS_WORKMOVE AA INNER JOIN T_SCM_PALLET P ON AA.BARCODE = P.BBARCODE AND A.BARCODE = P.PBARCODE  AND SOURCE = 'WIPINPUT' AND AA.USEYN = 'Y' AND AA.INDATE = A.INDATE) AS SCANQTY2
+		FROM T_WMS_WORKMOVE A 
+		LEFT JOIN t_mi_item b          ON b.itemcode = a.itemcode
+		LEFT JOIN t_mi_typesub c          ON c.subcode  = b.carno         AND c.typecode = 'MI041'
+		WHERE A.SOURCE = 'WIPSENDING' AND USEYN = 'Y' AND A.INDATE = #{date}
+		AND UPPER(TRIM(a.factory)) = UPPER(TRIM(#{factory}))
+		<if test="storage != null and !storage.equalsIgnoreCase('all')">
+	    	AND UPPER(TRIM(a.storage)) = UPPER(TRIM(#{storage}))
+	    </if>
+		ORDER BY A.YMDHMS asc
+		
+		<!-- SELECT a.factory,
+	           a.storage,
+	           a.roomcode,
+	           a.indate,
+	           c.subname_ch AS car,
+	           a.itemcode,
+	           b.itemname,
+	           a.qty,
+	           a.barcode,
+	           substr(a.ymdhms,9,2)||':'||substr(a.ymdhms,11,2) as ymdhms 
+	    FROM t_wms_workmove a
+	    LEFT JOIN t_mi_item b ON b.itemcode = a.itemcode
+	    LEFT JOIN t_mi_typesub c ON c.subcode = b.carno
+	                             AND c.typecode = 'MI041'
+	    WHERE a.source = 'WIPSENDING'
+	    AND NOT EXISTS (
+	        SELECT 1
+	        FROM t_wms_workmove r
+	        WHERE r.barcode = a.barcode
+	          AND r.source = 'WIPINPUT'
+	    )
+
+	        AND a.indate = #{date}
+
+	        AND UPPER(TRIM(a.factory)) = UPPER(TRIM(#{factory}))
+
+	        AND UPPER(TRIM(a.storage)) = UPPER(TRIM(#{storage}))
+
+	    ORDER BY a.barcode -->
+	</select>
+	
+	<select id="searchWIPInputCompleted" resultType="map">
+		SELECT
+		       a.wccode     AS wccode,
+		       a.itemcode   AS itemcode,
+		       a.qty        AS qty,
+		       a.barcode    AS barcode,
+		       substr(a.ymdhms,9,2)||':'||substr(a.ymdhms,11,2) as ymdhms 
+		  FROM t_wms_workmove a
+		  LEFT JOIN (
+                SELECT barcode, ymdhms
+                  FROM (
+                        SELECT
+                               s.barcode,
+                               s.ymdhms,
+                               ROW_NUMBER() OVER (
+                                   PARTITION BY s.barcode
+                                   ORDER BY s.ymdhms DESC
+                               ) AS rn
+                          FROM t_wms_workmove s
+                         WHERE s.source = 'WIPSENDING'
+                           AND s.useyn  = 'Y'
+                  )
+                 WHERE rn = 1
+          ) s
+            ON s.barcode = a.barcode
+		  LEFT JOIN t_mi_item b
+		    ON b.itemcode = a.itemcode
+		  LEFT JOIN t_mi_typesub c
+		    ON c.subcode  = b.carno
+		   AND c.typecode = 'MI041'
+		 WHERE a.source = 'WIPINPUT'
+		   AND a.useyn  = 'Y'
+
+	        AND a.indate = #{date}
+
+	        AND UPPER(TRIM(a.factory)) = UPPER(TRIM(#{factory}))
+
+	        AND UPPER(TRIM(a.storage)) = UPPER(TRIM(#{storage}))
+
+		 ORDER BY
+		       a.ymdhms desc
+	</select>
+
+	<!-- 공정 불출 리스트 조회 - detail -->
+	<select id="searchWIPInputDetail" resultType ="map">
+		<!-- SELECT			250913쿼리 변경
+			a.itemcode,
+			a.qty,
+			a.roomcode,
+			a.ymdhms 
+		  FROM t_wms_workmove a
+		  LEFT OUTER JOIN t_mi_item b ON a.itemcode = b.itemcode 
+		  LEFT OUTER JOIN t_mi_typesub c ON b.carno = c.subcode AND c.typecode = 'MI041' 
+		 WHERE a.indate = #{date}
+		 ORDER BY a.iid DESC -->
+		 select 
+			itemcode,
+			sum(qty) as qty,
+			nvl(ROOMCODE,factory||'-'||storage) as roomcode,
+			substr(ymdhms,9,2)||':'||substr(ymdhms,11,2) as ymdhms 
+		from t_wms_WORKMOVE 
+		where INdate = #{date} and SOURCE = 'WIPINPUT' and useyn = 'Y' and UPPER(factory) = UPPER(#{factory}) AND STORAGE LIKE '%'||#{storage}||'%'
+		group by itemcode,substr(ymdhms,9,2)||':'||substr(ymdhms,11,2),ROOMCODE, factory, storage order by max(ymdhms) desc
+	</select>
+	
+	<!-- 공정 불출 리스트 조회 - summary -->
+	<select id="searchWIPInputSummary" resultType ="map">
+		select 
+			itemcode,
+			sum(qty) as sumqty 
+		from t_wms_WORKMOVE where INdate = #{date} and SOURCE = 'WIPINPUT' and useyn = 'Y' and UPPER(factory) = UPPER(#{factory}) AND STORAGE LIKE '%'||#{storage}||'%'
+		group by itemcode order by itemcode
+		<!-- SELECT				250913쿼리 변경
+		    a.indate,
+		    a.itemcode,
+		    d.factory,
+		    d.storage,
+			sum(a.qty) as sumqty
+		  FROM t_wms_workmove a
+		  LEFT OUTER JOIN t_mi_item b ON a.itemcode = b.itemcode 
+		  LEFT OUTER JOIN t_mi_typesub c ON b.carno = c.subcode AND c.typecode = 'MI041' 
+		  LEFT OUTER JOIN t_wms_location d ON a.barcode = d.barcode
+		 WHERE a.indate = #{date}
+           AND a.useyn = 'Y'
+         GROUP BY a.indate, a.itemcode, d.factory, d.storage -->
+	</select>
+	
+	<!-- 피딩 조회 - detail -->
+	<select id="searchWIPFeedingDetail" resultType ="map">
+		 select 
+			itemcode,
+			sum(qty) as qty,
+			location,
+			substr(ymdhms,9,2)||':'||substr(ymdhms,11,2) as ymdhms 
+		from t_wms_WORKLOCATION
+		where INdate = #{date} and SOURCE = 'FEEDING' and useyn = 'Y' and UPPER(factory) = UPPER(#{factory}) AND STORAGE LIKE '%'||#{storage}||'%'
+		group by itemcode, location, ymdhms
+		order by max(ymdhms) desc
+	</select>
+	
+	<select id="searchWIPFeedingSummary" resultType ="map">
+		select 
+			itemcode,
+			sum(qty) as sumqty 
+		from t_wms_WORKLOCATION where INdate = #{date} and SOURCE = 'FEEDING' and useyn = 'Y' and UPPER(factory) = UPPER(#{factory}) AND STORAGE LIKE '%'||#{storage}||'%'
+		group by itemcode order by itemcode
+	</select>
+	
+	<!-- part label 바코드 조회 -->
+	<select id="searchPartLabel" resultType ="map">
+		SELECT
+			b.useyn as yn,
+			b.barcode, 
+			b.itemname,
+			b.itemcode,
+			b.qty,
+			b.madate,
+			nvl((select location from t_scm_pallet p left join t_wms_location l2 on p.pbarcode = l2.barcode where p.bbarcode = #{barcode} and  p.useyn = 'Y' and l2.useyn = 'Y'AND l2.iid = (
+			        SELECT MAX(iid)
+			        FROM t_wms_location
+			        WHERE barcode = p.pbarcode
+			          AND useyn = 'Y'
+			  )) ,l.location) as location,
+			nvl((select p.sdate from t_scm_pallet p left join t_wms_location l2 on p.pbarcode = l2.barcode where p.bbarcode = #{barcode} and  p.useyn = 'Y' and l2.useyn = 'Y' AND l2.iid = (
+		        SELECT MAX(iid)
+		        FROM t_wms_location
+		        WHERE barcode = p.pbarcode
+		          AND useyn = 'Y'
+		  ) ) ,l.sdate) as sdate,
+			w.ymdhms as WIP
+		  FROM t_scm_barcode b
+		  left join t_wms_location l
+		  on b.barcode = l.barcode and  l.useyn = 'Y'
+		  LEFT OUTER JOIN t_mi_item d ON b.itemcode = d.itemcode
+		  LEFT OUTER JOIN t_mi_typesub c ON d.carno = c.subcode AND c.typecode = 'MI041' 
+		  left join t_wms_workmove w on b.barcode = w.barcode and w.useyn = 'Y'
+		 WHERE b.barcode = #{barcode} 
+		 and rownum = 1
+		 
+	</select>
+	
+	<!-- pallet label 바코드 조회 -->
+	<select id="searchPalletLabel" resultType ="map">
+		SELECT
+			p.useyn as yn,
+			p.pbarcode,
+			b.itemname,
+			p.itemcode,
+			--sum(p.qty) as qty,
+			(
+                SELECT sum(qty)
+                FROM t_scm_pallet
+                WHERE pbarcode = #{barcode} and useyn = 'Y'
+            ) AS qty,
+            (
+                SELECT COUNT(bbarcode)
+                FROM t_scm_pallet
+                WHERE pbarcode = #{barcode} and useyn = 'Y'
+            ) AS labelqty,
+            (
+		        select bdate 
+		        FROM (
+			        SELECT bdate
+			        FROM t_scm_pallet
+			        WHERE pbarcode = #{barcode}
+			        ORDER BY bdate
+			    )
+			    WHERE ROWNUM = 1
+		    ) as bdate,
+			nvl(l.location, w.WORKCENTER) as location,
+			l.sdate as sdate,
+			w.ymdhms as WIP
+		  FROM t_scm_pallet p
+		  left join t_wms_location l  on p.pbarcode = l.barcode and l.useyn = 'Y'
+		  LEFT OUTER JOIN t_mi_item b ON p.itemcode = b.itemcode 
+		  LEFT OUTER JOIN t_mi_typesub c ON b.carno = c.subcode AND c.typecode = 'MI041' 
+		  left join t_wms_workmove w on p.pbarcode = w.barcode and w.useyn = 'Y'
+		 WHERE p.pbarcode = #{barcode} and rownum = 1
+		 group by b.itemname, p.pbarcode, p.itemcode,l.location, l.sdate, w.ymdhms, p.useyn, w.WORKCENTER
+	</select>
+	
+	<!-- location 바코드 조회 -->
+	<select id="searchLocation" resultType = "map">
+		SELECT 
+			L.itemcode,
+            CASE 
+		    WHEN B.MADATE IS NOT NULL THEN B.MADATE
+		    ELSE '20'||(SELECT MIN(BDATE) 
+		          FROM T_SCM_PALLET X
+		          WHERE X.itemcode = L.itemcode
+		          AND ROWNUM = 1)
+			END AS MADATE,
+			L.qty,
+			L.BARCODE
+		FROM t_wms_location L
+        LEFT JOIN T_SCM_BARCODE B 
+        ON B.BARCODE = L.BARCODE
+		WHERE l.USEYN = 'Y'
+		  AND l.LOCATION = #{barcode}
+	</select>
+
+	<!-- 박스 바코드 조회 -->
+	<select id="searchBoxBarcode" resultType = "map">
+		SELECT
+			A.USEYN AS YN,
+			A.BARCODE,
+			A.ITEMNAME,
+			A.ITEMCODE,
+			A.QTY,
+			A.MADATE,
+			B.LOCATION,
+			B.SDATE
+		FROM T_SCM_BARCODE A
+		LEFT JOIN T_WMS_LOCATION B ON B.BARCODE = A.BARCODE AND B.USEYN = 'Y'
+		WHERE A.BARCODE = #{barcode}
+	</select>
+	
+	<select id="searchIncomingInvoiceList" resultType = "map"> <!-- 입고 Invoice List 조회 -->
+		<![CDATA[
+		WITH inv AS (        
+		    SELECT arrival_date, invoice_no, confirm_yn, SUM(qty) AS qty
+		    FROM t_mex_scm_invoice@ptlink
+		    GROUP BY arrival_date, invoice_no, confirm_yn
+		),
+		inb AS (            -- INBOUND 스캔 합계 (useyn='Y')
+		    SELECT invoiceno, SUM(qty) AS scanQty
+		    FROM t_wms_inbound
+		    WHERE useyn = 'Y'
+		    GROUP BY invoiceno
+		)
+		SELECT
+    		i.arrival_date,
+		    i.invoice_no,
+		    i.qty,                                
+		    NVL(b.scanQty,0) AS scanQty
+		FROM inv i
+		LEFT JOIN inb b ON b.invoiceno = i.invoice_no
+		WHERE --i.confirm_yn = 'Y'
+        i.qty is not null and i.qty !=0
+        AND ARRIVAL_DATE IS NOT NULL
+		]]>
+		<if test="type != null and type.toString().equals('Yes')">
+			AND i.qty = b.scanQty
+		</if>
+		<if test="type != null and type.toString().equals('No')">
+		<![CDATA[
+			AND (b.scanqty IS NULL OR b.scanqty <> i.qty)
+		]]>
+		</if>
+		ORDER BY i.arrival_date desc, i.invoice_no   
+			
+	</select>	
+	
+	<select id="searchInvoice" resultType = "map"> <!-- Invoice 조회 -->
+		<![CDATA[
+		SELECT a.itemcode,
+		       a.qty,
+		       NVL(SUM(b.qty), 0) as scanqty
+		  FROM T_MEX_SCM_INVOICE@ptlink a
+  		  LEFT OUTER JOIN T_WMS_INBOUND b ON a.invoice_no = b.invoiceno AND b.useyn = 'Y' and a.itemcode = b.itemcode
+		 WHERE a.invoice_no = #{invoiceNo}
+		   AND a.useyn = 'Y'
+		 group by a.itemcode, a.qty
+		 ORDER BY a.ITEMCODE
+		]]>	
+	</select>	
+	
+	<!-- 입고내역 조회 - Detail -->
+	<select id="searchIncomingDetail" resultType = "map">
+		select 
+			a.iid,
+			a.oitemcode,
+			to_number(a.qty) as qty,
+			nvl(a.source,' ') as source,
+			a.storage,
+			substr(a.ymdhms,9,6) as time 
+		from t_wms_inbound a 
+		left outer join t_wms_location b on a.barcode = b.barcode and b.useyn ='Y'
+		where a.sdate = #{date}
+		  and a.storage = #{storage}
+		<if test="custcode != null and custcode != ''">
+			and a.custcode = #{custcode}
+		</if>
+		<if test="custname != null and custname != ''">
+			and a.custname = #{custname}
+		</if>
+		and a.source = 'INCOMING'
+		and a.factory = #{factory}
+		and a.useyn = 'Y'
+		order by a.ymdhms desc
+	</select>
+	
+	<!-- 입고내역 조회 - summary -->
+	<select id="searchIncomingSummary" resultType = "map">
+		SELECT
+			a.sdate,
+		    a.factory,
+            a.storage,
+            a.oitemcode,
+		    SUM(a.qty) as sumqty
+		  FROM t_wms_inbound a
+		 WHERE a.useyn = 'Y'
+		 	AND A.SOURCE = 'INCOMING'
+		   AND a.sdate = #{date}
+		   AND a.storage = #{storage}
+		   AND a.factory = #{factory}
+		<if test="custcode != null and custcode != ''">
+			AND a.custcode = #{custcode}
+		</if>
+		<if test="custname != null and custname != ''">
+			AND a.custname = #{custname}
+		</if>
+           GROUP BY a.sdate, a.oitemcode, a.factory, a.storage
+	</select>
+	
+	<!-- 입고반품 -->
+	<update id="incomingReturn_updateYn" parameterType = "map">
+		UPDATE t_wms_inbound
+		SET useyn = 'N'
+		WHERE iid = (
+		  SELECT MAX(iid)
+		  FROM t_wms_inbound 
+		  WHERE barcode = #{barcode}
+		)
+	</update> 
+	
+	<!-- 입고반품 - 입고 여부 체크 -->
+	<!-- <select id="incomingReturn_inboundCheck" parameterType="map">
+		select count(*)
+		from t_wms_stock
+		where barcode = (
+			select barcode from t_wms_
+		)
+	</select> -->
+	
+	<insert id="incomingReturn_insertInboundTable" parameterType= "map">
+	    insert into t_wms_inbound
+	        (sdate, barcode, ymdhms, loginid, username, itemcode, bdate, seq, qty, scmmex, type,  source, storage,factory, custcode,custname, oitemcode, OKYN)
+	    select
+	        #{date},
+	        #{barcode},
+	        TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+	        #{loginid},
+	        #{username},
+	        #{itemcode},
+	        #{bdate},
+	        #{seq},
+	        #{qty},
+	        #{scmmex},
+	        #{type},
+	        #{source},
+	        #{storage},
+	        #{factory},
+			NVL((SELECT CUSTCODE FROM T_MI_PRICE_BUYCUST WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC FETCH FIRST 1 ROW ONLY), ''),
+			(SELECT
+				cu_sangho
+			FROM c_cust
+			WHERE cu_code = (NVL((SELECT CUSTCODE FROM T_MI_PRICE_BUYCUST WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC FETCH FIRST 1 ROW ONLY), ''))
+			),
+			#{oitemcode},
+			'N'
+		FROM DUAL
+	</insert>
+	
+	<!-- 입고반품 - stock 인서트 -->
+	<insert id="incomingReturn_insertStockTable" parameterType= "map">
+		INSERT INTO t_wms_stock (
+			SDATE,
+			BARCODE,
+			QTY,
+			STORAGE,
+			ITEMCODE,
+			LOGINID,
+			INSDATE,
+			YMDHMS,
+			mainkind,
+			kind,
+			outqty,
+			inqty,
+			location,
+			factory
+	    )
+	    values(
+	    	#{date},
+	    	#{barcode},
+	    	#{qty},
+	    	#{storage},
+	    	#{itemcode},
+	    	#{loginid},
+	    	TO_CHAR(SYSDATE, 'YYYY-MM-DD'),
+	    	TO_CHAR(SYSDATE,  'YYYYMMDDHH24MISS'),
+	    	#{main},
+	    	#{kind},
+	    	#{qty},
+	    	0,
+	    	#{location},
+	    	#{factory}
+	    )
+	</insert>
+	
+	<!-- 입고 반품 - Detail -->
+	<select id="searchIncomingReturnDetail" resultType = "map">
+		SELECT 
+		    a.iid,
+		    NVL(a.oitemcode, ' ') AS itemcode,
+		    TO_NUMBER(a.qty) AS qty,
+		    NVL(b.location,' ') AS location,
+		    NVL(a.storage, ' ') AS storage,
+		    SUBSTR(a.ymdhms,9,6) AS time 
+		FROM t_wms_inbound a 
+		LEFT JOIN (
+		    SELECT barcode, location
+		    FROM (
+		        SELECT 
+		            barcode,
+		            location,
+		            ROW_NUMBER() OVER (PARTITION BY barcode ORDER BY ymdhms DESC) AS rn
+		        FROM t_wms_location
+		    )
+		    WHERE rn = 1    
+		) B 
+		ON a.barcode = b.barcode  
+		WHERE a.sdate = #{date}
+		AND a.source = 'INCOMINGRETURN'
+		and a.useyn = 'Y'
+		ORDER BY a.ymdhms DESC
+	</select>	
+	
+	<!-- 출고 - Detail -->
+	<select id="searchLoadDetail" resultType = "map">
+		SELECT 
+		    a.iid,
+		    NVL(a.oitemcode, ' ') AS itemcode,
+		    TO_NUMBER(a.qty) AS qty,
+		    NVL(b.location,' ') AS location,
+		    NVL(a.storage, ' ') AS storage,
+		    SUBSTR(a.ymdhms,9,6) AS time 
+		FROM t_wms_outbound a 
+		LEFT JOIN (
+		    SELECT barcode, location
+		    FROM (
+		        SELECT 
+		            barcode,
+		            location,
+		            ROW_NUMBER() OVER (PARTITION BY barcode ORDER BY ymdhms DESC) AS rn
+		        FROM t_wms_location
+		    )
+		    WHERE rn = 1    
+		) B 
+ 		ON a.barcode = b.barcode 
+		WHERE a.sdate = #{date}
+		  and a.storage = #{storage}
+		  and a.useyn = 'Y'
+        AND a.source IN ('LOAD')
+		<if test = "custname != null and custname != ''">
+			and a.custname LIKE '%' || #{custname} ||'%'
+		</if>
+		ORDER BY a.ymdhms DESC
+	</select>
+	
+	<!-- 출고 반품 - Detail -->
+	<select id="searchLoadReturnDetail" resultType = "map">
+		SELECT 
+		    a.iid,
+		    NVL(a.oitemcode, ' ') AS itemcode,
+		    TO_NUMBER(a.qty) AS qty,
+		    NVL(b.location,' ') AS location,
+		    NVL(a.storage, ' ') AS storage,
+		    SUBSTR(a.ymdhms,9,6) AS time 
+		FROM t_wms_outbound a 
+		LEFT OUTER JOIN t_wms_location b ON a.barcode = b.barcode AND B.USEYN ='Y' 
+		WHERE a.sdate = #{date}
+		and a.source = 'LOADRETURN'
+		and a.useyn = 'Y'
+		AND A.QTY IS NOT NULL
+		ORDER BY a.ymdhms DESC
+	</select>
+	
+	
+	<update id = "palletN" >
+		update t_scm_pallet
+		set useyn = 'N',
+		memo_d = #{dmemo},
+		ymdhms_d =  TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+		where pbarcode = #{barcode} and useyn = 'Y'
+	</update>
+	
+	<update id = "barcodeN" >
+		update t_scm_barcode
+		set useyn = 'N',
+		useynremark = #{dmemo},
+		useyn_ymdhms =  TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+		where barcode = #{barcode}
+	</update>
+	
+	<select id = "existUnpack" resultType = "string">
+		select barcode
+		from t_wms_unpack
+		where barcode in
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn = 'Y'
+	</select>
+	
+	<select id = "unpackList" resultType = "map">
+		select 
+			sdate,
+			a.barcode,
+			qty,ymdhms,
+			print_yn,
+			print_qty as qty1, 
+			b.itemcode,
+			b.itemname,
+			c.subname_ch as car, 
+			lotdate, 
+			nvl((select sum(qty) from t_scm_barcode aa where a.barcode = aa.unpackbarcode and useyn = 'Y'),0) as scanqty, 
+			(select nvl(sum(qty),0)      
+				from t_wms_workmove bb      
+				where bb.barcode in (         
+					select aa.barcode          from t_scm_barcode aa          where a.barcode = aa.unpackbarcode     )) as workmoveqty ,
+			(select nvl(sum(qty),0)      
+				from t_wms_location bb      
+				where bb.barcode in (         
+					select aa.barcode          from t_scm_barcode aa          where a.barcode = aa.unpackbarcode     )) as locationqty  
+			from t_wms_unpack a left outer join t_mi_item b on a.itemcode = b.itemcode left outer join t_mi_typesub c on b.carno = c.subcode and c.typecode = 'MI041'
+			where sdate = #{date} and useyn = 'Y'  
+			and a.factory = #{factory}
+			<if test="barcode != null and barcode != ''">
+				and barcode = #{barcode}
+			</if>
+			order by ymdhms desc
+		
+		<!-- select
+			u.iid,
+			u.sdate,
+			u.barcode,
+			completeyn as yn,
+			u.qty,
+            nvl(sum(b.qty),0) as scanqty
+		from t_wms_unpack u
+        left join t_scm_barcode b
+        on b.barcode = u.barcode
+        and b.useyn = 'Y'
+		where sdate = #{date}
+		
+		group by u.sdate, u.barcode, completeyn, u.qty,u.iid		
+		order by iid desc -->
+	</select>
+	
+	<select id = "unpackBarcodeList" resultType = "map">
+		select
+			(select qty from t_wms_unpack u where barcode = #{barcode} and useyn = 'Y') as totalqty,	
+			barcode,
+			qty,
+			useyn
+		from t_scm_barcode
+		where unpackbarcode = #{barcode}		
+		order by useyn desc, barcode asc
+	</select>
+	
+	<update id = "updateUnpackBarcodeYN">
+		update t_scm_barcode 
+		set useyn = 'Y'
+		where unpackbarcode = #{barcode}
+		and barcode in 
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	</update>
+	
+	<update id = "updateUnpackStatus">
+		update t_wms_unpack 
+		set completeyn = 'Y',
+		complete_ymdhms = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+		where barcode = #{barcode}
+	</update>
+	
+	<!-- 공정불출 반납 내역 - summary -->
+	<select id = "searchWIPReturnDetail" resultType = "map">
+		<!-- SELECT 
+		    iid,
+		    NVL(itemcode, ' ') AS itemcode,
+		    TO_NUMBER(qty) AS qty,
+		    NVL(factory,' ') AS factory,
+		    NVL(storage, ' ') AS storage,
+		    SUBSTR(ymdhms,9,6) AS time 
+		FROM t_wms_stock
+		WHERE kind = 'WIPRETURN'
+		and sdate = #{date} -->
+		select 
+			itemcode,
+			sum(qty) as qty,
+			nvl(ROOMCODE,' ') as location,
+			substr(ymdhms,9,2)||':'||substr(ymdhms,11,2) as time 
+		from t_wms_WORKMOVE 
+		where INdate = #{date} and SOURCE = 'WIPRETURN' and UPPER(factory) = UPPER(#{factory}) AND STORAGE LIKE '%'||#{storage}||'%' and useyn = 'Y'
+		group by itemcode,substr(ymdhms,9,2)||':'||substr(ymdhms,11,2),ROOMCODE order by max(ymdhms) desc
+	</select>
+	
+	<!-- 공정불출 반납 내역 - summary -->
+	<select id = "searchWIPReturnSummary" resultType = "map">
+		<!-- select
+			sdate,
+			factory,
+			storage,
+			itemcode,
+			sum(qty) as sumqty
+		from t_wms_stock
+		where kind = 'WIPRETURN'		
+		and sdate = #{date} 
+		group by sdate, itemcode, factory, storage -->
+		select 
+			itemcode,
+			sum(qty) as  sumqty
+		from t_wms_WORKMOVE where INdate = #{date} and SOURCE = 'WIPRETURN'  and UPPER(factory) = UPPER(#{factory}) AND STORAGE LIKE '%'||#{storage}||'%' and useyn = 'Y'
+		group by itemcode order by itemcode
+	</select>
+	
+	<!-- 재고 조회 detail -->
+	<select id = "searchStockDetail" resultType = "map">		
+	    SELECT
+	        a.factory,
+	        a.storage,
+	        a.location,
+	        a.sdate,
+	        c.subname_ch AS car,
+	        a.itemcode,
+	        b.itemname,
+	        a.qty,
+	        a.barcode,
+	        a.ymdhms,
+	        a.loginid,
+	        SUBSTR(a.ymdhms, 9, 2) || ':' || SUBSTR(a.ymdhms, 11, 2) as hhmm,
+			CASE WHEN INSTR(a.barcode, ',') > 0 
+				THEN TRIM(REGEXP_SUBSTR(a.barcode, '[^,]+', 1, 2))
+				ELSE ''
+			END AS bdate
+	    FROM t_wms_location a
+	    LEFT JOIN t_mi_item b
+	      ON b.itemcode = a.itemcode
+	    LEFT JOIN t_mi_typesub c
+	      ON c.subcode  = b.carno
+	     AND c.typecode = 'MI041'
+	    WHERE a.useyn   = 'Y'		  
+        <if test = "factory != null and factory != ''">
+          	and UPPER(factory) = UPPER(#{factory})
+        </if>  
+        <if test = "storage != null and storage != ''">
+			and UPPER(storage) = UPPER(#{storage})
+        </if>
+        <if test = "itemcode != null and itemcode != ''">
+        	and a.itemcode like  '%' || #{itemcode} ||'%'
+        </if>
+        ORDER BY itemcode, location
+	</select>
+	
+	<select id = "stockHistoryMain" resultType = "com.example.demo.vo.StockHistoryVO">
+		 SELECT 
+			A.ITEMCODE,
+			B.SPEC,
+			A.ITEMNAME,
+			A.LOCATION,
+			A.LASTSTATUS
+		FROM V_STOCKINFO_N A
+		LEFT JOIN T_MI_ITEM B ON B.ITEMCODE = A.ITEMCODE AND B.DELDATE = ' '
+		WHERE BARCODE = #{barcode}
+	</select>
+
+	<select id = "stockHistoryList" resultType = "com.example.demo.vo.StockHistoryVO">
+		select  
+			useyn,
+			sdate,
+    		kind, 
+    		barcode, 
+    		factory, 
+    		storage, 
+    		mktime as time, 
+  			location, 
+  			work,
+  			qty,
+  			laststatus,
+  			loginid ,
+  			factory,
+  			labeltype,
+  			partbarcode,
+  			custcode,
+  			custname,
+  			memo
+  		from v_itemhistory v
+   		where  v.barcode =#{barcode} 
+   		--AND v.kind NOT IN ('UNPACKSUB')
+   		
+	</select>
+	
+	<select id="getWorkshop" resultType = 'string'>
+		SELECT WCCODE
+		FROM T_WMS_WORKMOVE
+		WHERE BARCODE = #{barcode}
+		AND USEYN = 'Y'
+		ORDER BY IID DESC
+		FETCH FIRST 1 ROWS ONLY
+	</select>
+	
+	<select id="show_stockHistory_sangho" resultType="map">
+		SELECT CU_SANGHO FROM C_CUST WHERE CU_CODE = #{custCode}
+	</select>
+	
+	<!-- 바코드 정보 조회 -->
+	<select id="searchWarehouse" resultType="com.example.demo.vo.BarcodeVO">
+		SELECT 
+			a.barcode as barcodeone,
+		    b.itemname,
+		    a.itemcode,
+		    c.indate,
+		    a.storage
+		FROM t_wms_stock a
+		LEFT JOIN t_mi_item b ON a.itemcode = b.itemcode
+		LEFT JOIN t_wms_inbound c ON a.barcode = c.barcode
+		where a.useyn = 'Y'
+		  AND a.barcode IN
+		<foreach collection="list" item="bc" open="(" separator="," close=")">
+		  #{bc}
+		</foreach>
+
+	</select>
+	
+	<select id = "sameWarehouseCheck" resultType= "String">
+		select distinct barcode from t_wms_location
+		where UPPER(location) like  UPPER(#{factory} || '-' || #{storage1} || '%')
+		and useyn = 'Y'
+		and barcode in
+		<foreach collection = "list" item = "barcode" open="(" separator= "," close= ")">
+			#{barcode}
+		</foreach>
+	</select>
+	
+	<!-- 창고 이동 선입선출 체크 -->
+	<select id="checkFifo" resultType="map" parameterType="map">
+		WITH ref AS (
+		    SELECT b.itemcode,
+		           MIN(TO_DATE(b.sdate,'YYYY-MM-DD')) AS ref_indate
+		    FROM t_scm_barcode b
+		    WHERE b.barcode IN
+		    <foreach collection="barcode" item="b" open="(" separator="," close=")">
+		        #{b}
+		    </foreach>
+		    GROUP BY b.itemcode
+		),
+		agg AS (
+		    SELECT l.itemcode,
+		           l.barcode,
+		           b.sdate,
+		           SUM(NVL(l.qty, 0)) AS qty
+		    FROM t_wms_location l
+		    JOIN ref r ON r.itemcode = l.itemcode
+			left join t_scm_barcode b on b.barcode = l.barcode
+		    WHERE l.useyn = 'Y'
+		      AND l.factory = #{factory}
+			  AND L.STORAGE = #{storage1}
+		      <![CDATA[AND TO_DATE(b.sdate,'YYYY-MM-DD') < r.ref_indate]]>
+		    GROUP BY l.itemcode, l.barcode, b.sdate
+		),
+		ranked AS (
+		    SELECT a.*,
+		           ROW_NUMBER() OVER (
+		               PARTITION BY a.itemcode
+		               ORDER BY TO_DATE(a.sdate,'YYYY-MM-DD') ASC, a.barcode
+		           ) AS rn
+		    FROM agg a
+		)
+		SELECT r.itemcode, r.barcode, r.qty, r.sdate, m.spec AS oitemcode
+		FROM ranked r
+		LEFT JOIN t_mi_item m ON m.itemcode = r.itemcode AND m.deldate = ' '
+		<![CDATA[WHERE r.rn <= 5]]>
+		ORDER BY r.itemcode, TO_DATE(r.sdate,'YYYY-MM-DD') ASC, r.rn
+	</select>
+
+	<!-- 창고 이동 처리 - stockmove -->
+	<insert id="transferWarehouseStockMove">
+		insert into t_wms_stockmove(
+			sdate,
+			itemcode,
+			barcode,
+			qty,
+			factory,
+			storage1,
+			storage2,
+			ymdhms,
+			loginid,
+			okyn,
+			source
+		)
+		values(
+			#{date},
+			#{itemcode},
+			#{barcode},
+			#{qty},
+			#{factory},
+			#{storage1},			
+			#{storage2},			
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{loginid},
+			#{okyn},
+			#{movesource}
+		)
+	</insert>
+	
+	<insert id = "insWorkmove">
+		insert into t_wms_workmove
+		(
+			indate,
+			barcode,
+			itemcode,
+			roomcode,
+			loginid,
+			ymdhms,
+			qty,
+			source,
+			factory,
+			storage,
+			wccode,
+			okyn
+		)
+		values(
+			#{date},
+			#{barcode},
+			#{itemcode},
+			#{factory}||'-'||#{storage},
+			#{loginid},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{qty},
+			#{source},
+			#{factory},
+			#{storage},
+			#{factory}||'-'||#{wstorage},
+			#{okyn}
+		)
+		
+	</insert>
+	
+	<!-- 창고 이동 처리 - stock -->
+	<insert id="transferWarehouseStock">
+		insert into t_wms_stock(
+			sdate,
+			kind,
+			barcode,
+			inqty,
+			outqty,
+			qty,
+			factory,
+			storage,
+			factory2,
+			storage2,
+			itemcode,
+			loginid,
+			insdate,
+			ymdhms,
+			mainkind			
+		)
+		values(
+			#{date},
+			#{kind},
+			#{barcode},
+			#{inqty},
+			#{outqty},
+			#{qty},
+			#{factory},
+			#{storage1},			
+			#{factory2},
+			#{storage2},			
+			#{itemcode},
+			#{loginid},
+			#{date},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{mainkind}
+		)
+	</insert>	
+	
+	
+	
+	<!-- 창고 이동 처리 - detail -->
+	<select id = "searchWarehouseDetail" resultType = "map">
+		select
+			sdate,
+			itemcode,
+			qty,
+			factory,
+			storage1,
+			substr(ymdhms,9,6) as time
+		from t_wms_stockmove
+		where sdate = #{date} and factory = #{factory} AND STORAGE1 LIKE '%'||#{storage}||'%' and useyn = 'Y'
+		order by iid desc
+	</select>
+	
+	<!-- 창고 이동 처리 - summary -->
+	<select id = "searchWarehouseSummary" resultType = "map">
+		select
+			sdate,
+			factory,
+			storage1,
+			itemcode,
+			SUM(qty) as sumqty
+		from t_wms_stockmove
+		where sdate = #{date} and factory = #{factory} AND STORAGE1 LIKE '%'||#{storage}||'%' and useyn = 'Y'
+		group by sdate, factory, storage1, itemcode
+		order by storage1
+	</select>
+	
+	<!-- 공장 이동 처리 - factorymove -->
+	<insert id="transferFactoryFactoryMove">
+		insert into t_wms_factorymove(
+			sdate,
+			itemcode,
+			barcode,
+			qty,
+			factory,
+			movefactory,
+			storage,
+			ymdhms,
+			source,
+			loginid,
+			okyn
+		)
+		values(
+			#{date},
+			#{itemcode},
+			#{barcode},
+			#{qty},
+			#{factory},
+			#{moveFactory},			
+			#{storage},			
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{source},
+			#{loginid},
+			#{okyn}
+		)
+	</insert>
+	
+	<!-- 공장 이동 처리 - stock -->
+	<insert id="transferFactoryStock">
+		insert into t_wms_stock(
+			sdate,
+			kind,
+			barcode,
+			inqty,
+			outqty,
+			qty,
+			factory,
+			factory2,
+			storage,
+			storage2,
+			itemcode,
+			insuser,
+			insdate,
+			ymdhms,
+			mainkind			
+		)
+		values(
+			#{date},
+			#{kind},
+			#{barcode},
+			0,
+			#{outqty},
+			#{qty},
+			#{factory},
+			#{moveFactory},
+			#{storage},			
+			#{storage},			
+			#{itemcode},
+			#{loginid},
+			TO_CHAR(SYSDATE, 'YYYY-MM-DD'),
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{mainkind}
+		)
+	</insert>	
+	
+	<!-- 공장이동완료 RECEIVING STOCK -->
+	<insert id="factoryReceivingStock">
+		insert into t_wms_stock(
+			sdate,
+			kind,
+			barcode,
+			inqty,
+			outqty,
+			qty,
+			factory,
+			storage,
+			itemcode,
+			insuser,
+			insdate,
+			ymdhms,
+			mainkind			
+		)
+		values(
+			#{date},
+			#{kind},
+			#{barcode},
+			#{qty},
+			0,
+			#{qty},
+			#{factory},
+			#{storage},			
+			#{itemcode},
+			#{loginid},
+			TO_CHAR(SYSDATE, 'YYYY-MM-DD'),
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{mainkind}
+		)
+	</insert>	
+	<!-- 공장 이동 처리 - detail -->
+	<select id = "searchFactoryDetail" resultType = "map">
+		select
+			f.sdate,
+			f.itemcode,
+			f.qty,
+			f.factory,
+			f.storage,
+			b.itemname,
+			substr(f.ymdhms,9,6) as time
+		from t_wms_factorymove f
+		LEFT JOIN t_mi_item b ON f.itemcode = b.itemcode
+		where f.sdate = #{date} and f.useyn = 'Y'
+		and factory LIKE '%'||#{factory}||'%'
+		AND STORAGE LIKE '%'||#{storage}||'%'
+	</select>
+	
+	<!-- 공장 이동 처리 - summary -->
+	<select id = "searchFactorySummary" resultType = "map">
+		select
+			f.sdate,
+			f.factory,
+			f.storage,
+			f.itemcode,
+			SUM(f.qty) as sumqty,
+			b.itemname
+		from t_wms_factorymove f
+		LEFT JOIN t_mi_item b ON f.itemcode = b.itemcode
+		where f.sdate = #{date} and f.factory LIKE '%'||#{factory}||'%' and f.useyn = 'Y'
+		AND f.STORAGE LIKE '%'||#{storage}||'%'
+		group by f.sdate, f.factory, f.storage, f.itemcode, b.itemname
+	</select>
+	
+	<!-- 공장 이동 처리 - complete -->
+
+	<!-- 상호명 불러오기 -->
+	<select id="incomingSanghoLocal" resultType="string">
+		<![CDATA[select cu_code||'_'||cu_sangho from c_cust where chk_buy =1 and (substr(cu_code,1,1) <> 'K' and cu_code != '0001') order by cu_sangho]]>
+	</select>
+	<select id="incomingSanghoCkd" resultType="string">
+		<![CDATA[
+			select cu_code||'_'||cu_sangho from c_cust where chk_buy =1 and (substr(cu_code,1,1) = 'K' or cu_code = '0001') order by cu_sangho
+		]]>
+	</select>
+	<select id="incomingSanghoException" resultType="string">
+		select cu_code||'_'||cu_sangho from c_cust where chk_buy =1 order by cu_sangho
+	</select>
+	
+	<!-- 출고 -->
+	<select id= 'loadSangho' resultType='string'>
+		select cu_code || '_' || cu_sangho as cust from c_cust where chk_sale=1 order by cu_code
+	</select>
+	
+	<select id="updateExceptionCheckStatus" resultType="int">
+		select laststatus
+		from v_itemhistory
+		where (kind = 'BARCODE' or kind = 'PALLET')
+		and barcode = #{barcode}
+	</select>
+	
+	<select id="palletExceptionCheckStatus" resultType="int">
+		SELECT COUNT(*)
+		FROM (
+		    SELECT p.pbarcode AS barcode, p.laststatus
+		    FROM t_scm_pallet p
+		    WHERE p.pbarcode = #{barcode}
+		    UNION ALL
+		    SELECT c.bbarcode AS barcode, b.laststatus
+		    FROM t_scm_pallet c
+		    JOIN t_scm_barcode b ON b.barcode = c.bbarcode
+		    WHERE c.pbarcode = #{barcode}
+		) x
+		WHERE NVL(x.laststatus, -1) NOT IN (10, 20)
+	</select>
+	
+	<select id="partExceptionCheckStatus" resultType="int">		
+		SELECT COUNT(*)
+		  FROM t_scm_barcode
+		 WHERE barcode = #{barcode}
+		   AND NVL(laststatus, -1) NOT IN (10, 20)
+	</select>
+	
+	<update id="updateLaststatusPart">
+		update t_scm_barcode set
+		laststatus = #{laststatus},
+		lastfactory = #{factory},
+		laststorage = #{storage}
+		where barcode = #{barcode}
+	</update>
+	<update id="updateLaststatusPallet">
+		update t_scm_pallet set
+		laststatus = #{laststatus},
+		lastfactory = #{factory},
+		laststorage = #{storage}
+		where pbarcode = #{barcode}
+	</update>
+	
+	<select id="findChildBarcodesForPallets" parameterType="list" resultType="string">
+		WITH input AS (
+			<foreach collection="list" item="barcode" separator=" UNION ALL ">
+			SELECT #{barcode} AS pbarcode FROM dual
+			</foreach>
+		)
+		SELECT p.bbarcode
+		FROM t_scm_pallet p
+		JOIN input i ON i.pbarcode = p.pbarcode
+		WHERE p.useyn = 'Y'
+	</select>
+	
+	<select id="unloadedList" resultType = "map">
+		SELECT 
+	        l.barcode,
+	        l.sdate,
+	        c.subname_ch as car,
+	        l.itemcode,
+	        b.itemname,
+	        SUM(l.qty) as qty
+	    FROM t_wms_location l
+	    LEFT JOIN t_mi_item b ON l.itemcode = b.itemcode
+	    LEFT JOIN t_mi_typesub c ON b.carno = c.subcode AND c.typecode = 'MI041'
+	    WHERE (l.rack IS NULL OR l.rack = '-')
+	    AND l.useyn = 'Y'
+	    and factory = #{factory}
+	    and storage = #{storage}
+	    GROUP BY l.barcode, l.sdate, c.subname_ch, l.itemcode, b.itemname
+	    ORDER BY l.itemcode, l.sdate desc, l.barcode
+	</select>
+
+	<select id = "factoryMoveOk" resultType = "int">	
+		SELECT COUNT(1)
+		  FROM t_wms_factorymove
+		 WHERE barcode IN
+	  <foreach collection="list" item="barcode" open="(" separator="," close=")">
+	    #{barcode}
+	  </foreach>
+		   and useyn = 'Y'
+		   and completeyn = 'N'
+	</select>
+	
+	<insert id="completeFactoryMove">
+		insert into t_wms_factorymove(
+			sdate,
+			itemcode,
+			barcode,
+			qty,
+			factory,
+			storage,
+			ymdhms,
+			source	,
+			loginid,
+			movefactory,
+			movestorage,
+			okyn
+		)
+		values(
+			#{date},
+			#{itemcode},
+			#{barcode},
+			#{qty},
+			#{factory},
+			#{storage},			
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{source},
+			#{loginid},
+			#{factory2},
+			#{storage2},
+			#{okyn}
+		)
+	</insert>
+	
+	<select id = "palletInboundCheck" resultType = "string">
+		  SELECT BARCODE FROM T_WMS_INBOUND
+		  WHERE BARCODE IN
+		  <foreach collection="list" item="barcode" open="(" separator="," close=")">
+		    #{barcode}
+		  </foreach>
+		  and FACTORY= #{factory}
+		  and useyn = 'Y'
+	</select>
+	
+	<select id = "selectStorage" resultType ="String">
+		select storage from t_wms_location where barcode = #{barcode} AND USEYN = 'Y' AND ROWNUM = 1
+	</select>
+	
+	<select id = "itemcodeList" resultType ="String">
+		select distinct itemcode from t_wms_location
+		where barcode in
+		<foreach collection="list" item="barcode" open="(" separator="," close=")">
+		    #{barcode}
+		  </foreach>
+		  and useyn = 'Y'
+	</select>
+	
+	<select id = "wipFifo" resultType = "com.example.demo.vo.ItemLocationVO">
+		 WITH ref AS (
+    SELECT l.itemcode,
+           MIN(TO_DATE(l.indate,'YYYY-MM-DD')) AS ref_indate
+    FROM t_wms_location l
+    WHERE l.useyn = 'Y'
+      AND l.barcode IN
+      <foreach collection="list" item="b" open="(" separator="," close=")">
+        #{b}
+      </foreach>
+    GROUP BY l.itemcode
+  ),
+  agg AS (
+    SELECT l.itemcode,
+           l.location,
+           l.indate,  -- 문자열 그대로 보유
+           SUM(
+             NVL(
+               /* QTY가 NUMBER면 l.qty, 문자면 아래 TO_NUMBER 사용 */
+               l.qty
+               -- TO_NUMBER(REPLACE(l.qty, ',', ''))
+             ,0)
+           ) AS qty
+    FROM t_wms_location l
+    JOIN ref r ON r.itemcode = l.itemcode
+    WHERE l.useyn = 'Y'
+    and factory = #{factory}
+      <![CDATA[AND TO_DATE(l.indate,'YYYY-MM-DD') < r.ref_indate]]>
+    GROUP BY l.itemcode, l.location, l.indate
+  ),
+  ranked AS (
+    SELECT a.*,
+           ROW_NUMBER() OVER (
+             PARTITION BY a.itemcode
+             ORDER BY TO_DATE(a.indate,'YYYY-MM-DD') ASC, a.location
+           ) AS rn
+    FROM agg a
+  )
+  SELECT itemcode, location, qty, indate
+  FROM ranked
+  <![CDATA[WHERE rn <= 5]]>
+  ORDER BY itemcode, TO_DATE(indate,'YYYY-MM-DD') ASC, rn
+	</select>
+	
+	
+	
+	<select id="getStatus" resultType = "map">
+		select *
+		from(
+			select factory,source,sum(qty),count(qty) from t_wms_inbound where sdate = #{date} and useyn = 'Y' group by factory,source
+			UNION ALL
+			select factory,source,sum(qty),count(qty) from t_wms_workmove where sdate = #{date} and useyn = 'Y'group by factory,source
+			UNION ALL
+			select factory,source,sum(qty),count(qty) from t_wms_outbound where sdate = #{date} and useyn = 'Y' group by factory,source
+			UNION ALL
+			select factory,'SEMI-PRODUCT'AS SOURCE, sum(qty),count(qty) from T_WMS_SEMIWORK where Sdate = #{date} and useyn = 'Y' group by factory
+			UNION ALL
+			select factory,'Count-Location'AS SOURCE, sum(qty),count(qty) from T_WMS_REALSTOCK where Sdate = #{date} and useyn = 'Y' AND SCANTYPE = 'LOCATION' group by factory
+			UNION ALL
+			select factory,'Count-Barcode'AS SOURCE, sum(qty),count(qty) from T_WMS_REALSTOCK where Sdate = #{date} and useyn = 'Y' AND SCANTYPE = 'BARCODE' group by factory
+		)
+		where UPPER(factory) = UPPER(#{factory})
+		order by factory, SOURCE
+	</select>
+	
+	<select id = "selectPallet" resultType = "string">
+		select distinct pbarcode from t_scm_pallet where 
+		bbarcode in
+		 <foreach collection="list" item="barcode" open="(" separator="," close=")">
+		    #{barcode}
+		  </foreach>
+		  and useyn = 'Y'
+	</select>
+	
+	<insert id = "insertExceptionReceiving">
+		insert into t_wms_location(
+			indate, ymdhms, location, barcode, itemcode, qty, loginid, factory, storage,source, memo2,okyn
+		)
+		select #{date}, TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),#{location2},#{barcode},#{itemcode},#{qty},#{loginid},#{factory2},#{storage2},#{source},#{memo},#{okyn}
+		from dual
+		where not exists(
+			select 1 from t_wms_location where factory = #{factory2} and useyn = 'Y' AND BARCODE = #{barcode}
+		)
+	</insert>
+	
+	<!-- receiving 예외입고  -->
+	<insert id="insInboundExceptionReceiving" parameterType="map">
+  		INSERT INTO t_wms_inbound (
+   	 		sdate,
+   	 		barcode, 
+   	 		ymdhms, 
+   	 		loginid,
+   	 		itemcode, 
+   	 		qty, 
+   	 		type,
+   	 		source, 
+   	 		storage,
+   	 		factory,
+   	 		source2,
+   	 		custcode,
+   	 		
+   	 		custname,
+   	 		okyn
+   	 	)  
+   	 	VALUES  (
+   	    	#{date}, 
+   	    	#{barcode}, 
+   	 		TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	#{loginid},
+   	    	#{itemcode}, 
+   	    	#{qty}, 
+   	    	#{type},
+   	    	'INCOMINGEXCEPTION',
+   	    	#{storage2},
+   	    	#{factory2},
+   	    	#{memo},
+   	    	(SELECT
+			  CASE 
+			        WHEN EXISTS ( SELECT 1  FROM T_MI_ITEM  WHERE ITEMCODE = #{itemcode}  AND CMB_ITEMTYPE = '006' AND FREEOFCHARGE =1 ) THEN '0039'
+			        ELSE NVL(( SELECT custcode  FROM ( SELECT custcode  FROM t_mi_price_buycust  WHERE itemcode = #{itemcode}  ORDER BY condate DESC )WHERE ROWNUM = 1 ), '')
+			  END AS CUSTCODE
+			FROM DUAL),
+			
+			(SELECT cu_sangho
+			          FROM c_cust
+			         WHERE cu_code = (
+			  CASE 
+			        WHEN EXISTS ( SELECT 1 FROM T_MI_ITEM  WHERE ITEMCODE = #{itemcode}  AND CMB_ITEMTYPE = '006' AND FREEOFCHARGE =1) THEN '0039'
+			        ELSE NVL(( SELECT custcode  FROM ( SELECT custcode  FROM t_mi_price_buycust  WHERE itemcode = #{itemcode}  ORDER BY condate DESC )WHERE ROWNUM = 1 ), '')
+			  END)),
+			  #{okyn}
+   	    )
+	</insert>
+	
+	<select id = "barcodeLabelType" resultType = "string">
+		select NVL(labeltype,'NONE') from t_scm_barcode where barcode = #{barcode}
+	</select>
+	
+	<update id = "worklocationN">
+		update t_wms_worklocation
+		set useyn = 'N',
+		memo_d = #{dmemo},
+		ymdhms_d =  TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+        where barcode = #{barcode} and useyn = 'Y'
+	</update>
+
+	<select id="getItemcode" resultType="string">
+		SELECT A.ITEMCODE
+		FROM T_MI_ITEM A
+		--JOIN T_SM_SALECUSTPRICE B ON B.ITEMCODE = A.ITEMCODE
+		--JOIN C_CUST C ON B.CUSTCODE = C.CU_CODE
+		WHERE SPEC = #{oitemcode}
+		and deldate = ' '
+	</select>
+
+	<select id="getItemInfoSpec" resultType = "map">
+		SELECT A.ITEMCODE, A.ITEMNAME, A.SPEC AS OITEMCODE, B.SUBNAME_CH as car
+		FROM T_MI_ITEM A
+		LEFT JOIN T_MI_TYPESUB B ON B.SUBCODE = A.CARNO
+		WHERE REPLACE(SPEC, '-', '') = REPLACE(#{oitemcode}, '-', '')
+		and deldate = ' '
+	</select>
+	<select id="getItemInfoSItemcode" resultType = "map">
+		SELECT A.ITEMCODE, A.ITEMNAME, A.SPEC AS OITEMCODE, B.SUBNAME_CH as car
+		FROM T_MI_ITEM A
+		LEFT JOIN T_MI_TYPESUB B ON B.SUBCODE = A.CARNO
+		--JOIN T_SM_SALECUSTPRICE B ON B.ITEMCODE = A.ITEMCODE
+		--JOIN C_CUST C ON B.CUSTCODE = C.CU_CODE
+		WHERE itemcode = #{itemcode}
+		and deldate = ' '
+	</select>
+
+	<!-- 트랜시스 검증 insert -->
+	<insert id="insValidation" parameterType="map">
+		INSERT INTO t_wms_validation (
+			SDATE,
+			CARTBARCODE,
+			ASSYBARCODE,
+			CARTQTY,
+			ASSYQTY,
+			OITEMCODE,
+			YMDHMS,
+			SOURCE,
+			factory
+		) VALUES (
+			TO_CHAR(SYSDATE, 'YYYY-MM-DD'),
+			#{cartBarcode},
+			#{assyBarcode},
+			#{cartQty},
+			#{assyQty},
+			#{oitemcode},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{source},
+			#{factory}
+		)
+	</insert>
+
+	<select id="searchInspectionList" resultType="map">
+		SELECT barcode, TO_NUMBER(qty) AS qty, source2 AS judgment
+		FROM t_wms_inspection
+		WHERE sdate = #{date}
+		AND factory = #{factory}
+		<if test="source != null and source != ''">
+		AND source = #{source}
+		</if>
+		<if test="source2 != null and source2 != ''">
+		AND source2 = #{source2}
+		</if>
+		ORDER BY ymdhms DESC
+	</select>
+
+	<insert id = "insInspection">
+		insert into t_wms_inspection
+		(
+			sdate, itemcode, barcode,
+			qty, okqty, ngqty,
+			judgment, factory, storage, loginid, source,
+			source2, ymdhms, barcode2)
+		values
+		(
+			#{date}, #{itemcode}, #{barcode},
+			#{qty}, #{qty}, #{qty},
+			#{source2}, #{factory}, #{storage}, #{loginid}, #{source},
+			#{source2}, TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'), #{barcode}
+		)
+	</insert>
+
+	<insert id = "conditionChange">
+		insert into t_wms_conditionchange
+		(sdate, itemcode, factory, storage, qty, barcode, oldokyn, newokyn, ymdhms, loginid, source, source2)
+		values
+		(#{date}, #{itemcode}, #{factory}, #{storage}, #{qty}, #{barcode},#{oldokyn}, #{newokyn},TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),#{loginid}, #{source}, #{source2})
+	</insert>
+
+	<update id = "updateLabelType">
+		update t_scm_barcode set labelType = 'DEFECTIVE',
+		basiclabeltype =
+		CASE
+		WHEN basiclabeltype IS NULL OR basiclabeltype = ''
+		THEN labeltype
+		ELSE basiclabeltype || ',' || labeltype
+		END
+		where barcode = #{barcode}
+	</update>
+</mapper>
+
+
+
+
+

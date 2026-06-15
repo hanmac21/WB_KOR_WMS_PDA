@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="com.example.demo.mapper.mexico.MexStockInMapper">
+	<insert id = "saveMexInBarcode">
+		insert into t_scm_inbound
+		(indate, barcode , ymdhms, cucode, cname, itemcode, bdate, seq, qty, scmmex, type, pbarcode)
+		values
+		( #{date}, #{barcode}, TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'), #{cucode}, #{cname}, #{itemcode}, #{bdate}, #{seq}, #{qty}, #{scmmex}, #{type}, #{pbarcode})
+	</insert>
+	
+	<select id = "mexExistInbound" resultType = "string"> 
+		select barcode
+		from  t_scm_inbound
+		WHERE 
+	        barcode IN
+	        <foreach item="barcode" collection="list" open="(" separator="," close=")">
+	            #{barcode}
+	        </foreach>
+	</select>
+	
+	<select id = "mexExistIn" resultType = "string"> 
+		select barcode
+		from  t_scm_barcode
+		WHERE 
+	        barcode IN
+	        <foreach item="barcode" collection="list" open="(" separator="," close=")">
+	            #{barcode}
+	        </foreach>
+	</select>
+	
+</mapper>

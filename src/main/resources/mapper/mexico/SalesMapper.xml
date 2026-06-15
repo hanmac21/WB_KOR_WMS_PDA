@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="com.example.demo.mapper.mexico.SalesMapper">
+	
+	<select id= 'selCust' resultType='string'>
+		select cu_code || '_' || cu_sangho as cust from c_cust where chk_sale=1 order by cu_code
+	</select>
+
+	<insert id = "insOutbound">
+		insert into t_wms_outbound
+		(outdate, barcode , ymdhms, loginid, itemcode, bdate, seq, qty, scmmex, type, pbarcode,custcode)
+		values
+		( #{date}, #{barcode}, TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'), #{loginid}, #{itemcode}, #{bdate}, #{seq}, #{qty}, #{scmmex}, #{type}, #{pbarcode}, #{custcode})
+	</insert>
+	
+	<select id = "existOutbound" resultType = "string">
+		select DISTINCT  barcode
+		from t_wms_outbound
+		where barcode IN
+		<foreach item="barcode" collection="list" open="(" separator="," close=")">
+	        #{barcode}
+	    </foreach>
+	    and useyn = 'Y'
+	</select>
+	
+	<select id = "selectpbBarcode" resultType = "string">
+		select bbarcode
+		from  t_scm_pallet
+		WHERE pbarcode = #{barcode}
+	</select>
+	
+	<!-- 작업장 위치 삭제 -->
+	<update id = "updateWorkLocationN">
+		update t_wms_worklocation
+		set useyn = 'N',
+		ymdhms_d = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+		memo_d = #{source},
+		loginid_d = #{loginid}
+        where barcode = #{barcode}
+        and useyn = 'Y'
+	</update>
+	
+	<update id = "updateWorkLocationY">
+		update t_wms_worklocation set useyn = 'Y' ,
+		ymdhms_d = '', memo_d = ''
+		where barcode = #{barcode} and useyn = 'N' 
+		AND iid = (
+        SELECT MAX(iid)
+          FROM t_wms_worklocation
+         WHERE barcode = #{barcode} 
+
+       )
+		
+	</update>
+	
+	<select id = "getPItemcode" resultType = "String">
+		SELECT REPLACE(SPEC,'-','') AS OITEMCODE FROM T_MI_ITEM WHERE ITEMCODE = #{itemcode}
+	</select>
+	
+	<insert id = "insSalesTransfer">
+    	insert into t_wms_workoutbound
+        (outdate, barcode , ymdhms, loginid, itemcode, 
+        qty,  custcode, source, storage, factory, source3,
+        seq)
+        values
+        ( #{date}, #{barcode}, TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'), #{loginid}, #{itemcode}, 
+		#{qty}, #{custcode}, #{source}, #{storage1}, #{factory},#{factoryno},
+		(SELECT NVL(COUNT(*), 0) + 1 
+	       FROM t_wms_workoutbound 
+	      WHERE outdate = #{date}))
+    </insert>
+	
+	<select id = "searchSalesTransferDetail"  resultType = "map">
+		select 
+			c.subname_ch as car, 
+			b.itemcode as itemcode,
+			a.barcode as barcode,
+			a.qty as qty,
+			substr(a.ymdhms,9,2)||':'||substr(a.ymdhms,11,2) as time,
+			mes_key,
+			case 
+		        when exists (
+		            select 1 
+		            from T_MM_ENTERSUB s
+		            where s.mes_key = a.mes_key
+		        ) then 'Y'
+		        else 'N'
+		    end as key_exist
+		from t_wms_workoutbound a 
+		left outer join t_mi_item b on a.itemcode = b.itemcode 
+		left outer join t_mi_typesub c on b.carno = c.subcode and c.typecode = 'MI041'
+		LEFT JOIN T_SCM_BARCODE d on a.barcode = d.barcode
+		where a.outdate = #{date}  and upper(a.factory) = upper(#{factory})
+		and a.useyn = 'Y'
+		order by a.iid desc
+	</select>
+	
+	<!-- 출고 insert -->
+	<insert id="insSalesOutput" parameterType="map">
+  		INSERT INTO t_wms_outbound (
+   	 		outdate, 
+   	 		barcode, 
+   	 		ymdhms, 
+   	 		loginid, 
+   	 		itemcode, 
+   	 		
+   	 		bdate, 
+   	 		seq, 
+   	 		qty, 
+   	 		scmmex, 
+   	 		type,
+   	 		
+   	 		source, 
+   	 		source2,
+   	 		source3,
+   	 		
+   	 		storage,
+   	 		factory,
+   	 		invoiceno,
+   	 		custcode,
+   	 		
+   	 		custname,
+   	 		dock,
+   	 		intf_yn
+   	 	)  
+   	 	VALUES  (
+   	    	#{date}, 
+   	    	#{barcode}, 
+   	 		TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+   	    	#{loginid},  
+   	    	#{itemcode}, 
+   	    	
+   	    	#{bdate},
+   	    	#{seq},
+   	    	#{qty}, 
+   	    	#{scmmex}, 
+   	    	#{type},
+   	    	
+   	    	#{source},
+   	    	#{source2},
+   	    	#{factoryno},
+   	    	
+   	    	#{storage},
+   	    	#{factory},
+   	    	#{memo},
+   	    	#{custcode},
+   	    	
+   	    	#{custname},
+   	    	#{dock},
+   	    	'W'
+   	    )
+	</insert>
+		
+    <!-- workstock minus -->
+    <insert id = "insWorkStockMinus">
+        insert into t_wms_workstock
+	        (mainkind, kind, sdate, barcode ,outqty, 
+	        qty, factory,storage,workcenter,location, 
+	        itemcode, insuser,ymdhms,insdate)
+        values
+        	(#{mainkind}, #{source}, #{date}, #{barcode}, #{qty},
+        	#{qty}, #{factory}, #{storage}, #{workcenter}, #{location},
+        	#{itemcode}, #{loginid}, TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),TO_CHAR(SYSDATE, 'YYYY-MM-DD'))
+	</insert>
+	
+	<insert id = "insBasicLocation">
+		insert into t_wms_location
+		(indate,ymdhms,location,barcode,itemcode,
+			qty,loginid,factory,storage,source)
+		values(
+			#{date},
+			TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+			#{location},
+			#{barcode},
+			#{itemcode},
+			#{qty},
+			#{loginid},
+			#{factory},
+			#{storage},
+			#{source}
+		)
+	</insert>
+	
+	<update id = "searchTransferDetailDel">
+		update t_wms_workoutbound 
+		set useyn = 'N',
+		ymdhms_d = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+		memo_d = #{dmemo},
+		loginid_d = #{loginid}
+		where barcode = #{barcode} and useyn = 'Y'
+	</update>
+
+
+	<insert id="deleteEntersub">
+		INSERT INTO T_MM_ENTERSUB_IF(IFNO,MES_KEY,MES_SEQ,DATA_DIV,CUD_DIV,DELETE_GUBUN) VALUES(#{ifno},#{meskey},'1','SCM','D','A')
+	</insert>
+</mapper>

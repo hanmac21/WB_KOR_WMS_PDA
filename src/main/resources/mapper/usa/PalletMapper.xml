@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="com.example.demo.mapper.usa.PalletMapper">
+	
+	<select id = "searchPallet" resultType = "string">
+		select pbarcode
+		from t_scm_pallet
+		where bbarcode = #{barcode}
+		and useyn = 'Y'
+	</select>
+	
+	<update id = "bbarcodeN">
+		update t_scm_pallet
+		set useyn = 'N',
+		ymdhms_d = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+		memo_d = #{memo}
+		where bbarcode = #{barcode}
+		and useyn = 'Y'
+	</update>
+	
+	<select id = "palletQty" resultType = "double">
+		select NVL(SUM(qty), 0) from t_scm_pallet
+		where pbarcode = #{pbarcode}
+		and useyn = 'Y'
+	</select>
+	
+	<select id = "partQty" resultType = "double">
+		select NVL(lastqty, 0) from t_scm_barcode
+		where barcode = #{barcode}
+		and useyn = 'Y'
+	</select>
+	
+	<!-- 로케이션 전용 -->
+	<update id = "updateLQtyN">
+		update t_wms_location set qty = #{pqty}, useyn = 'N', MEMO_D = #{dmemo},
+		ymdhms_d = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+		where barcode = #{pbarcode}
+		and useyn = 'Y'
+	</update>
+	
+	<update id = "updateLQty">
+		update t_wms_location set qty = #{pqty}
+		where barcode = #{pbarcode}
+		and useyn = 'Y'
+	</update>
+	
+	<insert id= "partLocation" parameterType="map">
+		insert into t_wms_location 
+		(sdate, ymdhms,location, barcode, itemcode, qty, loginid, factory,storage,rack,module,levelcode,position,source,memo2)
+		select #{date}, TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'), location, #{barcode}, itemcode,#{qty},#{loginid},factory,storage,rack,module,levelcode,position,source,#{memo} from t_wms_location
+		where barcode = #{pbarcode} and useyn = 'Y'
+		and rownum = 1
+	</insert>
+	<!-- 로케이션 전용 -->
+	
+	<!-- 작업장 전용 -->
+	<update id = "updateWLQtyN">
+		update t_wms_worklocation set qty = #{pqty}, useyn = 'N', MEMO_D = #{dmemo},
+		ymdhms_d = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+		where barcode = #{pbarcode}
+		and useyn = 'Y'
+	</update>
+	
+	<update id = "updateWLQty">
+		update t_wms_worklocation set qty = #{pqty}
+		where barcode = #{pbarcode}
+		and useyn = 'Y'
+	</update>
+	
+	<insert id= "partWorkLocation" parameterType="map">
+		insert into t_wms_worklocation 
+		(indate, ymdhms,location, barcode, itemcode, qty, loginid, factory,storage,rack,module,levelcode,position,source,memo2)
+		select #{date}, TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'), location, #{barcode}, itemcode,#{qty},#{loginid},factory,storage,rack,module,levelcode,position,source,#{memo} from t_wms_worklocation
+		where barcode = #{pbarcode} and useyn = 'Y'
+		and rownum = 1
+	</insert>
+	<!-- 작업장 전용 -->
+</mapper>
+
+
+
+
+

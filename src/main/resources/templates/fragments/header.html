@@ -1,0 +1,235 @@
+<div xmlns:th ="http://www.thymeleaf.org" th:fragment="commonHeader(menuName)">
+	<div class="header">
+	    <div class="header-content">
+	        <button id="backBtn" class="back-btn chevron"  aria-label="Back" onclick="history.back()" th:if="${menuName != '메뉴'}"></button>
+	        <!-- <div class="menu-icon">
+	            <div class="menu-lines"></div>
+	        </div> -->
+			<span class="header-id" id="headerID" style="display:none">test</span>
+	        <span class="header-title" id="headerTitle"  th:text="${menuName}">WMS 시스템</span>
+	        <input type="button" class="btn_logOut" style="display:none" value="Logout">
+	    </div>
+	</div>
+	<th:block th:replace="fragments/product-popup :: productInfoPopup"></th:block>
+	<script th:inline="javascript">
+	    window.I18N = Object.assign(window.I18N || {}, {
+	    	"login.inputall":        					/*[[#{login.inputall}]]*/        					"아이디와 비밀번호를 모두 입력해주세요.",
+	    	"login.selectfactory":   					/*[[#{login.selectfactory}]]*/   					"공장을 선택해주세요.",
+	    	"login.selectlang":      					/*[[#{login.selectlang}]]*/      					"언어를 선택해주세요.",
+	    	"login.invalid":         					/*[[#{login.invalid}]]*/         					"아이디 또는 비밀번호가 올바르지 않습니다.",
+	    	"login.error":           					/*[[#{login.error}]]*/           					"처리도중 에러가 발생하였습니다.",
+	    	"login.noconnection":    					/*[[#{login.noconnection}]]*/    					"Wi-Fi 또는 데이터 연결이 없습니다.",
+	    	"login.loggingin":       					/*[[#{login.loggingin}]]*/       					"로그인 중...",
+	    	"login.checkconnection": 					/*[[#{login.checkconnection}]]*/ 					"인터넷 연결을 확인해주세요.",
+	    	"login.login":           					/*[[#{login.login}]]*/           					"로그인",	
+	    	"info.oneItemPerPallet": 					/*[[#{info.oneItemPerPallet}]]*/ 					"한 팔레트에는 하나의 품번만 가능합니다.",
+	    	
+	
+			"info.barcode.sent":                  		/*[[#{info.barcode.sent}]]*/                  		"바코드를 전송했습니다",
+			"info.barcode.saved":                 		/*[[#{info.barcode.saved}]]*/                 		"바코드가 저장되었습니다",
+			"info.location.stroage":                 	/*[[#{info.location.stroage}]]*/                 	"적재되었습니다",
+			"info.release.process":                 	/*[[#{info.release.process}]]*/                 	"공정 불출 되었습니다",
+			"info.developing":                 			/*[[#{info.developing}]]*/                 			"개발중입니다.",
+			"info.enter.keyword":                 		/*[[#{info.enter.keyword}]]*/                 		"키워드를 입력하세요.",
+			"info.loading":        						/*[[#{info.loading}]]*/								"로딩 중",
+			"info.qty.input":        					/*[[#{info.qty.input}]]*/							"수량입력",
+			"info.date.message":        				/*[[#{info.date.message}]]*/						"해당 바코드는 날짜변경할수 없는 바코드입니다",
+			
+			
+			"warning.barcode.required":              	/*[[#{warning.barcode.required}]]*/            		"바코드를 입력해주세요.",
+			"warning.barcode.invalid":          		/*[[#{warning.barcode.invalid}]]*/          		"형식에 맞지 않는 바코드입니다.",
+			"warning.barcode.duplicate":             	/*[[#{warning.barcode.duplicate}]]*/           		"이미 등록된 바코드입니다",
+			"warning.barcode.noneToSave":    	      	/*[[#{warning.barcode.noneToSave}]]*/          		"저장할 바코드가 없습니다",
+			"warning.barcode.notInSCM":       			/*[[#{warning.barcode.notInSCM}]]*/       			"멕시코 SCM에 등록되지 않은 바코드입니다.",
+			"warning.barcode.production.cannot":       	/*[[#{warning.barcode.production.cannot}]]*/       	"생산실적 잡을 수 없는 바코드입니다.",
+			"warning.barcode.post-processing":       	/*[[#{warning.barcode.post-processing}]]*/       	"이 바코드는 후처리된 작업이 있어 현재 화면에서 삭제가 불가능합니다.",
+			"warning.barcode.notInbound":       		/*[[#{warning.barcode.notInbound}]]*/       		"입고 등록되지 않은 바코드입니다.",
+			"warning.barcode.notInStock":       		/*[[#{warning.barcode.notInStock}]]*/       		"재고 테이블에 바코드가 없습니다.",
+			"warning.barcode.notInboundTable":       	/*[[#{warning.barcode.notInSCM}]]*/       			"입고 테이블에 바코드가 없습니다.",
+			"warning.barcode.notOutboundTable":       	/*[[#{warning.barcode.notOutboundTable}]]*/       	"출고 테이블에 바코드가 없습니다.",
+			"warning.barcode.alreadyReceived":			/*[[#{warning.barcode.alreadyReceived}]]*/ 			"이미 입고등록된 바코드입니다.",
+			"warning.barcode.statusnotmatch":			/*[[#{warning.barcode.statusnotmatch}]]*/ 			"바코드 상태값이 일치하지 않습니다.",
+			"warning.barcode.scan":						/*[[#{warning.barcode.scan}]]*/ 					"바코드값을 스캔해주세요.",
+			"warning.data.delete.all":					/*[[#{warning.data.delete.all}]]*/ 					"삭제할 데이터가 없습니다.",
+			"warning.check" : 				 			/*[[#{warning.check}]]*/          					"다시 확인해주세요.",
+			"warning.tryAgain": 						/*[[#{warning.tryAgain}]]*/ 						"삭제하고 다시 시도해주세요.",
+			"warning.location.required": 				/*[[#{warning.location.required}]]*/ 				"적재 위치를 입력해주세요.",
+			"warning.location.barcode.duplicate": 		/*[[#{warning.location.barcode.duplicate}]]*/ 		"이미 적재된 바코드입니다.",
+			"warning.location.already.product": 		/*[[#{warning.location.already.product}]]*/ 		"해당 위치에 이미 다른 제품이 있습니다.",
+			"warning.release.barcode.duplicate": 		/*[[#{warning.release.barcode.duplicate}]]*/ 		"이미 공정불출된 바코드입니다.",
+			"warning.release.barcode.returned": 		/*[[#{warning.release.barcode.returned}]]*/ 		"이미 공정불출 반납된 바코드입니다.",
+			"warning.release.barcode.output": 			/*[[#{warning.release.barcode.output}]]*/ 			"이미 출고된 바코드입니다.",
+			"warning.barcode.notInbound":				/*[[#{warning.barcode.notInbound}]]*/				"입고등록되지 않은 바코드입니다.",
+			"warning.barcode.storagecheck":				/*[[#{warning.barcode.storagecheck}]]*/				"출고창고와 바코드 위치가 일치해야 합니다.<br> 같은 출고창고의 바코드만 이동 가능합니다.",
+			"warning.release.barcode.unpack":			/*[[#{warning.release.barcode.unpack}]]*/			"이미 언팩된 바코드입니다.",
+			"warning.pallet.infoNotFound":				/*[[#{warning.pallet.infoNotFound}]]*/				"팔레트 정보가 없습니다.",
+			"warning.pallet.part.barcode":				/*[[#{warning.pallet.part.barcode}]]*/				"These barcodes are grouped under pallet labels.",
+			"warning.pallet.part.unbound":				/*[[#{warning.pallet.part.unbound}]]*/				"These barcodes are grouped under pallet labels.",
+			"warning.stock.update.fail5":				/*[[#{warning.stock.update.fail5}]]*/				"등록에 실패했습니다.<br> 잠시 후 다시 시도해주세요.",
+			"warning.move.samestorage":					/*[[#{warning.move.samestorage}]]*/ 				"출고창고와 입고창고의 위치가 동일합니다.",
+			"warning.barcode.cannotIncoming":			/*[[#{warning.barcode.cannotIncoming}]]*/ 			"입고할 수 없는 바코드입니다.",
+			"warning.barcode.unpack.notcomplete":		/*[[#{warning.barcode.unpack.notcomplete}]]*/ 		"언팩을 완료해주세요.",
+			"warning.barcode.semi.registered":			/*[[#{warning.barcode.semi.registered}]]*/ 			"생산실적에 등록된 바코드입니다.",
+			"warning.barcode.error.cannot":				/*[[#{warning.barcode.error.cannot}]]*/ 			"불량바코드가 아닙니다",
+			"warning.location.select" :                 /*[[#{warning.location.select}]]*/ 					"로케이션을 선택해주세요.",
+			"warning.storage.select" :                 	/*[[#{warning.storage.select}]]*/ 					"창고를 선택해주세요.",
+			"warning.shipto.locked" :                  	/*[[#{warning.shipto.locked}]]*/  					"등록된 바코드가 있으면 출고처를 변경할 수 없습니다.",
+			"warning.stockCount.lastDay" :              /*[[#{warning.stockCount.lastDay}]]*/ 				"말일 재고실사를 이용해 주세요.",
+			"warning.stockCount" :                  	/*[[#{warning.stockCount}]]*/ 						"다른 재고실사를 이용해 주세요.",
+			"warning.wccode.null" :                  	/*[[#{warning.wccode.null}]]*/ 						"작업장을 선택해주세요.",
+			"warning.location.null" :                  	/*[[#{warning.location.null}]]*/ 					"로케이션을 선택해주세요.",
+			                      
+			
+			"warning.labeltype.different":				/*[[#{warning.labeltype.different}]]*/ 				"한 작업에는 한 가지 유형의 라벨만 사용할 수 있습니다.",
+			"warning.barcode.semi":						/*[[#{warning.barcode.semi}]]*/ 					"반제품은 창고이송 메뉴를 이용해주세요.",
+			"warning.barcode.semi.not":					/*[[#{warning.barcode.semi.not}]]*/ 				"반제품이 아닙니다.",
+			"warning.barcode.product.not":				/*[[#{warning.barcode.product.not}]]*/ 				"제품이 아닙니다.",
+			"warning.product.cannot":					/*[[#{warning.product.cannot}]]*/ 					"상품/제품은 작업이 불가합니다.",
+			"warning.barcode.wccodecheck":				/*[[#{warning.barcode.wccodecheck}]]*/ 				"작업장이 일치하지 않습니다.",
+			"warning.barcode.ptcheck":					/*[[#{warning.barcode.ptcheck}]]*/ 					"한국에서 인보이스로 보낸 내역이 없습니다.",
+			"warning.barcode.already.movement":			/*[[#{warning.barcode.already.movement}]]*/ 		"이 바코드는 이미 출고 처리되었습니다.",
+			"warning.barcode.already.wip":				/*[[#{warning.barcode.already.wip}]]*/ 				"불출된 바코드입니다.",
+			"warning.barcode.already.wip.messaage":		/*[[#{warning.barcode.already.wip.messaage}]]*/ 	"불출된 바코드입니다.<br>불출반납 메뉴를 이용해주세요.",
+			"warning.barcode.already.load":				/*[[#{warning.barcode.already.load}]]*/ 			"출고된 바코드입니다.",
+			"warning.barcode.already.loadreturn":		/*[[#{warning.barcode.already.loadreturn}]]*/ 		"이미 출고반납된 바코드입니다.",
+			"warning.barcode.already.work":				/*[[#{warning.barcode.already.work}]]*/ 			"생산실적 등록된 바코드입니다.",
+			"warning.barcode.already.inspection":		/*[[#{warning.barcode.already.inspection}]]*/ 		"검사 등록된 바코드입니다.",
+			
+			"warning.barcode.material.cannot.use":		/*[[#{warning.barcode.material.cannot.use}]]*/ 		"원자재, 부자재, 반제품은 출고가 불가능합니다",
+			"warning.barcode.incomingCodeCheck":		/*[[#{warning.barcode.incomingCodeCheck}]]*/ 		"무상사급, 원자재, 부자재, 상품만 입고할 수 있습니다.",
+			"warning.barcode.factorymoving":			/*[[#{warning.barcode.factorymoving}]]*/ 			"공장이송중인 바코드입니다<br>공장이동입고 메뉴를 이용해주세요.",
+			"warning.localstorage.limit":				/*[[#{warning.localstorage.limit}]]*/ 				"최대 500건까지 저장할 수 있습니다.",
+			"warning.pallet.part.cannnot":				/*[[#{warning.pallet.part.cannnot}]]*/ 				"팔레트 라벨이 생성된 파트라벨입니다.",
+			"warning.barcode.notregistered":			/*[[#{warning.barcode.notregistered}]]*/ 			"등록되지 않은 바코드입니다.",
+			"warning.pallet.unbound":					/*[[#{warning.pallet.unbound}]]*/ 					"해체된 팔레트 바코드입니다.",
+			"warning.barcode.storagehere":				/*[[#{warning.barcode.storagehere}]]*/ 				"재고가 존재합니다.",
+			"warning.barcode.diff.factory":				/*[[#{warning.barcode.diff.factory}]]*/ 			"이 바코드는 다른 공장에 있으므로 공장 출고 메뉴를 이용해 주세요.",
+			"warning.barcode.diff.storage":				/*[[#{warning.barcode.diff.storage}]]*/ 			"이 바코드는 다른 공장에 있으므로 창고 이동 메뉴를 이용해 주세요.",
+			"warning.barcode.diff.workLocation":		/*[[#{warning.barcode.diff.workLocation}]]*/ 		"라벨이 작업장에 없습니다.<br> 불출 먼저 진행하세요.",
+			"warning.barcode.worklocation.n":			/*[[#{warning.barcode.worklocation.n}]]*/ 			"작업장에 없는 바코드입니다.",
+			"warning.barcode.worklocation.y":			/*[[#{warning.barcode.worklocation.y}]]*/ 			"작업장에 있는 바코드입니다.",
+			"warning.barcode.location.n":				/*[[#{warning.barcode.location.n}]]*/ 				"창고에 없는 바코드입니다.",
+			"warning.barcode.alllocation.n":			/*[[#{warning.barcode.alllocation.n}]]*/ 			"창고나 작업장에 존재하지 않는 바코드입니다.",
+			"warning.barcode.judged.cannot.delete":		/*[[#{warning.barcode.judged.cannot.delete}]]*/ 	"판정된 라벨은 삭제가 불가능 합니다.",
+
+			"warning.barcode.work.not":					/*[[#{warning.barcode.work.not}]]*/ 				"생산실적 등록이 안된 바코드입니다.",
+			"warning.barcode.defective":				/*[[#{warning.barcode.defective}]]*/ 				"불량라벨은 작업 할 수 없습니다.",
+			"warning.barcode.defective.inspectionreturn": /*[[#{warning.barcode.defective.inspectionreturn}]]*/ "반품검사는 불량라벨만 검사 가능합니다.",
+			
+			"warning.memo.empty":						/*[[#{warning.memo.empty}]]*/ 						"메모를 입력해주세요.",
+			"warning.pallet.location.cannot":			/*[[#{warning.pallet.location.cannot}]]*/ 			"해당 팔레트의 위치 정보를 찾을 수 없습니다.",
+			"warning.qtyOver.title":					/*[[#{warning.qtyOver.title}]]*/ 					"수량초과",
+			"warning.qtyOver.message":					/*[[#{warning.qtyOver.message}]]*/ 					"스캔 수량이 인보이스 수량을 초과한 품목이 있습니다.<br><br>{0}",
+			"warning.qtyOver.itemLine":					/*[[#{warning.qtyOver.itemLine}]]*/ 				"{0} (Invoice Qty: {1}, Scan Qty: {2})",
+			"warning.qty.exceed":						/*[[#{warning.qty.exceed}]]*/ 						"수량 초과: 더 이상 추가할 수 없습니다.",
+
+			"warning.storage.same":						/*[[#{warning.storage.same}]]*/ 					"출고/입고창고가 같습니다.",
+			"warning.close.month":						/*[[#{warning.close.month}]]*/ 						"해당 월은 마감되었습니다.",
+
+			"warning.barcode.assy":						/*[[#{warning.barcode.assy}]]*/ 					"WMS 바코드와 ASSY 바코드의 아이템코드가 일치하지 않습니다.",
+			"warning.barcode.box":						/*[[#{warning.barcode.box}]]*/ 						"WMS 바코드와 BOX 바코드의 아이템코드가 일치하지 않습니다.",
+
+			"warning.qty.ngsum":						/*[[#{warning.qty.ngsum}]]*/ 						"NG 수량 합이 전체 수량을 초과할 수 없습니다.",
+			
+			"warning.input.adjustqty":					/*[[#{warning.input.adjustqty}]]*/ 					"조정 수량을 입력해주세요.",
+			"warning.adjustqty.negative":				/*[[#{warning.adjustqty.negative}]]*/ 				"조정 수량은 0보다 작을 수 없습니다.",
+			"warning.adjustqty.same":					/*[[#{warning.adjustqty.same}]]*/ 					"조정 수량이 현재 수량과 동일합니다.",
+			"warning.adjustqty.zero":					/*[[#{warning.adjustqty.zero}]]*/ 					"조정 수량이 0입니다.",
+
+			"warning.barcode.itemcode.diff":			/*[[#{warning.barcode.itemcode.diff}]]*/ 			"품번 전환된 바코드가 포함되어 있습니다. 확인이 필요합니다.",
+			"warning.barcode.itemcode.mismatch":		/*[[#{warning.barcode.itemcode.mismatch}]]*/		"품번이 일치하지 않습니다.",
+			"warning.item.notFound":					/*[[#{warning.item.notFound}]]*/					"품번 정보를 찾을 수 없습니다.",
+
+			"warning.invoice.required":					/*[[#{warning.invoice.required}]]*/					"인보이스를 먼저 스캔해주세요.",
+			"warning.invoice.alreadyScanned":			/*[[#{warning.invoice.alreadyScanned}]]*/			"인보이스가 이미 스캔되었습니다.<br>전체 취소 후 다시 스캔해주세요.",
+			"info.invoice.matched":						/*[[#{info.invoice.matched}]]*/						"매칭 완료",
+			"warning.invoice.notMatched":				/*[[#{warning.invoice.notMatched}]]*/				"인보이스에 없는 품번입니다.",
+			"warning.invoice.alreadyComplete":			/*[[#{warning.invoice.alreadyComplete}]]*/			"이미 수량이 완료된 품번입니다.",
+			"warning.invoice.overQty":					/*[[#{warning.invoice.overQty}]]*/					"수량 초과입니다.",
+			"warning.invoice.notComplete":				/*[[#{warning.invoice.notComplete}]]*/				"아직 스캔되지 않은 품번이 있습니다.",
+
+			"error.generic":                			/*[[#{error.generic}]]*/             	    		"처리도중 에러가 발생하였습니다",
+			"error.offline":                			/*[[#{error.offline}]]*/                 			"Wi-Fi 또는 데이터 연결이 없습니다.",
+			"error.failed.data.load":                	/*[[#{error.failed.data.load}]]*/                 	"데이터 로드 실패",
+			"error.session.expired":                	/*[[#{error.session.expired}]]*/                 	"세션이 만료되었습니다. 다시 로그인해주세요",
+			
+			
+			"confirm.adjustment":                   	/*[[#{confirm.adjustment}]]*/                   	"수량을 조정하시겠습니까?",
+			"confirm.delete.item":                  	/*[[#{confirm.delete.item}]]*/                  	"해당 항목을 삭제하시겠습니까?",
+			"confirm.delete.clear":                  	/*[[#{confirm.delete.clear}]]*/                  	"화면을 초기화하시겠습니까?",
+			"confirm.delete.all":                   	/*[[#{confirm.delete.all}]]*/                   	"전체 삭제하시겠습니까?",
+			"confirm.create.palletLabel":           	/*[[#{confirm.create.palletLabel}]]*/             	"파레트 라벨을 생성 하시겠습니까?",
+			"confirm.send.all":           				/*[[#{confirm.send.all}]]*/             			"전체 전송하시겠습니까?",
+			"confirm.inspection.return":				/*[[#{confirm.inspection.return}]]*/				"입고반품으로 처리하시겠습니까?",
+			"confirm.inspection.dispose":				/*[[#{confirm.inspection.dispose}]]*/				"폐기로 처리하시겠습니까?",
+			"confirm.send.qty.mismatch":  				/*[[#{confirm.send.qty.mismatch}]]*/    			"수량이 일치하지 않습니다. (대차: {0} / 스캔: {1})\n그래도 전송하시겠습니까?",
+			"confirm.noLocation":           			/*[[#{confirm.noLocation}]]*/             			"로케이션이 비어 있습니다 등록하시겠습니까?",
+			"confirm.logout":           				/*[[#{confirm.logout}]]*/             				"로케이션이 비어 있습니다 등록하시겠습니까?",
+			  
+			"success.deleted":                      	/*[[#{success.deleted}]]*/                  	   	"삭제되었습니다.",
+			"success.deleted.all":                  	/*[[#{success.deleted.all}]]*/               	   	"전체 삭제되었습니다.",
+			"success.cancel.sendAll":               	/*[[#{success.cancel.sendAll}]]*/            	   	"전체 전송을 취소했습니다.",
+			
+			
+			"makePallet.table.palletBarcode":        	/*[[#{makePallet.table.palletBarcode}]]*/			"팔레트 바코드",
+			"title.modal.unloaded.list":        		/*[[#{title.modal.unloaded.list}]]*/				"미적재 리스트",
+
+			
+			"btn.delete" :								/*[[#{btn.delete}]]*/								"",
+			"btn.confirm" :								/*[[#{btn.confirm}]]*/								"",
+			"btn.cancel" :								/*[[#{btn.cancel}]]*/								"",
+			"btn.search" :								/*[[#{btn.search}]]*/								"",
+			
+			"table.delete" : 							/*[[#{table.delete}]]*/ 							"삭제",
+			"table.itemCode" :							/*[[#{table.itemCode}]]*/							"",
+			"table.oitemcode" :							/*[[#{table.oitemcode}]]*/							"",
+			"table.itemName" :							/*[[#{table.itemName}]]*/							"",
+			"table.car" :								/*[[#{table.car}]]*/								"",
+			"table.qty" :								/*[[#{table.qty}]]*/								"",
+			"table.date" :								/*[[#{table.date}]]*/								"",
+			"table.lot" :								/*[[#{table.lot}]]*/								"",
+			"table.location" :							/*[[#{table.location}]]*/							"",
+			"table.time" :								/*[[#{table.time}]]*/								"",
+			"table.worktime" :							/*[[#{table.worktime}]]*/							"",
+			"table.no" :								/*[[#{table.no}]]*/									"",
+			"table.factory" :							/*[[#{table.factory}]]*/							"",
+			"table.storage" :							/*[[#{table.storage}]]*/							"",
+			"table.barcode" :							/*[[#{table.barcode}]]*/							"",
+			"table.total" :								/*[[#{table.total}]]*/								"",
+			"table.labalQty" :							/*[[#{table.labalQty}]]*/							"",
+			"table.locationDate" :						/*[[#{table.locationDate}]]*/						"",
+			"table.wipTime" :							/*[[#{table.wipTime}]]*/							"",
+			"table.user" :								/*[[#{table.user}]]*/								"",
+			"table.memo" :								/*[[#{table.memo}]]*/								"",
+			
+			"filter.title" :							/*[[#{filter.title}]]*/								"",
+			"filter.search" :							/*[[#{filter.search}]]*/							"",
+			"filter.search.all" :						/*[[#{filter.search.all}]]*/						"",
+			"filter.search.info" :						/*[[#{filter.search.info}]]*/						"",
+			"filter.search.type" :						/*[[#{filter.search.type}]]*/						"",
+			"filter.search.option" :					/*[[#{filter.search.option}]]*/						"",
+			
+			"btn.confirm" : 							/*[[#{btn.confirm}]]*/ 								"확인",
+			"btn.cancel" : 								/*[[#{btn.cancel}]]*/ 								"취소"
+
+			
+	    });
+	
+	    window.m  = (k, d) => (window.I18N && window.I18N[k]) || d || k;
+	    window.mf = (k, ...args) => (m(k, k)).replace(/\{(\d+)\}/g, (m,i)=> (args[i] ?? m));
+	    window.mhtml = window.mf; // HTML 포함 메시지에 사용
+	    
+	 	// 로그아웃
+	    $(document).on("click", ".btn_logOut", function() {
+	    	Utils.showConfirm(m('confirm.logout'),() =>{
+	    		// loginId 쿠키 삭제
+	    		document.cookie = "loginId=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+	    		// 메인 페이지로 이동
+	    		window.location.href = "/";
+	    	});
+	    });
+	    
+	    
+  </script>
+</div>

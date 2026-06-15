@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- <link rel="stylesheet" th:href="@{/css/header.css(v=${T(java.lang.System).currentTimeMillis()})}"> -->
+<title>로그인</title>
+<link rel="stylesheet" th:href="@{/css/common.css(v=${T(java.lang.System).currentTimeMillis()})}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+<style>
+  </style>
+</head>
+<body>
+	<div class= 'header-div'th:replace="fragments/header :: commonHeader(#{menu.incoming})"></div> 
+	<div class="container">
+        <!-- <div class="section-title" th:text = "#{menu.purchase.title}">구매 메뉴</div> -->
+        <div class="menu-grid">         	
+            <!-- <button  class="sub-menu-item incoming" onclick="checkNetworkAndMove('/purchase/incoming/local')" th:text = "#{menu.incoming.local}">
+                입고등록(Local)
+            </button>
+            <button  class="sub-menu-item incoming" onclick="checkNetworkAndMove('/purchase/incoming/ckd')" th:text = "#{menu.incoming.ckd}">
+                입고등록(CKD)
+            </button>
+            <button  class="sub-menu-item incoming" onclick="checkNetworkAndMove('/purchase/incoming/invoice')" th:text = "#{menu.incoming.invoice}">
+                입고등록(Invoice)
+            </button>
+            <button  class="sub-menu-item incoming" onclick="checkNetworkAndMove('/purchase/incoming/detail')" th:text = "#{menu.incoming.detail}">
+                입고내역 - detail
+            </button>
+            <button  class="sub-menu-item incoming" onclick="checkNetworkAndMove('/purchase/incoming/summary')" th:text = "#{menu.incoming.summary}">
+                입고내역 - summary
+            </button>                -->
+            <button  class="sub-menu-item incoming" onclick="checkNetworkAndMove('/purchase/incoming/return')" th:text = "#{menu.incoming.return}">
+                입고반품
+            </button>               
+            <button  class="sub-menu-item incoming" onclick="checkNetworkAndMove('/purchase/incoming/return_detail')" th:text = "#{menu.incoming.return_detail}">
+                입고반품 - detail
+            </button>               
+        </div>
+    </div>
+
+    <!-- 푸터 -->
+    <div class="footer">
+        <div class="footer-text">WMS v1.0 | <span id="currentDate"></span></div>
+    </div>
+    
+     <!-- 로딩 스피너 -->
+    <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <div th:text= "#{info.loading}">로딩중...</div>
+    </div>
+    <script th:src="@{/js/utils/common.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+	<script>
+	hideLoading();
+	window.addEventListener("pageshow", function(event) {
+	    hideLoading();
+	});
+	function checkNetworkAndMove(url) {
+		showLoading();
+		if (window.AndroidInterface && !AndroidInterface.isNetworkConnected()) {
+		    AndroidInterface.showNoInternetDialog();
+		    hideLoading();
+		    return;
+		}
+		location.href = url;
+	}
+	</script>
+</body>
+</html>

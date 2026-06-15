@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>로그인</title>
+<link rel="stylesheet" th:href="@{/css/common.css(v=${T(java.lang.System).currentTimeMillis()})}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+<style>
+	.incoming{
+		border-left: 10px solid #f5f451;
+	}
+	
+	.load{
+		border-left: 10px solid #ed2e62;
+	}
+	.stockcount{
+		border-left: 10px solid #059669;
+	}
+  </style>
+</head>
+<body>
+	<div class= 'header-div'th:replace="fragments/header :: commonHeader(#{menu.logistics.title})"></div>
+	<div class="container">
+        <div class="menu-grid">
+            <button  class="sub-menu-item" onclick="checkNetworkAndMove('/menu-purchase/labelPrint')" th:text = "#{menu.labelPrint}">
+                Label Print
+            </button>
+            <button  class="sub-menu-item incoming" onclick="checkNetworkAndMove('/menu-purchase/incoming')" th:text = "#{menu.incoming}">
+                Incoming
+            </button>
+            <button  class="sub-menu-item" onclick="checkNetworkAndMove('/menu-purchase/locationManagement')" th:text = "#{menu.location}">
+                Location Management
+            </button>
+            <button  class="sub-menu-item load" onclick="checkNetworkAndMove('/menu-purchase/load')" th:text = "#{menu.load}">
+               	Load
+            </button>
+            <button  class="sub-menu-item incoming" onclick="checkNetworkAndMove('/menu-purchase/movement')" th:text = "#{menu.movement}">
+                Movement
+            </button>
+            <button  class="sub-menu-item" onclick="checkNetworkAndMove('/menu-purchase/exception')" th:text = "#{menu.exception}">
+                Exception
+            </button>
+            <!--<button  class="sub-menu-item" onclick="checkNetworkAndMove('/menu-purchase/inspection')" th:text = "#{menu.quality}">
+                Inspection
+            </button>-->
+            <button  class="sub-menu-item stockcount" onclick="checkNetworkAndMove('/menu-purchase/stock-count')" th:text = "#{menu.stockCount}">
+                Stock Count
+            </button>
+            <button class="sub-menu-item"  onclick="checkNetworkAndMove('/purchase/stock-detail')" th:text = "#{menu.stock.detail}">
+                재고조회
+            </button>
+            <button class="sub-menu-item"  onclick="checkNetworkAndMove('/purchase/stock-info')" th:text = "#{menu.stockInfo}">
+                재고정보
+            </button>
+           <button class="sub-menu-item"  onclick="checkNetworkAndMove('/purchase/stock-history')" th:text = "#{menu.stockHistory}">
+                재고변동이력 stock history
+            </button>
+            <button class="sub-menu-item"  onclick="checkNetworkAndMove('/purchase/validation')" th:text = "#{menu.validation}">
+                검증 Validation
+            </button>
+		</div>
+    </div>
+
+    <!-- 푸터 -->
+    <!-- <div class="footer">
+        <div class="footer-text">WMS v1.0 | <span id="currentDate"></span></div>
+    </div> -->
+    
+     <!-- 로딩 스피너 -->
+    <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <div th:text= "#{info.loading}">로딩중...</div>
+    </div>
+    <script th:src="@{/js/utils/common.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+	<script>
+
+	hideLoading();
+	window.addEventListener("pageshow", function(event) {
+	    hideLoading();
+	});
+	function checkNetworkAndMove(url) {
+		showLoading();
+		if (window.AndroidInterface && !AndroidInterface.isNetworkConnected()) {
+		    AndroidInterface.showNoInternetDialog();
+		    hideLoading();
+		    return;
+		}
+		location.href = url;
+	}
+	</script>
+</body>
+</html>

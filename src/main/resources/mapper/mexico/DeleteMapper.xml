@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="com.example.demo.mapper.mexico.DeleteCheckMapper">
+	<select id = "checkHistory" resultType = "int">
+		SELECT COUNT(*)
+		FROM V_ITEMHISTORY V
+		WHERE V.BARCODE = #{barcode}
+		  AND V.USEYN = 'Y'
+		  AND V.KIND NOT IN('STOCKCOUNT BARCODE', 'STOCKCOUNT LOCATION', 'LOCATION')
+		  AND TO_TIMESTAMP(TRIM(V.MKTIME), 'YYYY-MM-DD HH24:MI:SS') > (
+		    SELECT MAX(TO_TIMESTAMP(TRIM(MKTIME), 'YYYY-MM-DD HH24:MI:SS'))
+		      FROM V_ITEMHISTORY 
+		     WHERE BARCODE = #{barcode}
+		       AND KIND = #{kind}
+		  )
+	</select>
+</mapper>
+
+
+
+
+
