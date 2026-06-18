@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>로그인</title>
+<link rel="stylesheet" th:href="@{/css/common.css(v=${T(java.lang.System).currentTimeMillis()})}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+</head>
+<body data-page="addEntry">
+	<div th:replace="fragments/header :: commonHeader(#{menu.incoming.ckd})"></div> 
+	<div class="form-container">
+		<div class="section-header">
+            <div class="datepicker-group">
+               <span th:text = "#{search.inDate}">입고일 : </span><input type="text" id="datepicker"  autocomplete='off' placeholder="" readonly>
+            </div>
+            <div class="action-buttons">
+                <button id="allCancelBtn" class="btn-action btn-cancel" onclick ="clearAll()" th:text = "#{btn.clearAll}">전체 취소</button>
+            </div>
+        </div>
+		<div class="form-group">
+			<div class = "storage-selector">
+            	<span th:text="#{search.storage}">창고</span>
+            	<select class="storage-select">
+            			<option value = 'MATERIAL'>MATERIAL</option>
+						<option value = 'PRODUCT'>PRODUCT</option>
+						<option value = 'WORKSHOP'>WORKSHOP</option>
+		        </select>
+            </div>
+            <div class="barcode-input">
+            <span th:text = "#{search.barcode}">바코드 : </span>
+                <input type="text" id="barcodeInput" class="form-input" th:placeholder = "#{info.barcode.scan}" autocomplete="off">
+                <button id="scanBtn" class="scan-btn" onclick = "addEntry()" th:text="#{btn.scan}">스캔</button>
+            </div>
+            <div class="barcode-input">
+            	<span th:text = "#{search.invoice}">메모 </span>
+                <input type="text" id="memo" class="form-input"  autocomplete="off">
+            </div>
+        </div>
+	</div>
+	<div class="form-container">
+		<div class="table-header">
+            <span class="item-count" th:utext="#{table.total(${count} ?: 0)}">총 <span id="count">0</span>건</span>
+        </div>
+        <div class="table-scroll-area">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th th:text = "#{table.barcode}">바코드</th>
+                        <th rowspan="2" th:text = "#{btn.delete}">삭제</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTableBody">
+                    <!-- 동적으로 추가될 데이터 -->
+                </tbody>
+            </table>
+        </div>
+	</div>
+    <!-- 푸터 -->
+    <div class="footer">
+        <button id="allSendBtn" class="btn-primary" onclick = "saveBarcode()" th:text = "#{btn.saveBarcode}">전체 전송</button>
+    </div>
+     <!-- 로딩 스피너 -->
+    <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <div th:text = "#{info.loading}">로딩중...</div>
+    </div>
+    <script th:src="@{/js/utils/common.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+    <script th:src="@{/js/modules/ulsan/incoming/ckd.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+	<script>
+	function checkNetworkAndMove(url) {
+		if (window.AndroidInterface && !AndroidInterface.isNetworkConnected()) {
+		    AndroidInterface.showNoInternetDialog();
+		    return;
+		}
+		location.href = url;
+	}
+	// 현재페이지만 포커스 갈수 있게 수정
+	['pointerdown', 'click', 'change'].forEach(ev => {
+		  document.addEventListener(ev, function (e) {
+		    if (e.target && e.target.closest('#memo')) {
+		      // 문서 위임 핸들러(blur 스케줄러)까지 버블링 되지 않게 차단
+		      e.stopPropagation();
+		      // stopImmediatePropagation은 native 이벤트에선 의미 없음, jQuery 델리게이트까지 안 가는 게 핵심
+		    }
+		  }, true); // ← 캡처 단계에서 가로채기
+		});
+	</script>
+</body>
+</html>

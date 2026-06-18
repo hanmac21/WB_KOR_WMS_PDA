@@ -7,6 +7,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import com.example.demo.service.UlsanService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -32,6 +33,9 @@ public class MainController {
 	PurchaseService purchaseService;
 
 	@Autowired
+    UlsanService ulsanService;
+
+	@Autowired
 	SalesService salesService;
 
 	@GetMapping({ "/", "/login" })
@@ -42,17 +46,134 @@ public class MainController {
 		return "/login";
 	}
 
+
+	@PostMapping("/loginCheck")
+	@ResponseBody
+	public String loginCheck(Model model, HttpServletRequest request) {
+		log.info("loginCheck ▶▶▶▶▶▶▶▶");
+		String loginid = request.getParameter("loginid").trim();
+		String loginpw = request.getParameter("loginpw").trim();
+		Map<String, Object> map = new HashMap<>();
+		map.put("loginid", loginid);
+		map.put("loginpw", loginpw);
+		int loginChk = loginService.loginChk(map);
+		HttpSession session = request.getSession();
+		String result = "";
+		if (loginid.equals("master") && loginpw.equals("woo#*")) { // DB연결 미연동 / 임시 로그인
+			session.setAttribute("loginid", "master");
+			session.setAttribute("sabun", "master");
+			session.setAttribute("name", "master");
+			session.setAttribute("inuser", "master");
+			session.setMaxInactiveInterval(-1);
+			result = "success";
+		} else if (loginChk > 0) {
+
+			session.setAttribute("loginid", loginid);
+			session.setMaxInactiveInterval(-1);
+			result = "success";
+
+		} else {
+			LoginVO lVo = loginService.selectLoginVO(loginid);
+			if(lVo == null) {
+				result = "idfail";
+			}else if(!loginpw.equals(lVo.getKs_passwd())) {
+				result = "pwfail";
+			}else {
+				result = "fail";
+			}
+		}
+		return result;
+	}
+
 	@GetMapping({ "/index" })
 	public String index(Model model, HttpSession session) {
 		log.info("index Page Load");
-		String loginid = (String) session.getAttribute("loginid");
-		
-		// 권한 검색
-//		Map<String, String> menu = loginService.getUserMenuAccess(loginid);
-//		model.addAttribute("menu", menu);
-//		model.addAttribute("loginid", loginid);
 		return "/index";
 	}
+
+
+	@GetMapping("/menu-ulsan")
+	public String menuPurchase() {
+		log.info("menu-ulsan Page Load");
+		return "ulsan/menu/menu";
+	}
+
+	@GetMapping("/menu-ulsan/incoming")
+	public String menuUlsanIncoming() {
+		log.info("menu-ulsan/incoming Page Load");
+		return "ulsan/menu/incoming";
+	}
+
+	// 입고등록(CKD)
+	@GetMapping("/ulsan/incoming/ckd")
+	public String ulsaneIncomingCKD() {
+		log.info("incoming-ckd Page Load");
+		return "ulsan/incoming/ckd";
+	}
+
+	// 입고 내역 - detail
+	@GetMapping("/ulsan/incoming/detail")
+	public String incomingDetail(Model model) {
+		log.info("inbound detail page Load");
+		List<String> cust = ulsanService.incomingSanghoException();
+		model.addAttribute("cust", cust);
+		return "ulsan/incoming/detail";
+	}
+
+	// 입고 내역 - summary
+	@GetMapping("/ulsan/incoming/summary")
+	public String incomingSummary(Model model) {
+		log.info("inbound summary page Load");
+		List<String> cust = ulsanService.incomingSanghoException();
+		model.addAttribute("cust", cust);
+		return "ulsan/incoming/summary";
+	}
+
+	// 입고 내역 - return
+	@GetMapping("/ulsan/incoming/return")
+	public String incomingReturn() {
+		log.info("inbound return page Load");
+		return "ulsan/incoming/return";
+	}
+
+	// 입고 내역 - return_detail
+	@GetMapping("/ulsan/incoming/return_detail")
+	public String incomingReturnDetail() {
+		log.info("inbound return_detail page Load");
+		return "ulsan/incoming/return_detail";
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	@GetMapping({ "/puebla-menu" })
 	public String pueblaMenu(Model model, HttpSession session) {
@@ -80,44 +201,7 @@ public class MainController {
 		log.info("menu-quality Page Load");
 		return "/quality/menu/menu";
 	}
-	
-	@PostMapping("/loginCheck")
-	@ResponseBody
-	public String loginCheck(Model model, HttpServletRequest request) {
-		log.info("loginCheck ▶▶▶▶▶▶▶▶");
-		String loginid = request.getParameter("loginid").trim();
-		String loginpw = request.getParameter("loginpw").trim();
-		Map<String, Object> map = new HashMap<>();
-		map.put("loginid", loginid);
-		map.put("loginpw", loginpw);
-		int loginChk = loginService.loginChk(map);
-		HttpSession session = request.getSession();
-		String result = "";
-		if (loginid.equals("master") && loginpw.equals("woo#*")) { // DB연결 미연동 / 임시 로그인
-			session.setAttribute("loginid", "master");
-			session.setAttribute("sabun", "master");
-			session.setAttribute("name", "master");
-			session.setAttribute("inuser", "master");
-			session.setMaxInactiveInterval(-1);
-			result = "success";
-		} else if (loginChk > 0) {
-			
-			session.setAttribute("loginid", loginid);
-			session.setMaxInactiveInterval(-1);
-			result = "success";
 
-		} else {
-			LoginVO lVo = loginService.selectLoginVO(loginid);
-			if(lVo == null) {
-				result = "idfail";
-			}else if(!loginpw.equals(lVo.getKs_passwd())) {
-				result = "pwfail";
-			}else {
-				result = "fail";
-			}
-		}
-		return result;
-	}
 
 	@GetMapping("/menu-purchase")
 	public String menuPurchase(Model model, HttpServletRequest request) {

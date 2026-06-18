@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.mapper.korea.UlsanMapper">
+    <select id = "forIncoming" resultType = "string">
+        select barcode from v_itemhistory
+        where (kind = 'BARCODE' or kind = 'PALLET')
+        and barcode in
+        <foreach item="barcode" collection="list" open="(" separator="," close=")">
+            #{barcode}
+        </foreach>
+        and useyn ='Y'
+        and laststatus between 1 and 9
+    </select>
+
+    <select id="getItemInfo" resultType = "map">
+        SELECT PNO, QTY
+        FROM T_SCM_BARCODE
+        WHERE BARCODE = #{barcode}
+    </select>
+
+    <select id = "getPartQty" resultType = "String">
+        select lastqty from t_scm_barcode
+        where barcode = #{barcode}
+        and useyn = 'Y'
+        and rownum = 1
+    </select>
+
+
+    <update id = "removeBarcode">
+        update t_wms_location
+        set useyn = 'N',
+        memo_d = #{dmemo},
+        ymdhms_d=TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+        where barcode = #{barcode}
+        and useyn = 'Y'
+    </update>
+
+    <insert id="insInbound" parameterType="map">
+        INSERT INTO t_wms_inbound (
+            sdate,
+            barcode,
+            ymdhms,
+            loginid,
+            itemcode,
+            bdate,
+            seq,
+            qty,
+
+            source,
+            storage,
+            factory,
+            invoiceno,
+            custcode,
+
+            custname
+        )
+        VALUES  (
+            #{date},
+            #{barcode},
+            TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+            #{loginid},
+            #{itemcode},
+            #{bdate},
+            #{seq},
+            #{qty},
+
+            #{source},
+            #{storage},
+            #{factory},
+            #{memo},
+            NVL((SELECT CUSTCODE FROM T_MI_PRICE_BUYCUST WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC FETCH FIRST 1 ROW ONLY), ''),
+            (SELECT
+            cu_sangho
+            FROM c_cust
+            WHERE cu_code = (NVL((SELECT CUSTCODE FROM T_MI_PRICE_BUYCUST WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC FETCH FIRST 1 ROW ONLY), '')))
+        )
+    </insert>
+
+    <insert id = "saveLocation">
+        insert into t_wms_location (
+            sdate,
+            ymdhms,
+            location,
+            barcode,
+            itemcode,
+            qty,
+            memo,
+            loginid,
+            factory,
+            storage,
+            rack,
+            module,
+            levelcode,
+            position,
+            source,
+            okyn
+        ) values(
+            #{date},
+            TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+            #{location},
+            #{barcode},
+            #{itemcode},
+            #{qty},
+            #{memo},
+            #{loginid},
+            #{factory},
+            #{storage},
+            #{rack},
+            #{module},
+            #{levelcode},
+            #{position},
+            #{source},
+            #{okyn}
+        )
+    </insert>
+
+    <insert id="insStockInbound" parameterType="map">
+        INSERT INTO t_wms_stock (
+            sdate,
+            kind,
+            barcode,
+            inqty,
+            outqty,
+            qty,
+            itemcode,
+            ymdhms,
+            factory,
+            storage,
+            mainkind,
+            loginid,
+            insdate
+        )
+        VALUES  (
+            #{date},
+            #{source},
+            #{barcode},
+            #{qty},
+            0,
+            #{qty},
+            #{itemcode},
+            TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+            #{factory},
+            #{storage},
+            #{main},
+            #{loginid},
+            #{date}
+        )
+    </insert>
+
+    <update id="updateLaststatusPart">
+        update t_scm_barcode
+        set laststatus = #{laststatus},
+            lastfactory = #{factory},
+            laststorage = #{storage}
+        where barcode = #{barcode}
+    </update>
+
+
+    <!-- 상호명 불러오기 -->
+    <select id="incomingSanghoException" resultType="string">
+        select cu_code||'_'||cu_sangho from c_cust where chk_buy =1 order by cu_sangho
+    </select>
+
+    <!-- 입고내역 조회 - Detail -->
+    <select id="searchIncomingDetail" resultType = "map">
+        select
+            a.iid,
+            a.itemcode,
+            to_number(a.qty) as qty,
+            nvl(a.source,' ') as source,
+            a.storage,
+            substr(a.ymdhms,9,6) as time
+        from t_wms_inbound a
+        left outer join t_wms_location b on a.barcode = b.barcode and b.useyn ='Y'
+        where a.sdate = #{date}
+        and a.storage = #{storage}
+        <if test="custcode != null and custcode != ''">
+            and a.custcode = #{custcode}
+        </if>
+        <if test="custname != null and custname != ''">
+            and a.custname = #{custname}
+        </if>
+        and a.source = 'INCOMING'
+        and a.factory = #{factory}
+        and a.useyn = 'Y'
+        order by a.ymdhms desc
+    </select>
+
+    <!-- 입고내역 조회 - summary -->
+    <select id="searchIncomingSummary" resultType = "map">
+        SELECT
+            a.sdate,
+            a.factory,
+            a.storage,
+            a.itemcode,
+            SUM(a.qty) as sumqty
+        FROM t_wms_inbound a
+        WHERE a.useyn = 'Y'
+        AND A.SOURCE = 'INCOMING'
+        AND a.sdate = #{date}
+        AND a.storage = #{storage}
+        AND a.factory = #{factory}
+        <if test="custcode != null and custcode != ''">
+            AND a.custcode = #{custcode}
+        </if>
+        <if test="custname != null and custname != ''">
+            AND a.custname = #{custname}
+        </if>
+        GROUP BY a.sdate, a.itemcode, a.factory, a.storage
+    </select>
+</mapper>

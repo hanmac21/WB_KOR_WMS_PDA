@@ -1,4 +1,4 @@
-package com.example.demo.mapper.usa;
+package com.example.demo.mapper.korea;
 
 import java.util.List;
 import java.util.Map;

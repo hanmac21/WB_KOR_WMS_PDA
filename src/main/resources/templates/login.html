@@ -9,393 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Malgun Gothic', sans-serif;
-            background-color: #f5f5f5;
-            min-height: 100vh;
-        }
-
-        .container {
-            padding: 30px 15px;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .logo-section {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .logo-icon {
-            width: 100%;
-            max-width: 300px;
-            height: 80px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
-        .logo-img {
-            width: 100%;
-            max-width: 300px;
-            height: 60px;
-            object-fit: contain;
-        }
-
-        .logo-text {
-            color: #1e3a8a;
-            font-size: 32px;
-            font-weight: 700;
-            letter-spacing: 2px;
-        }
-
-        .system-subtitle {
-            color: #6b7280;
-            font-size: 16px;
-            font-weight: 400;
-        }
-
-        .error-message {
-            position: fixed;
-            top: 80px;
-            left: 15px;
-            right: 15px;
-            background: #fee2e2;
-            color: #991b1b;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            border: 1px solid #fecaca;
-            z-index: 2000;
-            display: none;
-            animation: slideDown 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 1;
-                transform: translateY(0);
-            }
-            to {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-        }
-
-        .login-form {
-            max-width: 400px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        /* 공장 선택 버튼 */
-        .factory-selection {
-            margin-bottom: 15px;
-        }
-
-        /* 공장/창고 선택 버튼 (라디오 형태) */
-        .selection-btn {
-            width: 100%;
-            height: 50px;
-            background: white;
-            border: 2px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            color: #374151;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .selection-btn:hover {
-            border-color: #0887c9;
-            background: #f8fafc;
-        }
-
-        .selection-btn.selected {
-            background: #0887c9;
-            color: white;
-            border-color: #0887c9;
-            box-shadow: 0 4px 12px rgba(8, 135, 201, 0.3);
-        }
-
-        .selection-btn.selected:hover {
-            background: #0887c9;
-            border-color: #0887c9;
-        }
-
-        /* 아이디/비밀번호 입력 */
-        .credentials-section {        
-           /*  margin-bottom: 25px; */
-        }
-        /* 언어 선택 */
-        .language-selection {
-            margin-bottom: 25px;
-        }
-
-        .language-row {
-            display: flex;
-            gap: 8px;
-        }
-
-        .language-btn {
-            flex: 1;
-            height: 45px;
-            background: white;
-            border: 2px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            color: #374151;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .language-btn:hover {
-            border-color: #0887c9;
-            background: #f8fafc;
-        }
-
-        .language-btn.selected {
-            background: #0887c9;
-            color: white;
-            border-color: #0887c9;
-        }
-
-        .language-btn.selected:hover {
-            background: #0887c9;
-            border-color: #0887c9;
-        }
-
-        /* 입력 필드 */
-        .form-group {
-            margin-bottom: 18px;
-            position: relative;
-            display:flex;
-            align-items: center;
-        }
-        .form-group .form-label{
-        	font-size: 18px;
-        	margin-left: auto;
-        }
-        
-        .form-group input{
-        	margin-left: auto;
-        	width: 80%;
-        }
-
-        .form-label {
-            display: block;
-            color: #374151;
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 5px;
-        }
-
-        .form-input {
-            width: 100%;
-            height: 45px;
-            padding: 10px 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 14px;
-            background: #f9fafb;
-            color: #374151;
-            transition: all 0.3s ease;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #3b82f6;
-            background: white;
-        }
-
-        .form-input::placeholder {
-            color: #9ca3af;
-        }
-
-        .password-toggle {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: #6b7280;
-            cursor: pointer;
-            font-size: 14px;
-            padding: 4px;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .password-toggle:hover {
-            color: #374151;
-        }
-
-        .login-options {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 25px;
-        }
-
-        .remember-me {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .remember-me input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            accent-color: #3b82f6;
-        }
-
-        .remember-me label {
-            color: #374151;
-            font-size: 13px;
-            cursor: pointer;
-        }
-
-        .login-btn {
-            width: 100%;
-            height: 50px;
-            background: #059669;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .login-btn:active {
-            background: #2563eb;
-            transform: scale(0.98);
-        }
-
-        .login-btn:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .loading-spinner {
-            display: none;
-            width: 18px;
-            height: 18px;
-            border: 2px solid #ffffff40;
-            border-top: 2px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 8px;
-        }
-        
-        .update-minimal {
-            text-align: center;
-            padding-top: 15px;
-            margin-top: 10px;
-            border-top: 1px solid #f1f5f9;
-        }
-
-        .update-minimal a {
-            color: #94a3b8;
-            text-decoration: none;
-            font-size: 11px;
-            font-weight: normal;
-            opacity: 0.7;
-            transition: opacity 0.2s;
-        }
-
-        .update-minimal a:hover {
-            opacity: 1;
-            color: #64748b;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* 모바일 대응 */
-        @media (max-width: 480px) {
-            .container {
-                padding: 20px 10px;
-            }
-
-            .selection-btn {
-                height: 45px;
-                font-size: 15px;
-            }
-
-            .language-btn {
-                height: 40px;
-                font-size: 13px;
-            }
-
-            .form-input {
-                height: 42px;
-                font-size: 14px;
-            }
-
-            .login-btn {
-                height: 45px;
-                font-size: 15px;
-            }
-
-            .logo-section {
-                margin-bottom: 30px;
-            }
-        }
-
-        /* PDA 최적화 */
-        @media (max-width: 320px) {
-            .container {
-                padding: 15px 8px;
-            }
-
-            .language-row {
-                gap: 6px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/css/login.css">
 </head>
 <body>
     <!-- 컨텐츠 영역 -->
@@ -418,22 +32,22 @@
         <form id="loginForm" class="login-form" onsubmit="event.preventDefault(); login();">
             <!-- 공장 선택 -->
             <div class="factory-selection">
-                <button type="button" class="selection-btn" data-warehouse="WBTA">WBTA</button>
-                <button type="button" class="selection-btn" data-warehouse="ILLINOIS">ILLINOIS</button>
+                <button type="button" class="selection-btn" data-factory="ULSAN">울산</button>
+                <button type="button" class="selection-btn" data-factory="PT">평택</button>
             </div>
 
             <!-- 언어 선택 -->
-            <div class="language-selection">
+           <!-- <div class="language-selection">
                 <div class="language-row">
-                    <button type="button" class="language-btn" data-language="en">
-                        English
-                    </button>
                     <button type="button" class="language-btn" data-language="ko">
                         한국어
                     </button>
+                    <button type="button" class="language-btn" data-language="en">
+                        English
+                    </button>
                 </div>
             </div>
-			
+			-->
 			<div class="credentials-section">
                 <!-- 아이디 입력 -->
                 <div class="form-group">
@@ -449,7 +63,7 @@
                 </div>           
             </div>
             <div style="padding:5px; margin-bottom:13px;">
-            	<input type = "checkbox" id = "saveid"><span style="padding:8px; ">Remember ID</span>
+            	<input type = "checkbox" id = "saveid"><label style="padding:8px; ">아이디 저장</label>
             </div>          
             <button type="submit" id="loginBtn" class="login-btn">
                 <span id="loadingSpinner" class="loading-spinner"></span>
@@ -484,27 +98,13 @@
                 // 현재 버튼 선택
                 this.classList.add('selected');
 
-                const value = this.getAttribute('data-warehouse');
-
-                // 공장은 항상 WBTA 고정
-                selectedFactory = 'WBTA';
-
-                // 창고는 ILLINOIS 선택 시에만 값 보유
-                if (value === 'ILLINOIS') {
-                    selectedWarehouse = 'ILLINOIS';
-                } else {
-                    selectedWarehouse = null;
-                }
+                // ULSAN 또는 PT
+                selectedFactory = this.getAttribute('data-factory');
 
                 // 즉시 저장 (언어 변경으로 리로드 되어도 복원 가능)
-                localStorage.setItem('rememberedFactory', 'WBTA');
-                if (selectedWarehouse === 'ILLINOIS') {
-                    localStorage.setItem('rememberedWarehouse', 'ILLINOIS');
-                } else {
-                    localStorage.removeItem('rememberedWarehouse');
-                }
+                localStorage.setItem('rememberedFactory', selectedFactory);
 
-                console.log('선택 -> factory: WBTA(fixed), warehouse:', selectedWarehouse);
+                console.log('선택된 공장:', selectedFactory);
             });
         });
 
@@ -533,51 +133,32 @@
             });
         });
 
-        // 비밀번호 보기/숨기기 토글
-        function togglePassword() {
-            const passwordInput = document.getElementById('password');
-            const toggleIcon = document.getElementById('passwordToggleIcon');
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                toggleIcon.textContent = '🔒';
-            } else {
-                passwordInput.type = 'password';
-                toggleIcon.textContent = '👁';
-            }
-        }
-
         function login(){
-            // 유효성 검사
-            // 공장은 항상 WBTA
-            selectedFactory = 'WBTA';
-            
-            if (!selectedLanguage) {
-                showError('Select Language');
+            // 공장 선택 검사
+            if (!selectedFactory) {
+                showError('공장을 선택해 주세요.');
                 return;
             }
             
             if($("#loginid").val().trim()==''){
-            	showError('Input ID');
+            	showError('아이디를 입력하세요');
             	return;
             }
             
             if($("#loginpw").val().trim()==''){
-            	showError('Input Password');
+            	showError('비밀번호를 입력하세요');
             	return;
             }
             
             
             // 현재 세션용 데이터
             localStorage.setItem('rememberedFactory', selectedFactory);
-            localStorage.setItem('rememberedWarehouse', selectedWarehouse);
-            localStorage.setItem('rememberedLanguage', selectedLanguage);
+            // localStorage.setItem('rememberedLanguage', selectedLanguage);
             sessionStorage.setItem('currentFactory', selectedFactory);
-            sessionStorage.setItem('currentWarehouse', selectedWarehouse);
-            sessionStorage.setItem('currentLanguage', selectedLanguage);
+            // sessionStorage.setItem('currentLanguage', selectedLanguage);
             
             // 언어 파라미터 직접 생성
-            const langParam = selectedLanguage ? `?lang=${selectedLanguage}` : '';
+            // const langParam = selectedLanguage ? `?lang=${selectedLanguage}` : '';
             
            /* if(selectedFactory == 'Saltillo'){
                 location.replace('/index' + langParam);
@@ -601,7 +182,6 @@
                 url:"/loginCheck",
                 data:{
                     factory:selectedFactory,
-                    language:selectedLanguage,
                     loginid:$("#loginid").val(),
                     loginpw : $("#loginpw").val()
                 },
@@ -609,9 +189,8 @@
                 	console.log("result: "+result)
                     if(result == "success"){
                         // 선택 정보 저장
-                        localStorage.setItem('rememberedFactory', 'WBTA');
-                        localStorage.setItem('rememberedWarehouse', selectedWarehouse);
-                        localStorage.setItem('rememberedLanguage', selectedLanguage);
+                        localStorage.setItem('rememberedFactory', selectedFactory);
+                        // localStorage.setItem('rememberedLanguage', selectedLanguage);
                         const saveCheck = document.getElementById("saveid");
                         if (saveCheck.checked) {
                         	 localStorage.setItem('savedid', $("#loginid").val());
@@ -622,18 +201,11 @@
                           }
                         
                         // 현재 세션용 데이터
-                        sessionStorage.setItem('currentFactory', 'WBTA');
-                        sessionStorage.setItem('currentWarehouse', selectedWarehouse);
-                        sessionStorage.setItem('currentLanguage', selectedLanguage);
+                        sessionStorage.setItem('currentFactory', selectedFactory);
+                        // sessionStorage.setItem('currentLanguage', selectedLanguage);
                         
                         // URL 파라미터 유지해서 이동
-                        const currentParams = window.location.search;
-                        if(selectedFactory == 'Saltillo'){
-                            location.replace('/index' + currentParams);
-                        } else {
-                        	location.replace('/index' + langParam);
-                        	//location.replace('/puebla-menu' + currentParams);
-                        }
+                        location.replace('/index');
                     }else if(result == "idfail"){
                         showError('Invalid ID');
                     }else if(result == "pwfail"){
@@ -701,8 +273,8 @@
 
         // 페이지 로드 시 기억된 정보 복원
         document.addEventListener('DOMContentLoaded', function() {
-            const rememberedWarehouse = localStorage.getItem('rememberedWarehouse');
-            const rememberedLanguage = localStorage.getItem('rememberedLanguage');
+            const rememberedFactory = localStorage.getItem('rememberedFactory');
+            // const rememberedLanguage = localStorage.getItem('rememberedLanguage');
             const savedId = localStorage.getItem("savedid");		// 아이디 
             const savedPw = localStorage.getItem("savedpw");		// 비밀번호 
             if (savedId) {
@@ -711,32 +283,27 @@
               document.getElementById("saveid").checked = true;
             }
 
-            if (rememberedWarehouse === 'ILLINOIS') {
-                const btn = document.querySelector('.selection-btn[data-warehouse="ILLINOIS"]');
-                if (btn) {
-                    btn.classList.add('selected');
-                    selectedWarehouse = 'ILLINOIS';
-                }
-            } else {
-                // 기본 WBTA 선택
-                const btn = document.querySelector('.selection-btn[data-warehouse="WBTA"]');
-                if (btn) {
-                    btn.classList.add('selected');
-                    selectedWarehouse = null;
-                }
+            // 저장된 공장이 PT이면 평택, 그 외에는 울산을 기본 선택
+            const factoryToSet = rememberedFactory === 'PT' ? 'PT' : 'ULSAN';
+
+            const factoryBtn = document.querySelector(
+                `.selection-btn[data-factory="${factoryToSet}"]`
+            );
+
+            if (factoryBtn) {
+                factoryBtn.classList.add('selected');
+                selectedFactory = factoryToSet;
             }
 
-            // 공장은 항상 WBTA 고정
-            selectedFactory = 'WBTA';
-            localStorage.setItem('rememberedFactory', 'WBTA');
+            localStorage.setItem('rememberedFactory', selectedFactory);
 
-            // 기억된 언어 선택
-            let languageToSet = rememberedLanguage || "en";   // 기본값 영어
-		    const languageBtn = document.querySelector(`[data-language="${languageToSet}"]`);
-		    if (languageBtn) {
-		        languageBtn.classList.add('selected');
-		        selectedLanguage = languageToSet;
-		    }
+            // // 기억된 언어 선택
+            // let languageToSet = rememberedLanguage || "ko";   // 기본값 영어
+		    // const languageBtn = document.querySelector(`[data-language="${languageToSet}"]`);
+		    // if (languageBtn) {
+		    //     languageBtn.classList.add('selected');
+		    // }
+            // selectedLanguage = languageToSet;
         });
 
         // 사용하지 않는 함수들 제거

@@ -48,7 +48,7 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
-def versionCode = new Date().format("yyyyMMddHHmmss") // 예: 20250624103055
+def versionCode = new Date().format("yyyyMMddHHmm") // 예: 202506241030
 
 task writeVersionProperties {
     doLast {

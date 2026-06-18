@@ -3,7 +3,7 @@
     PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
     
-<mapper namespace="com.example.demo.mapper.usa.BarcodeCheckMapper">
+<mapper namespace="com.example.demo.mapper.korea.BarcodeCheckMapper">
 	<!-- 팔레트가 해체된 경우 모든 메뉴에서 사용 -->
 	<select id = "palletNCheck" resultType = "string">
 		select distinct pbarcode from t_scm_pallet

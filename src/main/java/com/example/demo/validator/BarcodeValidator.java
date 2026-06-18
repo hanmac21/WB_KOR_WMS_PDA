@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
-import com.example.demo.mapper.usa.BarcodeCheckMapper;
+import com.example.demo.mapper.korea.BarcodeCheckMapper;
 import com.example.demo.mapper.usa.PurchaseMapper;
 
 @Component
