@@ -98,6 +98,7 @@ public class MainController {
 		return "ulsan/menu/menu";
 	}
 
+	// 입고 중분류
 	@GetMapping("/menu-ulsan/incoming")
 	public String menuUlsanIncoming() {
 		log.info("menu-ulsan/incoming Page Load");
@@ -115,8 +116,6 @@ public class MainController {
 	@GetMapping("/ulsan/incoming/detail")
 	public String incomingDetail(Model model) {
 		log.info("inbound detail page Load");
-		List<String> cust = ulsanService.incomingSanghoException();
-		model.addAttribute("cust", cust);
 		return "ulsan/incoming/detail";
 	}
 
@@ -124,8 +123,6 @@ public class MainController {
 	@GetMapping("/ulsan/incoming/summary")
 	public String incomingSummary(Model model) {
 		log.info("inbound summary page Load");
-		List<String> cust = ulsanService.incomingSanghoException();
-		model.addAttribute("cust", cust);
 		return "ulsan/incoming/summary";
 	}
 
@@ -143,10 +140,68 @@ public class MainController {
 		return "ulsan/incoming/return_detail";
 	}
 
+	// 재고실사 대분류
+	@GetMapping("/menu-ulsan/stock-count")
+	public String menuPurchaseStockCount() {
+		log.info("menu-purchase/stockCount Page Load");
+		return "ulsan/menu/stockCount";
+	}
 
+	// 사내 재고실사 중분류
+	@GetMapping("/ulsan/menu/stockCount-in")
+	public String ulsanStockCountIn() {
+		log.info("ulsan/menu/stockCount-in Page Load");
+		return "ulsan/menu/stockCount-in";
+	}
 
+	// 사외 재고실사 중분류
+	@GetMapping("/ulsan/menu/stockCount-out")
+	public String ulsanStockCountOut() {
+		log.info("ulsan/menu/stockCount-out Page Load");
+		return "ulsan/menu/stockCount-out";
+	}
 
+	// 사내 재고실사
+	@GetMapping("/ulsan/stock-count/in-barcode")
+	public String ulsanStockCountInBarocde() {
+		log.info("stock-count/in-barcode Page Load");
+		return "ulsan/stock-count/in-barcode";
+	}
 
+	// 사외 재고실사
+	@GetMapping("/ulsan/stock-count/out-barcode")
+	public String ulsanStockCountOutBarocde() {
+		log.info("stock-count/out-barcode Page Load");
+		return "ulsan/stock-count/out-barcode";
+	}
+
+	// 재고현황 - detail
+	@GetMapping("/ulsan/stock-count/in-detail")
+	public String ulsanStockCountInDetail() {
+		log.info("stock-count/detail Page Load");
+		return "ulsan/stock-count/in-detail";
+	}
+
+	// 재고현황 - summary
+	@GetMapping("/ulsan/stock-count/in-summary")
+	public String ulsanStockCountInSummary() {
+		log.info("stock-count/summary Page Load");
+		return "ulsan/stock-count/in-summary";
+	}
+
+	// 재고현황 - detail
+	@GetMapping("/ulsan/stock-count/out-detail")
+	public String ulsanStockCountOutDetail() {
+		log.info("stock-count/detail Page Load");
+		return "ulsan/stock-count/out-detail";
+	}
+
+	// 재고현황 - summary
+	@GetMapping("/ulsan/stock-count/out-summary")
+	public String ulsanStockCountOutSummary() {
+		log.info("stock-count/summary Page Load");
+		return "ulsan/stock-count/out-summary";
+	}
 
 
 

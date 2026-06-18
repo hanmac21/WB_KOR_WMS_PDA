@@ -4,16 +4,6 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.example.demo.mapper.korea.UlsanMapper">
-    <select id = "forIncoming" resultType = "string">
-        select barcode from v_itemhistory
-        where (kind = 'BARCODE' or kind = 'PALLET')
-        and barcode in
-        <foreach item="barcode" collection="list" open="(" separator="," close=")">
-            #{barcode}
-        </foreach>
-        and useyn ='Y'
-        and laststatus between 1 and 9
-    </select>
 
     <select id="getItemInfo" resultType = "map">
         SELECT PNO, QTY
@@ -210,5 +200,89 @@
             AND a.custname = #{custname}
         </if>
         GROUP BY a.sdate, a.itemcode, a.factory, a.storage
+    </select>
+
+    <insert id = "insRealStock">
+        insert into t_wms_realstock(
+            sdate,
+            barcode,
+            qty,
+            loginid,
+            ymdhms,
+            type,
+            itemcode,
+            storage,
+            location,
+            factory,
+            source
+        ) values (
+            #{date},
+            #{barcode},
+            #{qty},
+            #{loginid},
+            TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+            #{type},
+            #{itemcode},
+            #{storage},
+            #{location},
+            #{factory},
+            #{source}
+        )
+    </insert>
+
+
+    <!-- 재고실사 - 나열형 -->
+    <select id="searchInventoryDetail" resultType="map">
+        SELECT
+            a.sdate,
+            c.subname AS car,
+            a.itemcode,
+            b.itemname,
+            a.qty,
+            a.type,
+            a.barcode,
+            a.location,
+            ymdhms
+        FROM   t_wms_realstock a
+        LEFT OUTER JOIN t_mi_item b ON a.itemcode = b.itemcode AND deldate = ' '
+        LEFT OUTER JOIN t_mi_typesub c ON b.carno = c.subcode AND c.typecode = 'MI041'
+        where useyn = 'Y'
+        <if test ="sdate != null and sdate != ''">
+            and a.sdate = #{sdate}
+        </if>
+        <if test = "factory != null and factory != ''">
+            and factory = #{factory}
+        </if>
+        <if test = "storage != null and storage != ''">
+            and storage = #{storage}
+        </if>
+        order by iid desc
+    </select>
+
+    <!-- 재고실사 - 집계형 -->
+    <select id="searchInventorySummary" resultType="map">
+        SELECT
+            a.SDATE,
+            a.itemcode,
+            a.STORAGE,
+            a.FACTORY,
+            SUM(a.QTY) as sumqty
+        FROM T_WMS_REALSTOCK a
+        LEFT OUTER JOIN t_mi_item b ON a.itemcode = b.itemcode
+        LEFT OUTER JOIN t_mi_typesub c ON b.carno = c.subcode AND c.typecode = 'MI041'
+        WHERE a.useyn = 'Y'
+        <if test ="sdate != null and sdate != ''">
+            and a.sdate = #{sdate}
+        </if>
+        <if test = "factory != null and factory != ''">
+            and a.factory = #{factory}
+        </if>
+        <if test = "storage != null and storage != ''">
+            and a.storage = #{storage}
+        </if>
+        <if test = "itemcode != null and itemcode != ''">
+            and a.itemcode = #{itemCode}
+        </if>
+        GROUP BY a.SDATE, a.itemcode, a.STORAGE, a.FACTORY, a.scantype
     </select>
 </mapper>

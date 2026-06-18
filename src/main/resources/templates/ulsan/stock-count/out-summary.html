@@ -4,7 +4,6 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- <link rel="stylesheet" th:href="@{/css/header.css(v=${T(java.lang.System).currentTimeMillis()})}"> -->
 <title>WMS 시스템</title>
 <link rel="stylesheet" th:href="@{/css/common.css(v=${T(java.lang.System).currentTimeMillis()})}">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -30,21 +29,11 @@
 		</div>
 		<div class="form-group">
 			<div class = "storage-selector">
-            	<select id="locationPart1" class="location-select">
-					<option value = 'WBTA'>WBTA</option>
-				</select>  
 				<select id="locationPart2"	class="location-select storage-select">
-					<option value = 'MATERIAL'>MATERIAL</option>
-					<option value = 'PRODUCT'>PRODUCT</option>
+					<option value = 'HSD'>HSD</option>
+					<option value = 'CNF'>CNF</option>
+					<option value = 'SW'>SW</option>
 				</select> 
-            </div>
-            <div class ="storage-selector">
-            	<span >ScanType : </span>
-            	<select class=".customer-selector" id = "scantype">
-            		<option value = "All">All</option>
-            		<option value = "LOCATION">Location</option>
-            		<option value = "BARCODE">Barcode</option>
-            	</select>
             </div>
         </div>
 	</div>
@@ -80,7 +69,7 @@
         <div th:text = "#{info.loading}">로딩중...</div>
     </div>
     <script th:src="@{/js/utils/common.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
-    <script	th:src="@{/js/modules/purchase/stock-count/in-summary.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+    <script	th:src="@{/js/modules/ulsan/stock-count/out-summary.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
 	<script>
 	function checkNetworkAndMove(url) {
 		if (window.AndroidInterface && !AndroidInterface.isNetworkConnected()) {

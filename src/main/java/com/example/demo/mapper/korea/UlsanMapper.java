@@ -1,5 +1,6 @@
 package com.example.demo.mapper.korea;
 
+import com.example.demo.vo.InventoryVO;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -7,8 +8,6 @@ import java.util.Map;
 
 @Mapper
 public interface UlsanMapper {
-
-    List<String> forIncoming(List<String> barcodes);
 
     Map<String, Object> getItemInfo(String barcode);
 
@@ -28,6 +27,8 @@ public interface UlsanMapper {
 
     void updateLaststatusPart(Map<String, Object> m);
 
+    void insRealStock(Map<String, Object> map);
+
 
 
 
@@ -36,4 +37,8 @@ public interface UlsanMapper {
     List<Map<String, Object>> searchIncomingDetail(Map<String, Object> map);
 
     List<Map<String, Object>> searchIncomingSummary(Map<String, Object> map);
+
+    List<InventoryVO> searchInventoryDetail(Map<String, Object> map);
+
+    List<InventoryVO> searchInventorySummary(Map<String, Object> map);
 }

@@ -16,7 +16,7 @@
 </head>
 <body data-page="addEntry">
 	<div
-		th:replace="fragments/header :: commonHeader(#{menu.stockCount.barcode})"></div>
+		th:replace="fragments/header :: commonHeader(#{menu.stockCount.out})"></div>
 	<div class="form-container">
 		<div class="section-header">
 			<div class="datepicker-group">
@@ -32,8 +32,9 @@
 			<div class="storage-selector">
 				<span th:text="#{search.storage}">창고</span>
 				<select id = "locationPart2" class="storage-select" >
-					<option value = 'MATERIAL'>MATERIAL</option>
-					<option value = 'PRODUCT'>PRODUCT</option>
+					<option value = 'HSD'>HSD</option>
+					<option value = 'CNF'>CNF</option>
+					<option value = 'SW'>SW</option>
 				</select>
 			</div>
 			<div class="barcode-input">
@@ -65,7 +66,7 @@
 	</div>
 	<!-- 푸터 -->
 	<div class="footer">
-		<button id="allSendBtn" class="btn-primary"	onclick="saveBarcode()" th:text="#{btn.saveBarcode}">전체 전송</button>
+		<button id="allSendBtn" class="btn-primary"	onclick="saveBarcode2()" th:text="#{btn.saveBarcode}">전체 전송</button>
 		</div>
 	</div>
 	<!-- 로딩 스피너 -->
@@ -76,7 +77,7 @@
 	<script
 		th:src="@{/js/utils/common.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
 	<script
-		th:src="@{/js/modules/purchase/stock-count/in-barcode.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+		th:src="@{/js/modules/ulsan/stock-count/out-barcode.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
 
 </body>
 </html>

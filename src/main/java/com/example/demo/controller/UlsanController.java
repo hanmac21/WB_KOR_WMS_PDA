@@ -45,4 +45,31 @@ public class UlsanController {
         log.info("search incoming summary");
         return ulsanService.searchIncomingSummary(param);
     }
+
+    // 재고실사 insert
+    @PostMapping("/insertRealStock")
+    public Map<String, Object> insertRealStock(@RequestBody BarcodeVO request, HttpServletRequest request2) {
+        log.info("realstock insert controller");
+        HttpSession session = request2.getSession(false);
+        if (session != null) {
+            String loginid = (String) session.getAttribute("loginid");
+            request.setLoginid(loginid); // 예: 등록자 세팅
+        }
+
+        return ulsanService.insRealStock(request);
+    }
+
+    // 재고실사현황 - Detail
+    @PostMapping("/search-stock-count/detail")
+    public Map<String, Object> search_inventory(@RequestBody Map<String, Object> param, HttpServletRequest request){
+        log.info("search_inventory_detail");
+        return ulsanService.searchInventoryDetail(param);
+    }
+
+    // 재고실사현황 - summary
+    @PostMapping("/search-stock-count/summary")
+    public Map<String, Object> search_inventory_summary(@RequestBody Map<String, Object> param, HttpServletRequest request){
+        log.info("search_inventory_summary");
+        return ulsanService.searchInventorySummary(param);
+    }
 }

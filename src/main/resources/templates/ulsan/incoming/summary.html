@@ -21,7 +21,6 @@
 	<div th:replace="fragments/header :: commonHeader(#{menu.incoming.summary})"></div> 
 	<div class="form-container">
 		<div class="section-header">
-            <!-- <div class="section-title" th:text = "#{search.barcodeScan}">바코드 스캔</div> -->
             <div class="datepicker-group">
                <span th:text = "#{search.inDate}">입고일 : </span>
                <input type="text" id="datepicker"  autocomplete='off' placeholder="" readonly>
@@ -31,14 +30,7 @@
             </div>
         </div>		
         
-        <div class="form-group">
-			<div class="customer-selector">
-				<span th:text="#{search.customer}"></span> 
-				<select class="customer-select">
-					<option value=" "></option>
-					<option th:each="item : ${cust}" th:value="${item}" th:text="${item}">
-				</select>
-			</div>			
+        <div class="form-group"
 			<div class = "storage-selector">
             	<span th:text="#{search.storage}">창고</span>
             	<select class="storage-select">
@@ -82,7 +74,7 @@
         <div th:text="#{info.loading}">로딩중...</div>
     </div>
      <script th:src="@{/js/utils/common.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
-    <script th:src="@{/js/modules/ulsan/incoming/summary.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+    <script th:src="@{/js/modules/ulsan/incoming/in-summary.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
 	<script>
 	hideLoading();
 	function checkNetworkAndMove(url) {

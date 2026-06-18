@@ -30,21 +30,11 @@
 		</div>
 		<div class="form-group">
 			<div class = "storage-selector">
-            	<select id="locationPart1" class="location-select">
-					<option value = 'WBTA'>WBTA</option>
-				</select>  
 				<select id="locationPart2"	class="location-select storage-select">
 					<option value = 'MATERIAL'>MATERIAL</option>
 					<option value = 'PRODUCT'>PRODUCT</option>
+					<option value = 'WORKSHOP'>WORKSHOP</option>
 				</select> 
-            </div>
-            <div class ="storage-selector">
-            	<span >ScanType : </span>
-            	<select class=".customer-selector" id = "scantype">
-            		<option value = "All">All</option>
-            		<option value = "LOCATION">Location</option>
-            		<option value = "BARCODE">Barcode</option>
-            	</select>
             </div>
         </div>
 	</div>
@@ -80,7 +70,7 @@
         <div th:text = "#{info.loading}">로딩중...</div>
     </div>
     <script th:src="@{/js/utils/common.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
-    <script	th:src="@{/js/modules/purchase/stock-count/in-summary.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+    <script	th:src="@{/js/modules/ulsan/stock-count/in-summary.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
 	<script>
 	function checkNetworkAndMove(url) {
 		if (window.AndroidInterface && !AndroidInterface.isNetworkConnected()) {

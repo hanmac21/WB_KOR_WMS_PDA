@@ -15,24 +15,17 @@
   </style>
 </head>
 <body>
-	<div class= 'header-div'th:replace="fragments/header :: commonHeader(#{menu.labelPrint})"></div> 
+	<div class= 'header-div'th:replace="fragments/header :: commonHeader(#{menu.stockCount.out})"></div>
 	<div class="container">
-        <!-- <div class="section-title" th:text = "#{menu.purchase.title}">구매 메뉴</div> -->
         <div class="menu-grid">
-         	<button  class="sub-menu-item" onclick="checkNetworkAndMove('/purchase/label/make-pallet')" th:text = "#{menu.labelPrint.makePallet}">
-                팔레트 라벨 생성
+            <button class="sub-menu-item load"  onclick="checkNetworkAndMove('/ulsan/stock-count/out-barcode')" th:text = "#{menu.stockCount.barcode}">
+                재고실사 - 바코드
             </button>
-         	<button  class="sub-menu-item" onclick="checkNetworkAndMove('/purchase/label/pallet-management')" th:text = "#{menu.labelPrint.palletManagement}">
-                팔레트 관리
+            <button class="sub-menu-item load"  onclick="checkNetworkAndMove('/ulsan/stock-count/out-detail')" th:text = "#{menu.stockCount.detail}">
+                Inventory - detail
             </button>
-         	<button  class="sub-menu-item" onclick="checkNetworkAndMove('/purchase/label/pallet-unbound')" th:text = "#{menu.labelPrint.pallet.unbound}">
-                팔레트 관리
-            </button>
-         	<button  class="sub-menu-item" onclick="checkNetworkAndMove('/purchase/label/part-adjustment')" th:text = "#{menu.labelPrint.part.adjustment}">
-                파트라벨 수량 조정
-            </button>
-            <button  class="sub-menu-item" onclick="checkNetworkAndMove('/purchase/label/part-adjustment-itemcode')" th:text = "#{menu.labelPrint.part.adjustment.itemcode}">
-                파트라벨 품번 조정
+            <button class="sub-menu-item load"  onclick="checkNetworkAndMove('/ulsan/stock-count/out-summary')" th:text = "#{menu.stockCount.summary}">
+                Inventory - summary
             </button>
         </div>
     </div>
