@@ -68,7 +68,7 @@
         <div th:text = "#{info.loading}">로딩중...</div>
     </div>
     <script th:src="@{/js/utils/common.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
-    <script th:src="@{/js/modules/sales/load/load.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+    <script th:src="@{/js/modules/sales/load/domestic-load.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
 	<script>
 	function checkNetworkAndMove(url) {
 		if (window.AndroidInterface && !AndroidInterface.isNetworkConnected()) {

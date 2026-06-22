@@ -14,7 +14,7 @@
     </style>
 </head>
 <body data-page="addEntry">
-    <div th:replace="fragments/header :: commonHeader(#{menu.load.load})"></div>
+    <div th:replace="fragments/header :: commonHeader(#{menu.load.loadtransys})"></div>
     <div class="form-container">
         <div class="section-header">
             <div class="action-buttons">
@@ -36,11 +36,7 @@
             <div class="storage-selector">
                 <span th:text="#{search.shipTo}">출고처</span>
                 <select class="shipto-select">
-                    <option value = "TRANSYS_GA">TRANSYS_GA</option>
-                    <option value = "TRANSYS_AL">TRANSYS_AL</option>
                     <option value = "TRANSYS_IL">TRANSYS_IL</option>
-                    <option value = "ADIENT">ADIENT</option>
-                    <option value = "LEAR">LEAR</option>
                 </select>
             </div>
             <div class="barcode-input">
@@ -80,7 +76,7 @@
         <div th:text="#{info.loading}">로딩중...</div>
     </div>
     <script th:src="@{/js/utils/common.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
-    <script th:src="@{/js/modules/purchase/load/domestic-load.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+    <script th:src="@{/js/modules/ulsan/load/export-load.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
     <script>
         function checkNetworkAndMove(url) {
             if (window.AndroidInterface && !AndroidInterface.isNetworkConnected()) {

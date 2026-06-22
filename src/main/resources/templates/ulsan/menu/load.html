@@ -17,34 +17,18 @@
 <body>
 	<div class= 'header-div'th:replace="fragments/header :: commonHeader(#{menu.load})"></div> 
 	<div class="container">
-        <!-- <div class="section-title" th:text = "#{menu.purchase.title}">구매 메뉴</div> -->
         <div class="menu-grid">
-         	<button id="btn-transys-ga" class="sub-menu-item load" onclick="checkNetworkAndMove('/purchase/load/loadTransysGA')" >
-                TRANSYS - GA
+            <button id="btn-export-load" class="sub-menu-item load" onclick="checkNetworkAndMove('/ulsan/load/export-load')">
+                수출품 출고
             </button>
-            <button id="btn-transys-al" class="sub-menu-item load" onclick="checkNetworkAndMove('/purchase/load/loadTransysAL')" >
-                TRANSYS - AL
+            <button id="btn-domestic-load" class="sub-menu-item load" onclick="checkNetworkAndMove('/ulsan/load/domestic-load')">
+                내수품 출고
             </button>
-            <button id="btn-transys-il" class="sub-menu-item load" onclick="checkNetworkAndMove('/purchase/load/loadTransysIL')" >
-                TRANSYS - IL
+            <button id="btn-sequence-load" class="sub-menu-item load" onclick="checkNetworkAndMove('/ulsan/load/sequence-load')" >
+                서열부품 출고
             </button>
-            <button id="btn-lear" class="sub-menu-item load" onclick="checkNetworkAndMove('/purchase/load/loadLear')" >
-                LEAR
-            </button>
-            <button id="btn-adient" class="sub-menu-item load" onclick="checkNetworkAndMove('/purchase/load/loadAdient')" >
-                ADIENT
-            </button>
-            <button id="btn-load" class="sub-menu-item load" onclick="checkNetworkAndMove('/purchase/load/load')" th:text = "#{menu.load.load}">
+            <button id="btn-load-detail" class="sub-menu-item load" onclick="checkNetworkAndMove('/ulsan/load/load-detail')" th:text = "#{menu.load.load.detail}">
                 출고
-            </button>
-            <button id="btn-load-detail" class="sub-menu-item load" onclick="checkNetworkAndMove('/purchase/load/load-detail')" th:text = "#{menu.load.load.detail}">
-                출고
-            </button>
-            <button id="btn-return" class="sub-menu-item load" onclick="checkNetworkAndMove('/purchase/load/return')" th:text = "#{menu.load.return}">
-                출고 반품
-            </button>
-            <button id="btn-return-detail" class="sub-menu-item load" onclick="checkNetworkAndMove('/purchase/load/return-detail')" th:text = "#{menu.load.return.detail}">
-                출고 반품 - detail
             </button>
         </div>
     </div>
@@ -65,24 +49,6 @@
 	window.addEventListener("pageshow", function(event) {
 	    hideLoading();
 	});
-
-	(function() {
-	    var isIllinois = sessionStorage.getItem('currentWarehouse') === 'ILLINOIS';
-	    var ilOnlyIds = ['btn-transys-il'];
-	    var nonIlIds = ['btn-transys-ga', 'btn-transys-al', 'btn-lear', 'btn-adient', 'btn-load'];
-
-	    if (isIllinois) {
-	        nonIlIds.forEach(function(id) {
-	            var el = document.getElementById(id);
-	            if (el) el.style.display = 'none';
-	        });
-	    } else {
-	        ilOnlyIds.forEach(function(id) {
-	            var el = document.getElementById(id);
-	            if (el) el.style.display = 'none';
-	        });
-	    }
-	})();
 	function checkNetworkAndMove(url) {
 		showLoading();
 		if (window.AndroidInterface && !AndroidInterface.isNetworkConnected()) {

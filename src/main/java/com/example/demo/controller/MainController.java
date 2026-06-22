@@ -203,8 +203,32 @@ public class MainController {
 		return "ulsan/stock-count/out-summary";
 	}
 
+	@GetMapping("/menu-ulsan/load")
+	public String menuUlsanLoad() {
+		log.info("menu-ulsan/load Page Load");
+		return "ulsan/menu/load";
+	}
 
+	// 수출품 출고
+	@GetMapping("/ulsan/load/export-load")
+	public String ulsanLoadExportLoad() {
+		log.info("Export Load Page Load");
+		return "ulsan/load/export-load";
+	}
 
+	// 내수품 출고
+	@GetMapping("/ulsan/load/domestic-load")
+	public String ulsanLoadDomesticLoad() {
+		log.info("Domestic Load Page Load");
+		return "ulsan/load/domestic-load";
+	}
+
+	// 서열부품 출고
+	@GetMapping("/ulsan/load/sequence-load")
+	public String ulsanLoadSequenceLoad() {
+		log.info("Sequence Load Page Load");
+		return "ulsan/load/sequence-load";
+	}
 
 
 
