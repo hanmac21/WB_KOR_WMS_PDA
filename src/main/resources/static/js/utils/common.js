@@ -694,19 +694,8 @@ function handleBarcode(barcode) {
                 $("#barcodeInput").val(barcode);
                 addEntry();
             } else {
-                if ((barcode.split(",").length == 5 && ( barcode.split(",")[4] == "WMSUSA"))
-                    || (barcode[0][0] == "P" && (barcode.endsWith("USA")) || barcode.split(",").length == 1 && barcode[0][0] == "P")
-                    || barcode.startsWith("[)>") || barcode.split("_").length == 6) {
-                    $("#barcodeInput").val(barcode);
-                    if (page.includes('addEntry')) {
-                        addEntry(); // 바코드 처리 로직
-                    } else {
-                        findPallet();
-                    }
-                } else {
-                    Utils.showAlert(`${m("warning.barcode.invalid")}<br>${m("warning.check")}`, "warning")
-                    playSound("error");
-                }
+                $("#barcodeInput").val(barcode);
+                addEntry(); // 바코드 처리 로직
             }
         } else {
         }

@@ -14,7 +14,7 @@
     </style>
 </head>
 <body data-page="addEntry">
-    <div th:replace="fragments/header :: commonHeader(#{menu.load.load})"></div>
+    <div th:replace="fragments/header :: commonHeader('내수품 출고')"></div>
     <div class="form-container">
         <div class="section-header">
             <div class="action-buttons">
@@ -29,18 +29,10 @@
                 </button>
             </div>
             <div class="storage-selector">
-                <span th:text="#{search.storage}">창고</span>
-                <select class="storage-select">
-                </select>
-            </div>
-            <div class="storage-selector">
                 <span th:text="#{search.shipTo}">출고처</span>
                 <select class="shipto-select">
-                    <option value = "TRANSYS_GA">TRANSYS_GA</option>
-                    <option value = "TRANSYS_AL">TRANSYS_AL</option>
-                    <option value = "TRANSYS_IL">TRANSYS_IL</option>
-                    <option value = "ADIENT">ADIENT</option>
-                    <option value = "LEAR">LEAR</option>
+                    <option value = "TRANSYS">트랜시스</option>
+                    <option value = "LEAR">리어코리아</option>
                 </select>
             </div>
             <div class="barcode-input">
@@ -58,11 +50,10 @@
         <div class="table-scroll-area">
             <table class="data-table">
                 <thead>
-                <tr>
-                    <th th:text="#{table.itemCode}">품번</th>
-                    <th th:text="#{table.qty}">수량</th>
-                    <th rowspan="2" th:text="#{btn.delete}">삭제</th>
-                </tr>
+                    <tr>
+                        <th th:text="#{table.barcode}">바코드</th>
+                        <th th:text="#{btn.delete}">삭제</th>
+                    </tr>
                 </thead>
                 <tbody id="dataTableBody">
                 <!-- 동적으로 추가될 데이터 -->

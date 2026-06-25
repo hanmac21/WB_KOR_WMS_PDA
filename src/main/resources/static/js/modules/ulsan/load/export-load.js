@@ -52,9 +52,6 @@ $(document).ready(function () {
         }
     });
 
-    // 창고 기본값 변경
-    $(".storage-select").val("OUTSIDE").trigger("change");
-
     renderTable();
     $('#barcodeInput').on('touchstart mousedown', function () {
         manualTouch = true;
@@ -106,42 +103,33 @@ function addEntry() {			// 로컬스토리지 저장
         console.warn("현재 스캔 모드입니다.");
     }
 
-    if (barcode.includes(":") && barcode.startsWith("[)>") || barcode.split("_").length == 6) {
-        // 트랜시스 바코드인지 확인
-        let stored = [];
+    // 트랜시스 바코드인지 확인
+    let stored = [];
 
-        if (window.localStorage && localStorage.getItem("barcodeListTransysOut")) {
-            stored = JSON.parse(localStorage.getItem("barcodeListTransysOut"));
-        } else {
-            stored = [];
-        }
-
-        if (stored.includes(barcode)) {
-            console.log("barcode : " + barcode)
-            let audio = new Audio('/sounds/buzzer2.wav');
-            audio.play();
-            $("#barcodeInput").val("");
-            Utils.showAlert(`${barcode}<br>${m("warning.barcode.duplicate")}`);
-            hideLoading();
-            return;
-        } else {
-            let audio = new Audio('/sounds/complete.wav');
-            audio.play();
-
-            stored.push(barcode);
-            localStorage.setItem("barcodeListTransysOut", JSON.stringify(stored));
-            $("#barcodeInput").val("");
-            renderTable();
-            hideLoading();
-            Utils.showAlert(`${barcode}<br>${m("info.barcode.saved")}`, "#008000", barcode)
-        }
+    if (window.localStorage && localStorage.getItem("barcodeListTransysOut")) {
+        stored = JSON.parse(localStorage.getItem("barcodeListTransysOut"));
     } else {
-        let audio = new Audio('/sounds/buzzer.wav');
+        stored = [];
+    }
+
+    if (stored.includes(barcode)) {
+        console.log("barcode : " + barcode)
+        let audio = new Audio('/sounds/buzzer2.wav');
         audio.play();
         $("#barcodeInput").val("");
+        Utils.showAlert(`${barcode}<br>${m("warning.barcode.duplicate")}`);
         hideLoading();
-        Utils.showAlert(`${m("warning.barcode.invalid")}<br>${m("warning.check")}`, "warning")
         return;
+    } else {
+        let audio = new Audio('/sounds/complete.wav');
+        audio.play();
+
+        stored.push(barcode);
+        localStorage.setItem("barcodeListTransysOut", JSON.stringify(stored));
+        $("#barcodeInput").val("");
+        renderTable();
+        hideLoading();
+        Utils.showAlert(`${barcode}<br>${m("info.barcode.saved")}`, "#008000", barcode)
     }
 }
 
@@ -169,7 +157,6 @@ function saveBarcode() {					// 전체전송
         source: "LOAD",
         main: "OUT",
         kind: "LOAD",
-        storage: $(".storage-select").val(),
         shipTo: $(".shipto-select").val(),
         factory: localStorage.getItem('rememberedFactory'),
         memo: ""
@@ -178,7 +165,7 @@ function saveBarcode() {					// 전체전송
     Utils.showConfirm(m("confirm.send.all"), () => {
             showLoading();
             $.ajax({
-                url: `/purchase/insOutput`,
+                url: `/ulsan/insOutput`,
                 method: 'POST',
                 contentType: "application/json",
                 data: JSON.stringify(data),
@@ -244,37 +231,15 @@ function renderTable() {		//테이블그리기
     }
     table.empty();
     for (let i = 0; i < barcodeArray.length; i++) {
-        let barcodeOneArr = barcodeArray[i].split(",");
-        let barcodeStr = barcodeArray[i];	// 전체 문자열
-        let tbody = "";
-        if (barcodeOneArr.length === 5 && (barcodeStr.endsWith("MEX") || barcodeStr.endsWith("USA"))) {	// 정상 바코드
-            tbody = `<tr class = "bar_` + barcodeArray[i] + ` bar-row" data-barcode="${barcodeArray[i]}">
-							<td>` + barcodeOneArr[0] + `</td>
-							<td>` + Number(barcodeOneArr[3]) + `</td>
-							<td><button class="delete-btn" onclick="deleteEntry('` + barcodeArray[i] + `')">${m("btn.delete")}</button></td>
-						</tr>`
-        }else if (barcodeOneArr[0][0] === "P" && (barcodeStr.endsWith("MEX") || barcodeStr.endsWith("USA"))) {
-            tbody = `<tr class = "bar_` + barcodeArray[i] + ` bar-row" data-barcode="${barcodeArray[i]}">
-							<td>(P)` + barcodeOneArr[1] + `</td>
-							<td>` + Number(barcodeOneArr[2]) + `</td>
-							<td><button class="delete-btn" onclick="deleteEntry('` + barcodeArray[i] + `')">${m("btn.delete")}</button></td>
-						</tr>`
-        } else if (barcodeStr.startsWith("[)>")) {
-            let barcodeParts = barcodeArray[i].split(":");
-            let itemcode = barcodeParts[2].substring(1);
-            let qty = barcodeParts[3].substring(2);
-            tbody = `<tr class = "bar_` + barcodeArray[i] + ` bar-row" data-barcode="${barcodeArray[i]}">
-							<td>` + itemcode + `</td>
-							<td>` + Number(qty) + `</td>
-							<td><button class="delete-btn" onclick="deleteEntry('` + barcodeArray[i] + `')">${m("btn.delete")}</button></td>
-						</tr>`
-        } else if(barcodeStr.split("_").length == 6){
-             tbody = `<tr class = "bar_` + barcodeArray[i] + ` bar-row" data-barcode="${barcodeArray[i]}">
-                     <td>` + barcodeStr.split("_")[3] + `</td>
-                     <td>` + Number(barcodeStr.split("_")[4]) + `</td>
-                     <td><button class="delete-btn" onclick="deleteEntry('` + barcodeArray[i] + `')">${m("btn.delete")}</button></td>
-                 </tr>`
-        }
+        const barcodeStr = barcodeArray[i];
+
+        const tbody = `
+            <tr class="bar_${barcodeStr} bar-row" data-barcode="${barcodeStr}">
+                <td>${barcodeStr}</td>
+                <td><button class="delete-btn" onclick="deleteEntry('${barcodeStr}')">${m("btn.delete")}</button></td>
+            </tr>
+        `;
+
         table.append(tbody);
     }
     $("#count").text(+barcodeArray.length)

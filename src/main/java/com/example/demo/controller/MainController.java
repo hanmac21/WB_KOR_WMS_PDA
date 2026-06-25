@@ -230,9 +230,18 @@ public class MainController {
 		return "ulsan/load/sequence-load";
 	}
 
+	// 출고 - detail
+	@GetMapping("/ulsan/load/load-detail")
+	public String ulsanLoadDetail() {
+		log.info("load - detail page Load");
+		return "ulsan/load/detail";
+	}
 
-
-
+	@GetMapping("/ulsan/validation")
+	public String ulsanValidation() {
+		log.info("validation");
+		return "/ulsan/validation/validation_transys";
+	}
 
 
 

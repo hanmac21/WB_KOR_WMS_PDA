@@ -173,7 +173,7 @@ public class UlsanService {
     }
 
     //재고실사 - 바코드
-    @Transactional(transactionManager = "usaTransactionManager", rollbackFor = Exception.class)
+    @Transactional(transactionManager = "koreaTransactionManager", rollbackFor = Exception.class)
     public Map<String, Object> insRealStock(BarcodeVO request) {
         String date = request.getDate();
 
@@ -242,6 +242,126 @@ public class UlsanService {
         } catch (Exception e) {
             result.put("success", false);
             result.put("message", e.getMessage());
+        }
+        return result;
+    }
+
+    // 출고 insert
+    @Transactional(transactionManager = "koreaTransactionManager", rollbackFor = Exception.class)
+    public Map<String, Object> insOutput(BarcodeVO vo) {
+        Map<String, Object> result = new HashMap<>();
+        final String date = vo.getDate();
+        final String main = vo.getMain();
+        final String source = vo.getSource();
+        final String kind = vo.getKind();
+        final List<String> bc = vo.getBarcode();
+        String factory = vo.getFactory();
+        String memo = vo.getMemo();
+        System.out.println("memo @@@@ :"+memo);
+        final String loginId = vo.getLoginid();
+        final String userName = "username";
+
+        String shipTo = vo.getShipTo();		// 출고처
+        List<String> barcodes = vo.getBarcode();
+
+        for (String barcode : barcodes) {
+            String custcode = "";
+            if("LEAR".equalsIgnoreCase(shipTo)){
+                custcode = "1981";
+            }else if("TRANSYS_".equalsIgnoreCase(shipTo)){
+                custcode = "1380";
+            }
+
+            Map<String, Object> m = new HashMap<>();
+            m.put("factory", factory);
+            m.put("date", date);
+            m.put("barcode", barcode);
+            m.put("loginid", loginId);
+            m.put("username", userName);
+            m.put("source", source);
+            m.put("source2", "PURCHASE");
+            m.put("custcode", custcode);
+            m.put("custname", shipTo);
+            m.put("main", main);
+            m.put("kind", kind);
+            m.put("memo", memo);
+
+            // 바코드 파싱 (인라인)
+            if (barcode.split(",").length == 6 && barcode.endsWith("WBT")) {
+                String[] parts = barcode.split(",", -1);
+                m.put("oitemcode", parts[1]);
+                m.put("itemcode", parts[2]);
+                m.put("seq", parts[4]);
+                m.put("qty", resolveBarcodeQty(barcode));
+            } else {
+                result.put("response", "fail4");
+                result.put("message", "지원되지 않는 바코드 형식: " + barcode);
+                throw new RuntimeException("INVALID_BARCODE_FORMAT");
+            }
+
+            m.put("dmemo","OUTPUT");
+
+            int insOutbound = ulsanMapper.insOutput(m);
+            int affected = ulsanMapper.insertStockOutput(m);
+            ulsanMapper.removeBarcode(m);
+
+            if (insOutbound == 0 || affected == 0) {
+                result.put("response", "fail5");
+                result.put("message", "재고 반영 실패(동시성). 다시 시도: " + barcode);
+                throw new RuntimeException("STOCK_TXN_FAILED");
+            }
+        }
+
+
+        result.put("response", "success");
+        return result;
+    }
+
+    public Map<String, Object> searchLoadDetail(Map<String, Object> map) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            List<Map<String, Object>> list = ulsanMapper.searchLoadDetail(map);
+            result.put("list", list);
+            result.put("success", true);
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", e.getMessage());
+        }
+        return result;
+    }
+
+    // 트랜시스 검증 저장
+    @Transactional(transactionManager = "koreaTransactionManager", rollbackFor = Exception.class)
+    public Map<String, Object> saveValidation(Map<String, Object> param) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            String cartBarcode = (String) param.get("cartBarcode");
+            String cartQty     = String.valueOf(param.get("cartQty"));
+            String assyQty     = String.valueOf(param.get("assyQty"));
+            String itemcode    = (String) param.get("oitemcode");
+            String source      = (String) param.get("source");
+            String factory      = (String) param.get("factory");
+
+            @SuppressWarnings("unchecked")
+            List<String> assyBarcodes = (List<String>) param.get("assyBarcodes");
+
+            for (String assyBarcode : assyBarcodes) {
+                Map<String, Object> m = new HashMap<>();
+                m.put("cartBarcode", cartBarcode);
+                m.put("assyBarcode", assyBarcode);
+                m.put("cartQty",     cartQty);
+                m.put("assyQty",     1);
+                m.put("oitemcode",    itemcode);
+                m.put("source",      source);
+                m.put("factory",      factory);
+                ulsanMapper.insValidation(m);
+            }
+
+            result.put("response", "success");
+        } catch (Exception e) {
+            result.put("response", "fail");
+            result.put("message", e.getMessage());
+            throw e;
         }
         return result;
     }

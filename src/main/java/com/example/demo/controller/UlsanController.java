@@ -72,4 +72,31 @@ public class UlsanController {
         log.info("search_inventory_summary");
         return ulsanService.searchInventorySummary(param);
     }
+
+    // 출고 insert
+    @PostMapping("/insOutput")
+    public Map<String, Object> insOutput(@RequestBody BarcodeVO vo, HttpServletRequest request2) {
+        log.info(" Outbound start");
+        HttpSession session = request2.getSession(false);
+        if (session != null) {
+            String loginid = (String) session.getAttribute("loginid");
+            vo.setLoginid(loginid); // 예: 등록자 세팅
+        }
+        return ulsanService.insOutput(vo);
+    }
+
+
+    // 출고 - Detail
+    @PostMapping("/search-load/detail")
+    public Map<String, Object> loadDetail(@RequestBody Map<String, Object> param, HttpServletRequest request){
+        log.info("search load detail");
+        return ulsanService.searchLoadDetail(param);
+    }
+
+
+    // 검증 insert
+    @PostMapping("/validation/save")
+    public Map<String, Object> saveValidation(@RequestBody Map<String, Object> param) {
+        return ulsanService.saveValidation(param);
+    }
 }

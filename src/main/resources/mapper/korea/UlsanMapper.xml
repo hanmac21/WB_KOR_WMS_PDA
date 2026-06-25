@@ -12,7 +12,7 @@
     </select>
 
     <select id = "getPartQty" resultType = "String">
-        select lastqty from t_scm_barcode
+        select qty from t_scm_barcode
         where barcode = #{barcode}
         and useyn = 'Y'
         and rownum = 1
@@ -285,4 +285,119 @@
         </if>
         GROUP BY a.SDATE, a.itemcode, a.STORAGE, a.FACTORY, a.scantype
     </select>
+
+    <insert id="insOutput" parameterType="map">
+        INSERT INTO t_wms_outbound (
+            sdate,
+            barcode,
+            ymdhms,
+            loginid,
+            itemcode,
+            seq,
+            qty,
+            source,
+            source2,
+            factory,
+            custcode,
+            custname,
+            oitemcode
+        )
+        VALUES  (
+            #{date},
+            #{barcode},
+            TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+            #{loginid},
+            #{itemcode},
+            #{seq},
+            #{qty},
+            #{source},
+            #{source2},
+            #{factory},
+            #{custcode},
+            #{custname},
+            #{oitemcode}
+        )
+    </insert>
+
+    <insert id="insertStockOutput" parameterType="map">
+        INSERT INTO t_wms_stock (
+            sdate,
+            kind,
+            barcode,
+            inqty,
+            outqty,
+            qty,
+            itemcode,
+            ymdhms,
+            mainkind,
+            loginid,
+            insdate,
+            factory
+        )
+        VALUES  (
+            #{date},
+            #{kind},
+            #{barcode},
+            0,
+            #{qty},
+            #{qty},
+            #{itemcode},
+            TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
+            #{main},
+            #{loginid},
+            TO_CHAR(SYSDATE,'YYYY-MM-DD'),
+            #{factory}
+        )
+    </insert>
+
+    <select id="searchLoadDetail" resultType = "map">
+        SELECT
+            a.iid,
+            NVL(a.itemcode, ' ') AS itemcode,
+            TO_NUMBER(a.qty) AS qty,
+            SUBSTR(a.ymdhms,9,6) AS time
+        FROM t_wms_outbound a
+        LEFT JOIN (
+            SELECT barcode
+            FROM (
+                SELECT
+                barcode,
+                ROW_NUMBER() OVER (PARTITION BY barcode ORDER BY ymdhms DESC) AS rn
+                FROM t_wms_location
+            )
+            WHERE rn = 1
+        ) B
+        ON a.barcode = b.barcode
+        WHERE a.sdate = #{date}
+        and a.useyn = 'Y'
+        AND a.source IN ('LOAD')
+        <if test = "custname != null and custname != ''">
+            and a.custname LIKE '%' || #{custname} ||'%'
+        </if>
+        ORDER BY a.ymdhms DESC
+    </select>
+
+    <insert id="insValidation" parameterType="map">
+        INSERT INTO t_wms_validation (
+            SDATE,
+            CARTBARCODE,
+            ASSYBARCODE,
+            CARTQTY,
+            ASSYQTY,
+            OITEMCODE,
+            YMDHMS,
+            SOURCE,
+            factory
+        ) VALUES (
+            TO_CHAR(SYSDATE, 'YYYY-MM-DD'),
+            #{cartBarcode},
+            #{assyBarcode},
+            #{cartQty},
+            #{assyQty},
+            #{oitemcode},
+            TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+            #{source},
+            #{factory}
+        )
+    </insert>
 </mapper>

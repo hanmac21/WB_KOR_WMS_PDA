@@ -41,4 +41,12 @@ public interface UlsanMapper {
     List<InventoryVO> searchInventoryDetail(Map<String, Object> map);
 
     List<InventoryVO> searchInventorySummary(Map<String, Object> map);
+
+    int insOutput(Map<String, Object> m);
+
+    int insertStockOutput(Map<String, Object> m);
+
+    List<Map<String, Object>> searchLoadDetail(Map<String, Object> map);
+
+    void insValidation(Map<String, Object> m);
 }

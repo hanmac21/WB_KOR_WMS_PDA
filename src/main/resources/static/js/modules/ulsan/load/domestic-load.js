@@ -52,11 +52,6 @@ $(document).ready(function () {
         }
     });
 
-    // 창고 기본값 변경 (ILLINOIS 창고 선택 시 OUTSIDE 우선)
-    const _storedWarehouse = (localStorage.getItem("rememberedWarehouse") || "").trim();
-    const _defaultStorage = _storedWarehouse === 'ILLINOIS' ? "OUTSIDE" : "PRODUCT";
-    $(".storage-select").val(_defaultStorage).trigger("change").prop("disabled", true);
-
     renderTable();
 
     const savedBarcodes = JSON.parse(localStorage.getItem("barcodeListOut") || "[]");
@@ -78,7 +73,7 @@ $(document).ready(function () {
         $(this).data('prev', $(this).val());
     });
 
-$('#barcodeInput').on('touchstart mousedown', function () {
+    $('#barcodeInput').on('touchstart mousedown', function () {
         manualTouch = true;
     });
 
@@ -216,7 +211,7 @@ function saveBarcode() {					// 전체전송
         shipTo: $(".shipto-select").val(),
         factory: localStorage.getItem('rememberedFactory'),
         memo: "",
-        invoiceno : ""
+        invoiceno: ""
     }
 
     Utils.showConfirm(m("confirm.send.all"), () => {

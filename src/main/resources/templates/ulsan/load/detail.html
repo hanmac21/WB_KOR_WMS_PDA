@@ -21,7 +21,6 @@
 	<div th:replace="fragments/header :: commonHeader(#{menu.load.load.detail})"></div> 
 	<div class="form-container">
 		<div class="section-header">
-            <!-- <div class="section-title" th:text = "#{search.barcodeScan}">바코드 스캔</div> -->
             <div class="datepicker-group">
                <span th:text = "#{search.inDate}">입고일 : </span>
                <input type="text" id="datepicker"  autocomplete='off' placeholder="" readonly>
@@ -31,22 +30,12 @@
             </div>
         </div>	
         <div class="form-group">
-			<div class = "storage-selector">
-            	<span th:text="#{search.storage}">창고</span>
-            	<select class="storage-select">
-            			<option value = 'PRODUCT'>PRODUCT</option>
-						<option value = 'OUSIDE'>OUSIDE</option>
-		        </select>
-            </div>
             <div class="storage-selector">
                 <span th:text="#{search.shipTo}">출고처</span>
                 <select class="shipto-select">
                     <option value="">ALL</option>
-                    <option value = "TRANSYS_GA">TRANSYS_GA</option>
-                    <option value = "TRANSYS_AL">TRANSYS_AL</option>
-                    <option value = "TRANSYS_IL">TRANSYS_IL</option>
-                    <option value = "LEAR">LEAR</option>
-                    <option value = "ADIENT">ADIENT</option>
+                    <option value = "TRANSYS">트랜시스</option>
+                    <option value = "리어코리아">리어코리아</option>
                 </select>
             </div>
         </div>	
@@ -62,8 +51,6 @@
                     <tr>
                         <th th:text = "#{table.itemCode}">품번</th>
                         <th th:text = "#{table.qty}">수량</th>
-                        <th th:text = "#{table.location}">locaton</th>
-                        <th th:text = "#{table.storage}">storage</th>                        
                         <th th:text = "#{table.time}">Time</th>
                     </tr>
                 </thead>
@@ -84,7 +71,7 @@
         <div th:text="#{info.loading}">로딩중...</div>
     </div>
      <script th:src="@{/js/utils/common.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
-    <script th:src="@{/js/modules/purchase/load/in-detail.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+    <script th:src="@{/js/modules/ulsan/load/detail.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
 	<script>
 	hideLoading();
 	function checkNetworkAndMove(url) {

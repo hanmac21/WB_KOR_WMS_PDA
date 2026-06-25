@@ -41,16 +41,6 @@ $(document).ready(function() {
 	$("#datepicker").val(today);
 	$("#datepicker").datepicker();
 
-	// 창고 기본값 변경 (ILLINOIS 창고 선택 시 OUTSIDE 우선)
-    const _storedWarehouse = (localStorage.getItem("rememberedWarehouse") || "").trim();
-    const _defaultStorage = _storedWarehouse === 'ILLINOIS' ? "OUTSIDE" : "PRODUCT";
-    $(".storage-select").val(_defaultStorage).trigger("change").prop("disabled", true);
-
-    if (_storedWarehouse === 'ILLINOIS') {
-        $(".shipto-select").find("option").not("[value='TRANSYS_IL']").remove();
-        $(".shipto-select").val("TRANSYS_IL").prop("disabled", true);
-    }
-
 	search();
 	
 	$(document).on('click', '.ui-datepicker-current', function() {
@@ -71,8 +61,6 @@ function renderTable(list) {		//테이블그리기
 			<tr>
 				<td>${(list?.[i]?.ITEMCODE == null || list?.[i]?.ITEMCODE === 'null') ? '' : list[i].ITEMCODE}</td>
 				<td>${(list?.[i]?.QTY == null || list?.[i]?.QTY === 'null') ? '' : list[i].QTY}</td>
-				<td>${(list?.[i]?.LOCATION == null || list?.[i]?.LOCATION === 'null') ? '' : list[i].LOCATION}</td>	
-				<td>${(list?.[i]?.STORAGE == null || list?.[i]?.STORAGE === 'null') ? '' : list[i].STORAGE}</td>	
 				<td>${(list?.[i]?.TIME == null || list?.[i]?.TIME === 'null') ? '' : list[i].TIME}</td>		
             </tr>
 		`;
@@ -103,7 +91,7 @@ function search(){
 	
 	// 데이터 가져오기
 	$.ajax({
-		url: "/purchase/search-load/detail",		
+		url: "/ulsan/search-load/detail",
         method: 'POST',
 		contentType: "application/json",
 		data: JSON.stringify(data),

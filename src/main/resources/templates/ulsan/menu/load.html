@@ -24,7 +24,10 @@
             <button id="btn-domestic-load" class="sub-menu-item load" onclick="checkNetworkAndMove('/ulsan/load/domestic-load')">
                 내수품 출고
             </button>
-            <button id="btn-sequence-load" class="sub-menu-item load" onclick="checkNetworkAndMove('/ulsan/load/sequence-load')" >
+<!--            <button id="btn-sequence-load" class="sub-menu-item load" onclick="checkNetworkAndMove('/ulsan/load/sequence-load')" >-->
+<!--                서열부품 출고-->
+<!--            </button>-->
+            <button id="btn-sequence-load" class="sub-menu-item load" onclick="Utils.showAlert('개발 중인 메뉴입니다.', 'info')">
                 서열부품 출고
             </button>
             <button id="btn-load-detail" class="sub-menu-item load" onclick="checkNetworkAndMove('/ulsan/load/load-detail')" th:text = "#{menu.load.load.detail}">

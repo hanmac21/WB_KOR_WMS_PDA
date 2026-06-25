@@ -14,13 +14,8 @@
     </style>
 </head>
 <body data-page="addEntry">
-    <div th:replace="fragments/header :: commonHeader(#{menu.load.loadtransys})"></div>
+    <div th:replace="fragments/header :: commonHeader('수출품 출고')"></div>
     <div class="form-container">
-        <div class="section-header">
-            <div class="action-buttons">
-
-            </div>
-        </div>
         <div class="form-group">
             <div class="datepicker-group">
                 <span th:text="#{search.outDate}">출고일 : </span><input type="text" id="datepicker" autocomplete='off' placeholder="" readonly>
@@ -29,14 +24,9 @@
                 </button>
             </div>
             <div class="storage-selector">
-                <span th:text="#{search.storage}">창고</span>
-                <select class="storage-select">
-                </select>
-            </div>
-            <div class="storage-selector">
                 <span th:text="#{search.shipTo}">출고처</span>
                 <select class="shipto-select">
-                    <option value = "TRANSYS_IL">TRANSYS_IL</option>
+                    <option value = "TRANSYS">트랜시스</option>
                 </select>
             </div>
             <div class="barcode-input">
@@ -55,9 +45,8 @@
             <table class="data-table">
                 <thead>
                 <tr>
-                    <th th:text="#{table.itemCode}">품번</th>
-                    <th th:text="#{table.qty}">수량</th>
-                    <th rowspan="2" th:text="#{btn.delete}">삭제</th>
+                    <th th:text="#{table.barcode}">바코드</th>
+                    <th th:text="#{btn.delete}">삭제</th>
                 </tr>
                 </thead>
                 <tbody id="dataTableBody">
