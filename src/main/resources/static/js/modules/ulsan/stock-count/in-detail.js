@@ -84,7 +84,6 @@ function searchInventory(){
 	const factory = $("#locationPart1").val();
 	const storage = $("#locationPart2").val();
 
-	console.log(scantype);
 	let data = {
 		sdate: sdate,
 		factory: factory,
