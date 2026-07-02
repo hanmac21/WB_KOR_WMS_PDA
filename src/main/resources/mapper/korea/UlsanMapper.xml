@@ -400,4 +400,15 @@
             #{factory}
         )
     </insert>
+
+    <select id="getStorage" resultType="string">
+        SELECT DISTINCT STORAGE
+        FROM T_WMS_WAREHOUSE
+        <where>
+           <if test="type != null and type != ''">
+               MEMO2 = #{type}
+           </if>
+        </where>
+        ORDER BY STORAGE
+    </select>
 </mapper>

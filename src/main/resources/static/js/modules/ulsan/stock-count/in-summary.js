@@ -42,7 +42,9 @@ $(document).ready(function() {
 	$("#datepicker").datepicker();
 
 	// 페이지 로드 시 조회
-	searchInventory();
+	getStroage("사내", function() {
+		searchInventory();
+	});
 	
 	$(document).on('click', '.ui-datepicker-current', function() {
 		const today = new Date();

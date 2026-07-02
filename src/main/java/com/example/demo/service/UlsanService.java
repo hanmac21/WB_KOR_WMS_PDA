@@ -365,4 +365,8 @@ public class UlsanService {
         }
         return result;
     }
+
+    public List<String> getStorage(String type) {
+        return ulsanMapper.getStorage(type);
+    }
 }

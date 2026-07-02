@@ -49,4 +49,6 @@ public interface UlsanMapper {
     List<Map<String, Object>> searchLoadDetail(Map<String, Object> map);
 
     void insValidation(Map<String, Object> m);
+
+    List<String> getStorage(String type);
 }

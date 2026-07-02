@@ -25,19 +25,13 @@
 			<div class = "storage-selector">
             	<span th:text="#{search.storage}">창고</span>
             	<select class="storage-select">
-            			<option value = 'MATERIAL'>MATERIAL</option>
-						<option value = 'PRODUCT'>PRODUCT</option>
-						<option value = 'WORKSHOP'>WORKSHOP</option>
+                    <!-- 동적으로 추가 -->
 		        </select>
             </div>
             <div class="barcode-input">
             <span th:text = "#{search.barcode}">바코드 : </span>
                 <input type="text" id="barcodeInput" class="form-input" th:placeholder = "#{info.barcode.scan}" autocomplete="off">
                 <button id="scanBtn" class="scan-btn" onclick = "addEntry()" th:text="#{btn.scan}">스캔</button>
-            </div>
-            <div class="barcode-input">
-            	<span th:text = "#{search.invoice}">메모 </span>
-                <input type="text" id="memo" class="form-input"  autocomplete="off">
             </div>
         </div>
 	</div>

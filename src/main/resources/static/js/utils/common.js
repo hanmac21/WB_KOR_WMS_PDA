@@ -1526,3 +1526,28 @@ function closeHistoryModal() {
         swal.style.display = 'flex';
     }
 }
+
+function getStroage(type, onDone) {
+    const data = {};
+    if (type) {
+        data.type = type;
+    }
+
+    $.ajax({
+        url: "/ulsan/getStroage",
+        type: "POST",
+        data: data,
+        dataType: "json",
+        success: function (res) {
+            const $sel = $('.storage-select');
+            $sel.empty();
+            res.forEach(function (s) {
+                $sel.append($('<option>').val(s).text(s));
+            });
+            if (typeof onDone === 'function') onDone();   // 채운 뒤 콜백
+        },
+        error: function (res) {
+            console.error('getStroage failed:', res);
+        }
+    });
+}

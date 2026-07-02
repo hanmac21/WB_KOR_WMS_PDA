@@ -41,7 +41,10 @@ $(document).ready(function() {
 	$("#datepicker").val(today);
 	$("#datepicker").datepicker();
 
-	search();
+	// 창고 리스트 동적으로 사용
+	getStroage('사내', function () {
+		search();
+	});
 	
 	$(document).on('click', '.ui-datepicker-current', function() {
 		const today = new Date();

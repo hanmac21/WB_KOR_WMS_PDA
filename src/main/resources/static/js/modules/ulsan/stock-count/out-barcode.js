@@ -53,6 +53,9 @@ $(document).ready(function () {
     })
     console.log("sdss")
     renderTable();
+
+    getStroage("사외");
+
     // 지웅 - 배포시 주석제거
     $('#barcodeInput').on('touchstart mousedown', function () {
         manualTouch = true;

@@ -53,6 +53,9 @@ $(document).ready(function () {
 
     renderTable();
 
+    // 창고 리스트 동적으로 사용
+    getStroage('사내');
+
     focusWithoutKeyboard();
     // input창에서 포커스 없어질때 세팅
     $('#barcodeInput').on('blur', function () {
