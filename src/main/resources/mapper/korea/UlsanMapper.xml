@@ -18,6 +18,24 @@
         and rownum = 1
     </select>
 
+    <select id="getTradebarcode" resultType="map">
+        SELECT
+            BARCODE,
+            PNO,
+            QTY
+        FROM T_SCM_BARCODE
+        WHERE TRADEBARCODE = #{barcode}
+    </select>
+
+    <select id="getItemList" resultType="map">
+        SELECT
+            ITEMCODE,
+            ITEMNAME
+        FROM T_MI_ITEM
+        WHERE DELDATE = ' '
+        AND BRANCH = '001'
+        ORDER BY ITEMCODE
+    </select>
 
     <update id = "removeBarcode">
         update t_wms_location
@@ -35,16 +53,13 @@
             ymdhms,
             loginid,
             itemcode,
-            bdate,
-            seq,
             qty,
 
             source,
             storage,
             factory,
-            invoiceno,
+            tradebarcode,
             custcode,
-
             custname
         )
         VALUES  (
@@ -53,14 +68,12 @@
             TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
             #{loginid},
             #{itemcode},
-            #{bdate},
-            #{seq},
             #{qty},
 
             #{source},
             #{storage},
             #{factory},
-            #{memo},
+            #{tradebarcode},
             NVL((SELECT CUSTCODE FROM T_MI_PRICE_BUYCUST WHERE ITEMCODE = #{itemcode} ORDER BY CONDATE DESC FETCH FIRST 1 ROW ONLY), ''),
             (SELECT
             cu_sangho
@@ -104,39 +117,6 @@
             #{position},
             #{source},
             #{okyn}
-        )
-    </insert>
-
-    <insert id="insStockInbound" parameterType="map">
-        INSERT INTO t_wms_stock (
-            sdate,
-            kind,
-            barcode,
-            inqty,
-            outqty,
-            qty,
-            itemcode,
-            ymdhms,
-            factory,
-            storage,
-            mainkind,
-            loginid,
-            insdate
-        )
-        VALUES  (
-            #{date},
-            #{source},
-            #{barcode},
-            #{qty},
-            0,
-            #{qty},
-            #{itemcode},
-            TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
-            #{factory},
-            #{storage},
-            #{main},
-            #{loginid},
-            #{date}
         )
     </insert>
 

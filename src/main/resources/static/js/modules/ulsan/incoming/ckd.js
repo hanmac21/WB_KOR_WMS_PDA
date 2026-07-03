@@ -89,8 +89,11 @@ function addEntry() {			// 로컬스토리지 저장
         console.warn("현재 스캔 모드입니다.");
     }
 
-    if(barcode.split(",").length === 4 || barcode.startsWith("M")) {
-        // 울산 scm 라벨
+    // 울산 scm 바코드
+    // 울산 거래명세서 바코드
+    // 대차 라벨
+    // 대차 내부 소형 라벨
+    if(barcode.length === 11 || barcode.startsWith("M") || barcode.split(',').length === 6 || barcode.split(',').length === 2) {
         let stored = [];
 
         if (window.localStorage && localStorage.getItem("barcodeListInCkd")) {
@@ -216,20 +219,12 @@ function renderTable() {		//테이블그리기
     for (let i = 0; i < barcodeArray.length; i++) {
         let barcodeStr = barcodeArray[i];	// 전체 문자열
         let tbody = "";
-        if(barcodeStr.split(",").length === 4){        // SCM라벨
-            let parts = barcodeStr.split(",");
-             tbody = `<tr class = "bar_${barcodeArray[i]} bar-row" data-barcode="${barcodeArray[i]}">
-                            <td class = "dataInfo">${barcodeStr}</td>
-                            <td><button class="delete-btn" onclick="deleteEntry('${barcodeArray[i]}', '')">${m('btn.delete')}</button></td>
-                        </tr>`
-        } else if (barcodeStr.startsWith("M")){          // SCM라벨
-            tbody = `<tr class = "bar_${barcodeArray[i]} bar-row" data-barcode="${barcodeArray[i]}">
-                            <td class = "dataInfo">${barcodeStr}</td>
-                            <td><button class="delete-btn" onclick="deleteEntry('${barcodeArray[i]}', '')">${m('btn.delete')}</button></td>
-                        </tr>`
-        }
+        tbody = `<tr class = "bar_${barcodeArray[i]} bar-row" data-barcode="${barcodeArray[i]}">
+                    <td class = "dataInfo">${barcodeStr}</td>
+                    <td><button class="delete-btn" onclick="deleteEntry('${barcodeArray[i]}', '')">${m('btn.delete')}</button></td>
+                </tr>`
 
-            table.prepend(tbody);
+        table.prepend(tbody);
     }
     $("#count").text(+barcodeArray.length);
 }

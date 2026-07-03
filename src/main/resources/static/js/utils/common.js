@@ -1006,20 +1006,22 @@ function threeButtonConfirm(message = "3개 버튼 중 하나를 선택하세요
     });*/
 }
 
-
-// 작업후 모든 포커스 제거
+// ① 무조건 blur → keep-focus는 건너뛰기
 $(document).on("click change", "button, input, textarea", function () {
-    setTimeout(() => document.activeElement.blur(), 100);
+    setTimeout(() => {
+        const a = document.activeElement;
+        if (a && a.classList && a.classList.contains('keep-focus')) return;
+        if (a) a.blur();
+    }, 100);
 });
 // select는 별도로
 let lastBlurTimer = null;
 
-// 버튼/인풋/텍스트에어리아만 해당 요소 자신을 blur
-$(document).on("click change", "button, input, textarea", function () {
+// ② 셀렉터에서 keep-focus 제외
+$(document).on("click change", "button, input:not(.keep-focus), textarea", function () {
     const el = this;
     if (lastBlurTimer) clearTimeout(lastBlurTimer);
     lastBlurTimer = setTimeout(() => {
-        // 여전히 그 요소가 포커스일 때만 blur (select 열기를 방해하지 않음)
         if (document.activeElement === el) el.blur();
     }, 100);
 });

@@ -48,11 +48,8 @@ public class UlsanService {
         if (lastqty == null || lastqty.isEmpty() || "0".equals(lastqty)) {
             // DB에 없으면 바코드에서 4번째 필드 사용
             String[] parts = barcode.split(",");
-            if (parts.length == 6) {
-                qtyStr = parts[3];
-            } else {
-                qtyStr = parts[3];   // 예: "10.00" 또는 "10.10" 또는 "10.1"
-            }
+            // 예: "10.00" 또는 "10.10" 또는 "10.1"
+            qtyStr = parts[3];
         } else {
             qtyStr = lastqty;
         }
@@ -81,7 +78,7 @@ public class UlsanService {
         final String loginId = vo.getLoginid();
         final String userName = "username";
         final String storage = vo.getStorage();
-        String memo = vo.getMemo();
+//        String memo = vo.getMemo();
 
         for (String barcode : barcodes) {
             Map<String,Object> m = new HashMap<String, Object>();
@@ -99,24 +96,39 @@ public class UlsanService {
             m.put("module", "");
             m.put("levelcode", "");
             m.put("position", "");
-            m.put("memo", memo);
+            m.put("memo", "");
             m.put("okyn", "Y");
+            m.put("tradebarcode", "");
 
             // 바코드 파싱 (인라인)
-            if (barcode.split(",").length == 4) {		            // SCM라벨바코드
-                String[] parts = barcode.split(",");
-                m.put("itemcode", parts[0]);
-                m.put("bdate", "");
-                m.put("seq", "");
-                m.put("qty", resolveBarcodeQty(barcode));
-                m.put("type", "box");
-            } else if (barcode.startsWith("M")) {		                // SCM라벨바코드
+            if (barcode.startsWith("M")) {		                // SCM 바코드
                 Map<String, Object> item = ulsanMapper.getItemInfo(barcode);
                 m.put("itemcode", item.get("PNO"));
-                m.put("bdate", "");
-                m.put("seq", "");
                 m.put("qty", resolveBarcodeQty(barcode));
-                m.put("type", "box");
+                m.put("type", "scm");
+            } else if (barcode.length() == 11) {		            // 거래명세서
+                List<Map<String,Object>> lists = ulsanMapper.getTradebarcode(barcode);
+                for (Map<String, Object> row : lists) {
+                    m.put("barcode", row.get("BARCODE"));
+                    m.put("tradebarcode", barcode);
+                    m.put("qty", row.get("QTY"));
+                    m.put("itemcode", row.get("PNO"));
+                    m.put("type", "trade");
+
+                    int insInbound = ulsanMapper.insInbound(m);
+                    int inslocation = ulsanMapper.saveLocation(m);
+                }
+                continue;   // 이 바코드 처리 완료, 다음 바코드로
+            } else if (barcode.split(",").length == 6) {		 // 대차 라벨
+                String[] parts = barcode.split(",");
+                m.put("itemcode", parts[2]);
+                m.put("qty", resolveBarcodeQty(barcode));
+                m.put("type", "CART");
+            } else if (barcode.split(",").length == 2) {		 // 대차 소형 라벨
+                String[] parts = barcode.split(",");
+                m.put("qty", parts[1]);
+                m.put("itemcode", parts[0]);
+                m.put("type", "CART_SMALL");
             } else {
                 result.put("response", "fail4");
                 result.put("message", "지원되지 않는 바코드 형식: " + barcode);
@@ -124,22 +136,71 @@ public class UlsanService {
                 throw new RuntimeException("INVALID_BARCODE_FORMAT");
             }
 
-            int insInbound = 0;
             // INSERT: 입고
-            insInbound = ulsanMapper.insInbound(m);
-
-            m.put("laststatus", 10);
-            m.put("dmemo", "INCOMING");
-            ulsanMapper.removeBarcode(m);
+            int insInbound = ulsanMapper.insInbound(m);
             int inslocation = ulsanMapper.saveLocation(m);
-            int affected = 0;
-            affected = ulsanMapper.insStockInbound(m);
-            ulsanMapper.updateLaststatusPart(m);
 
-            if (insInbound==0 || affected == 0) {
+            if (insInbound==0) {
                 result.put("response", "fail5");
-                System.out.println("insInbound:"+insInbound+" affected:"+affected);
+                System.out.println("insInbound:"+insInbound);
                 result.put("message", "재고 반영 실패(동시성). 다시 시도: " + barcode);
+                throw new RuntimeException("STOCK_TXN_FAILED");
+            }
+        }
+
+        result.put("response", "success");
+        return result;
+    }
+
+    // 수기 입력 입고 insert
+    @Transactional(transactionManager = "koreaTransactionManager", rollbackFor = Exception.class)
+    public Map<String, Object> insInboundManual(BarcodeVO vo) {
+        Map<String, Object> result = new HashMap<>();
+        final String date = vo.getDate();
+        final String main = vo.getMain();
+        final String source = vo.getSource();
+        final String kind = vo.getKind();
+        final String factory = vo.getFactory();
+        final String loginId = vo.getLoginid();
+        final String userName = "username";
+        final String storage = vo.getStorage();
+
+        final List<String> itemcodes = vo.getItemcodes();
+        final List<String> qtys = vo.getQtys();
+
+        for (int i = 0; i < itemcodes.size(); i++) {
+            String itemcode = itemcodes.get(i);
+            String qty = qtys.get(i);
+
+            Map<String, Object> m = new HashMap<>();
+            m.put("date", date);
+            m.put("barcode", "");
+            m.put("loginid", loginId);
+            m.put("username", userName);
+            m.put("source", source);
+            m.put("main", main);
+            m.put("kind", kind);
+            m.put("storage", storage);
+            m.put("factory", factory);
+            m.put("location", factory + "-" + storage);
+            m.put("rack", "");
+            m.put("module", "");
+            m.put("levelcode", "");
+            m.put("position", "");
+            m.put("memo", "");
+            m.put("okyn", "Y");
+            m.put("tradebarcode", "");
+
+            m.put("itemcode", itemcode);
+            m.put("qty", qty);
+            m.put("type", "manual");
+
+            int insInbound = ulsanMapper.insInbound(m);
+            int inslocation = ulsanMapper.saveLocation(m);
+
+            if (insInbound == 0) {
+                result.put("response", "fail5");
+                result.put("message", "재고 반영 실패(동시성). 다시 시도: " + itemcode);
                 throw new RuntimeException("STOCK_TXN_FAILED");
             }
         }
@@ -194,16 +255,17 @@ public class UlsanService {
             map.put("source", "BARCODECOUNT");
             map.put("kind", "COUNT");
 
-            if (barcode.split(",").length == 5) {                               // 통합 라벨
-                map.put("itemcode", barcode.split(",")[0]);
-                map.put("qty", resolveBarcodeQty(barcode));
-                map.put("type", "box");
+            if (barcode.startsWith("M")) {                               // scm 라벨
+                Map<String, Object> item = ulsanMapper.getItemInfo(barcode);
+                map.put("itemcode", item.get("PNO"));
+                map.put("qty", item.get("QTY"));
+                map.put("type", "scm");
             } else if (barcode.split(",",-1).length == 6){                  // 대차
                 String[] parts = barcode.split(",", -1);
                 map.put("itemcode", parts[2]);
                 map.put("qty", resolveBarcodeQty(barcode));
-                map.put("type", "trolley");
-            }  else {
+                map.put("type", "cart");
+            } else {
                 result.put("response", "fail4");
                 result.put("message", "지원되지 않는 바코드 형식: " + barcode);
                 System.out.println("INVALID_BARCODE_FORMAT: " + barcode);
@@ -212,11 +274,47 @@ public class UlsanService {
 
             ulsanMapper.insRealStock(map);
             System.out.println("저장할 바코드: " + barcode);
-            map.put("laststatus",20);
-            ulsanMapper.updateLaststatusPart(map);
         }
         result.put("response", "success");
 		return result;
+    }
+
+    // 재고실사 - 수기
+    @Transactional(transactionManager = "koreaTransactionManager", rollbackFor = Exception.class)
+    public Map<String, Object> insertRealStockManual(BarcodeVO request) {
+        Map<String, Object> result = new HashMap<>();
+        String date = request.getDate();
+        String factory = request.getFactory();
+        String storage = request.getStorage();
+        String loginid = request.getLoginid();
+
+        List<String> itemcodes = request.getItemcodes();
+        List<String> qtys = request.getQtys();
+
+        for (int i = 0; i < itemcodes.size(); i++) {
+            String itemcode = itemcodes.get(i);
+            String qty = qtys.get(i);
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("date", date);
+            map.put("barcode", "");
+            map.put("loginid", loginid);
+            map.put("storage", storage);
+            map.put("location", factory + "-" + storage);
+            map.put("factory", factory);
+            map.put("source", "ITEMCODECOUNT");
+            map.put("kind", "COUNT");
+
+            map.put("itemcode", itemcode);
+            map.put("qty", qty);
+            map.put("type", "manual");
+
+            ulsanMapper.insRealStock(map);
+            System.out.println("저장할 품번: " + itemcode + " / 수량: " + qty);
+        }
+
+        result.put("response", "success");
+        return result;
     }
 
     // 재고실사현황 - Detail
@@ -368,5 +466,9 @@ public class UlsanService {
 
     public List<String> getStorage(String type) {
         return ulsanMapper.getStorage(type);
+    }
+
+    public List<Map<String, Object>> getItemList() {
+        return ulsanMapper.getItemList();
     }
 }

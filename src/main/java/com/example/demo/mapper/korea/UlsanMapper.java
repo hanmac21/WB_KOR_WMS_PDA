@@ -23,8 +23,6 @@ public interface UlsanMapper {
 
     int saveLocation(Map<String, Object> m);
 
-    int insStockInbound(Map<String, Object> m);
-
     void updateLaststatusPart(Map<String, Object> m);
 
     void insRealStock(Map<String, Object> map);
@@ -51,4 +49,8 @@ public interface UlsanMapper {
     void insValidation(Map<String, Object> m);
 
     List<String> getStorage(String type);
+
+    List<Map<String, Object>> getTradebarcode(String barcode);
+
+    List<Map<String, Object>> getItemList();
 }

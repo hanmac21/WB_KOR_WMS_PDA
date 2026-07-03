@@ -110,9 +110,8 @@ function addEntry() {			// 로컬스토리지 저장
         console.warn("현재 스캔 모드입니다.");
     }
 
-    // 라벨발행, 대차
-    if ((barcode.split(",").length === 5 &&  barcode.split(",")[4] === "WMSKOR")
-        || barcode.split(",").length === 6) {
+    // 대차
+    if (barcode.startsWith("M") || barcode.split(",").length === 6) {
         let stored = [];
 
         if (window.localStorage && localStorage.getItem("barcodeListRealStockIn")) {
@@ -188,7 +187,6 @@ function saveBarcode2(status = 'ok', list = []) {				// 전체전송
                     localStorage.removeItem('barcodeListRealStockIn');
                     $("#dataTableBody").empty();
                     $("#count").text("0");
-                    $("#totalqty").text("0");
                     playSound("complete");
                     Utils.showAlert(m("info.barcode.sent"), "info");
                 } else {
@@ -233,7 +231,6 @@ function saveBarcode2(status = 'ok', list = []) {				// 전체전송
 function renderTable() {		//테이블그리기
     console.log("테이블그리기")
     let table = $("#dataTableBody");
-    let totalqty = 0;
     let barcodeArray = [];
 
     if (typeof localStorage !== 'undefined' && localStorage.getItem("barcodeListRealStockIn")) {
@@ -243,30 +240,19 @@ function renderTable() {		//테이블그리기
     }
     table.empty();
     for (let i = 0; i <barcodeArray.length ; i++) {
-        let barcodeOneArr = barcodeArray[i].split(",");
+        let barcodeOneArr = barcodeArray[i];
         let tbody = "";
-        tbody = `<tr class = "bar_${barcodeArray[i]} bar-row" data-barcode="${barcodeArray[i]}">
-						<td class = "dataInfo">${barcodeOneArr}</td>
-						<td><button class="delete-btn" onclick="deleteEntry('${barcodeArray[i]}','${Number(barcodeOneArr[3])}')">${m("btn.delete")}</button></td>
-					</tr>`;
-        console.log(barcodeArray[i]);
-        if (barcodeOneArr.length === 4) {
-            console.log(Number(barcodeOneArr[2]));
-            totalqty = totalqty + Number(barcodeOneArr[2]);
-        } else if(barcodeArray[i].split("_").length== 6) {
-            let parts = barcodeArray[i].split("_")
-            console.log(Number(parts[4]));
-            totalqty = totalqty + Number(parts[4]);
-        }else{
-            totalqty = totalqty + Number(barcodeOneArr[3]);
-        }
+        tbody = `
+            <tr class = "bar_${barcodeArray[i]} bar-row" data-barcode="${barcodeOneArr}">
+                <td class = "dataInfo">${barcodeOneArr}</td>
+                <td><button class="delete-btn" onclick="deleteEntry('${barcodeOneArr}')">${m("btn.delete")}</button></td>
+            </tr>`;
         table.prepend(tbody);
     }
     $("#count").text(+barcodeArray.length);
-    $("#totalqty").text(formatNumber(totalqty));
 }
 
-function deleteEntry(bar, qty) {		// localstorage에서 특정데이터 삭제
+function deleteEntry(bar) {		// localstorage에서 특정데이터 삭제
     let className = "bar_" + bar;
     console.log("삭제 바코드 : " + bar)
     Utils.showConfirm(m("confirm.delete.item"), () => {
@@ -275,9 +261,6 @@ function deleteEntry(bar, qty) {		// localstorage에서 특정데이터 삭제
         localStorage.setItem("barcodeListRealStockIn", JSON.stringify(newArray));
         $("." + CSS.escape(className)).remove();
         $("#count").text(newArray.length);
-        let totalqty = $("#totalqty").text().replace(/,/g, '');
-        totalqty = Number(totalqty) - Number(qty);
-        $("#totalqty").text(formatNumber(totalqty));
         Utils.showAlert(m("success.deleted"), 'success');
     })
     focusWithoutKeyboard()
@@ -297,7 +280,6 @@ function clearAll() {			//localstorage 전체삭제
 
         localStorage.removeItem("barcodeListRealStockIn");
         $("#dataTableBody").empty();
-        $("#totalqty").text("0");
         $("#count").text("0");
         Utils.showAlert(m("success.deleted.all"), "success");
     })

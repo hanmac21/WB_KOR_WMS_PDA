@@ -38,5 +38,6 @@ public class BarcodeVO{
 	private String shipTo;
 	private String invoiceno;
 
-
+	private List<String> itemcodes;
+	private List<String> qtys;
 }

@@ -19,6 +19,11 @@ public class UlsanController {
 
     private final UlsanService ulsanService;
 
+    @GetMapping("/getItemList")
+    public List<Map<String, Object>> getItemList() {
+        return ulsanService.getItemList();
+    }
+
     // 입고 처리
     @PostMapping("/insInbound")
     public Map<String, Object> insInbound(@RequestBody BarcodeVO vo, HttpServletRequest request2) {
@@ -28,6 +33,17 @@ public class UlsanController {
             vo.setLoginid(loginid); // 예: 등록자 세팅
         }
         return ulsanService.insInbound(vo);
+    }
+
+    // 수기 입력 입고 처리
+    @PostMapping("/insInboundManual")
+    public Map<String, Object> insInboundManual(@RequestBody BarcodeVO vo, HttpServletRequest request2) {
+        HttpSession session = request2.getSession(false);
+        if (session != null) {
+            String loginid = (String) session.getAttribute("loginid");
+            vo.setLoginid(loginid); // 예: 등록자 세팅
+        }
+        return ulsanService.insInboundManual(vo);
     }
 
     // 입고현황 - Detail
@@ -55,6 +71,16 @@ public class UlsanController {
         }
 
         return ulsanService.insRealStock(request);
+    }
+
+    @PostMapping("/insertRealStockManual")
+    public Map<String, Object> insertRealStockManual(@RequestBody BarcodeVO vo, HttpServletRequest request2) {
+        HttpSession session = request2.getSession(false);
+        if (session != null) {
+            String loginid = (String) session.getAttribute("loginid");
+            vo.setLoginid(loginid); // 예: 등록자 세팅
+        }
+        return ulsanService.insertRealStockManual(vo);
     }
 
     // 재고실사현황 - Detail

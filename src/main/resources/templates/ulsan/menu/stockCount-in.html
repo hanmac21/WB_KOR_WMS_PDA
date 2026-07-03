@@ -17,6 +17,9 @@
             <button class="sub-menu-item stockcount"  onclick="checkNetworkAndMove('/ulsan/stock-count/in-barcode')" th:text = "#{menu.stockCount.barcode}">
                 재고실사 - 바코드
             </button>
+            <button class="sub-menu-item stockcount" onclick="checkNetworkAndMove('/ulsan/stock-count/in-manual')" th:text="'수기 재고실사'">
+                수기 재고실사
+            </button>
             <button class="sub-menu-item stockcount"  onclick="checkNetworkAndMove('/ulsan/stock-count/in-detail')" th:text = "#{menu.stockCount.detail}">
                 Inventory - detail
             </button>

@@ -112,6 +112,13 @@ public class MainController {
 		return "ulsan/incoming/ckd";
 	}
 
+	// 수기 입고등록
+	@GetMapping("/ulsan/incoming/manual")
+	public String ulsaneIncomingManual() {
+		log.info("incoming-manual Page Load");
+		return "ulsan/incoming/manual";
+	}
+
 	// 입고 내역 - detail
 	@GetMapping("/ulsan/incoming/detail")
 	public String incomingDetail(Model model) {
@@ -168,11 +175,25 @@ public class MainController {
 		return "ulsan/stock-count/in-barcode";
 	}
 
+	// 수기 사내 재고실사
+	@GetMapping("/ulsan/stock-count/in-manual")
+	public String ulsanStockCountInManual() {
+		log.info("stock-count in-manual Page Load");
+		return "ulsan/stock-count/in-manual";
+	}
+
 	// 사외 재고실사
 	@GetMapping("/ulsan/stock-count/out-barcode")
 	public String ulsanStockCountOutBarocde() {
 		log.info("stock-count/out-barcode Page Load");
 		return "ulsan/stock-count/out-barcode";
+	}
+
+	// 수기 사내 재고실사
+	@GetMapping("/ulsan/stock-count/out-manual")
+	public String ulsanStockCountOutManual() {
+		log.info("stock-count out-manual Page Load");
+		return "ulsan/stock-count/out-manual";
 	}
 
 	// 재고현황 - detail
