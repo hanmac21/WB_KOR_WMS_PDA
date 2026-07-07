@@ -91,9 +91,8 @@ function addEntry() {			// 로컬스토리지 저장
 
     // 울산 scm 바코드
     // 울산 거래명세서 바코드
-    // 대차 라벨
-    // 대차 내부 소형 라벨
-    if(barcode.length === 11 || barcode.startsWith("M") || barcode.split(',').length === 6 || barcode.split(',').length === 2) {
+    // 대차 라벨(출고 일반, 내부 일반, 내부 소형)
+    if(barcode.length === 11 || barcode.startsWith("M") || barcode.split(',').length === 6) {
         let stored = [];
 
         if (window.localStorage && localStorage.getItem("barcodeListInCkd")) {
@@ -148,9 +147,33 @@ function saveBarcode() {					// 전체전송
         return;
     }
 
+    // barcodeList 순서대로 수량 구성
+    let qtyList = barcodeList.map(function (barcode) {
+        const parts = barcode.split(",");
+        if (parts.length !== 6) return "";
+
+        // 대차라벨 : 화면 input을 순회로 찾기
+        let found = null;
+        $('#dataTableBody .input-qty').each(function() {
+            if ($(this).attr('data-barcode') === barcode){
+                found = $(this);
+                return false;
+            }
+        });
+
+        if (found) {
+            let qty = parseInt(found.val(), 10);
+            if (isNaN(qty) || qty < 0) qty = 0;
+            return String(qty);
+        }
+        return String(parseInt(parts[3], 10));
+    });
+
+
     let data = {
         date: $("#datepicker").val(),
         barcode: barcodeList,
+        qtys: qtyList,
         source: "INCOMING",
         storage: $('.storage-select').val(),
         factory: localStorage.getItem('rememberedFactory'),
@@ -207,7 +230,6 @@ function saveBarcode() {					// 전체전송
 function renderTable() {		//테이블그리기
     console.log("테이블그리기")
     let table = $("#dataTableBody");
-    let totalqty = 0;
     let barcodeArray = [];
 
     if (typeof localStorage !== 'undefined' && localStorage.getItem("barcodeListInCkd")) {
@@ -218,34 +240,45 @@ function renderTable() {		//테이블그리기
     table.empty();
     for (let i = 0; i < barcodeArray.length; i++) {
         let barcodeStr = barcodeArray[i];	// 전체 문자열
+        let parts = barcodeStr.split(',');
         let tbody = "";
-        tbody = `<tr class = "bar_${barcodeArray[i]} bar-row" data-barcode="${barcodeArray[i]}">
-                    <td class = "dataInfo">${barcodeStr}</td>
-                    <td><button class="delete-btn" onclick="deleteEntry('${barcodeArray[i]}', '')">${m('btn.delete')}</button></td>
-                </tr>`
 
+        if (parts.length === 6) {
+            let qty = parseInt(parts[3], 10);
+
+            tbody = `
+                <tr class = "bar-row" data-barcode="${barcodeStr}">
+                    <td class="dataInfo">${barcodeStr}</td>
+                    <td>
+                        <input type="number" class="input-qty keep-focus" min="0" value="${qty}" data-barcode="${barcodeStr}">
+                    </td>
+                    <td><button class="delete-btn" onclick="deleteEntry(this)">${m('btn.delete')}</button></td>
+                </tr>`;
+        }else {
+            tbody = `
+                <tr class="bar-row" data-barcode="${barcodeStr}">
+                    <td class="dataInfo" colspan="2">${barcodeStr}</td>
+                    <td><button class="delete-btn" onclick="deleteEntry(this)">${m('btn.delete')}</button></td>
+                </tr>`;
+        }
         table.prepend(tbody);
     }
     $("#count").text(+barcodeArray.length);
 }
 
 
-function deleteEntry(bar, qty) {		// localstorage에서 특정데이터 삭제
-    let className = "bar_" + bar;
+function deleteEntry(btn) {		// localstorage에서 특정데이터 삭제
+    const $row = $(btn).closest('tr');
+    const bar = $row.attr('data-barcode');
     console.log("삭제 바코드 : " + bar)
     Utils.showConfirm(m("confirm.delete.item"), () => {
         let barcodeArray = JSON.parse(localStorage.getItem("barcodeListInCkd") || "[]");
-        let newArray = barcodeArray.filter(item => item.toString().trim() !== bar.toString().trim());
+        let newArray = barcodeArray.filter(item => item !== bar);
         localStorage.setItem("barcodeListInCkd", JSON.stringify(newArray));
-        $("." + CSS.escape(className)).remove();
-        $("#count").text(newArray.length);
-        let totalqty = $("#totalqty").text();
-        totalqty = Number(totalqty) - Number(qty);
-        $("#totalqty").text(formatNumber(totalqty));
+        renderTable();
         Utils.showAlert(m("success.deleted"), 'success');
     })
     focusWithoutKeyboard()
-
 }
 
 function clearAll() {			//localstorage 전체삭제
@@ -261,7 +294,6 @@ function clearAll() {			//localstorage 전체삭제
 
         localStorage.removeItem("barcodeListInCkd");
         $("#dataTableBody").empty();
-        $("#totalqty").text("0");
         $("#count").text("0");
         Utils.showAlert(m("success.deleted.all"), "success");
     })

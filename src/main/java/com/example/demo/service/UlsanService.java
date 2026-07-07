@@ -69,19 +69,23 @@ public class UlsanService {
     @Transactional(transactionManager = "koreaTransactionManager", rollbackFor = Exception.class)
     public Map<String, Object> insInbound(BarcodeVO vo) {
         Map<String, Object> result = new HashMap<>();
-        final String date = vo.getDate();
-        final String main = vo.getMain();
-        final String source = vo.getSource();
-        final String kind = vo.getKind();
-        final List<String> barcodes = vo.getBarcode();
+        String date = vo.getDate();
+        String main = vo.getMain();
+        String source = vo.getSource();
+        String kind = vo.getKind();
+        List<String> barcodes = vo.getBarcode();
+        List<String> qtys = vo.getQtys();
         String factory = vo.getFactory();
-        final String loginId = vo.getLoginid();
-        final String userName = "username";
-        final String storage = vo.getStorage();
+        String loginId = vo.getLoginid();
+        String userName = "username";
+        String storage = vo.getStorage();
 //        String memo = vo.getMemo();
 
-        for (String barcode : barcodes) {
-            Map<String,Object> m = new HashMap<String, Object>();
+        for (int i = 0; i < barcodes.size(); i++) {
+            String barcode = barcodes.get(i);
+            String qty = (qtys != null && i < qtys.size()) ? qtys.get(i) : null;
+
+            Map<String,Object> m = new HashMap<>();
             m.put("date", date);
             m.put("barcode", barcode);
             m.put("loginid", loginId);
@@ -122,13 +126,14 @@ public class UlsanService {
             } else if (barcode.split(",").length == 6) {		 // 대차 라벨
                 String[] parts = barcode.split(",");
                 m.put("itemcode", parts[2]);
-                m.put("qty", resolveBarcodeQty(barcode));
                 m.put("type", "CART");
-            } else if (barcode.split(",").length == 2) {		 // 대차 소형 라벨
-                String[] parts = barcode.split(",");
-                m.put("qty", parts[1]);
-                m.put("itemcode", parts[0]);
-                m.put("type", "CART_SMALL");
+
+                // 화면에서 보낸 수량이 있으면
+                if (qty != null && !qty.isEmpty()) {
+                    m.put("qty", qty);
+                } else {
+                    m.put("qty", resolveBarcodeQty(barcode));
+                }
             } else {
                 result.put("response", "fail4");
                 result.put("message", "지원되지 않는 바코드 형식: " + barcode);
