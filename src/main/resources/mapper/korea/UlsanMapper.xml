@@ -37,6 +37,14 @@
         ORDER BY ITEMCODE
     </select>
 
+    <select id="getHeadrestInfo" resultType="string">
+        SELECT ITEMCODE
+        FROM T_MI_ITEM
+        -- 부품 바코드라 제품만 조회할 수 있도록
+        WHERE CMB_ITEMTYPE = '001'
+        AND SPEC = #{spec}
+    </select>
+
     <update id = "removeBarcode">
         update t_wms_location
         set useyn = 'N',

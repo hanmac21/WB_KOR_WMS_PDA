@@ -247,9 +247,13 @@ public class UlsanService {
         String factory = request.getFactory();
         String storage = request.getStorage();
         List<String> barcodes = request.getBarcode();
+        List<String> qtys =  request.getQtys();
         String loginid = request.getLoginid();
 
-        for (String barcode : barcodes) {		// 바코드 실사
+        for (int i = 0; i < barcodes.size(); i++) {
+            String barcode = barcodes.get(i);
+            String qty = qtys.get(i);
+
             Map<String, Object> map = new HashMap<>();
             map.put("date", date);
             map.put("barcode", barcode);
@@ -268,8 +272,21 @@ public class UlsanService {
             } else if (barcode.split(",",-1).length == 6){                  // 대차
                 String[] parts = barcode.split(",", -1);
                 map.put("itemcode", parts[2]);
-                map.put("qty", resolveBarcodeQty(barcode));
                 map.put("type", "cart");
+
+                // 화면에서 보낸 수량이 있으면
+                if (qty != null && !qty.isEmpty()) {
+                    map.put("qty", qty);
+                } else {
+                    map.put("qty", resolveBarcodeQty(barcode));
+                }
+            } else if (barcode.startsWith("[)>")){                  // 부품
+                String[] parts = barcode.split("\\|");
+                String spec = parts[3].substring(1);
+                String item = ulsanMapper.getHeadrestInfo(spec);
+                map.put("itemcode", item);
+                map.put("qty", "1");
+                map.put("type", "headrest");
             } else {
                 result.put("response", "fail4");
                 result.put("message", "지원되지 않는 바코드 형식: " + barcode);

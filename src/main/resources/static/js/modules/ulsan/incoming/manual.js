@@ -62,6 +62,38 @@ $(document).ready(function () {
     $(document).on("input", ".qty-input", function () {
         updateTotalQty();
     });
+
+    // 키보드 감지로 푸터 표시/숨김 (focus/blur 대신 이걸로 교체)
+    if (window.visualViewport) {
+        let baseHeight = window.visualViewport.height;
+
+        window.visualViewport.addEventListener('resize', function () {
+            // 화면 높이가 원래보다 많이 줄었으면 키보드가 올라온 상태로 판단
+            const shrink = baseHeight - window.visualViewport.height;
+
+            if (shrink > 150) {
+                $('.footer').hide();   // 키보드 올라옴
+            } else {
+                $('.footer').show();   // 키보드 내려감 (뒤로가기 포함)
+                baseHeight = window.visualViewport.height; // 기준 높이 갱신
+            }
+        });
+    }
+
+    // 수량칸: 마이너스 차단 + 최대 5자리 제한
+    $(document).on('keydown', '.qty-input', function (e) {
+        // 마이너스, e, +, . 입력 차단
+        if (['-', 'e', 'E', '+', '.'].includes(e.key)) {
+            e.preventDefault();
+        }
+    });
+
+    $(document).on('input', '.qty-input', function () {
+        // 숫자 이외 문자 제거 + 5자리 초과 자르기
+        let v = this.value.replace(/[^0-9]/g, '');
+        if (v.length > 5) v = v.slice(0, 5);
+        this.value = v;
+    });
 })
 
 // 품번 전체 검색
@@ -297,28 +329,28 @@ function saveEntry() {
     });
 }
 
-$(document).on("click", ".dataInfo", function () {
-    // 클릭한 tr중 dataInfo클래스를 찾아 첫번째 텍스트 반환
-    const itemCode = $(this).closest('tr').find('td.dataInfo').first().text().trim();
-
-    // 파레트라벨인지
-    const isPallet = itemCode.startsWith("(P)");
-
-    // 정규식으로 pno만 추출
-    const itemcode = isPallet ? itemCode.replace(/^\s*\(\s*p\s*\)\s*/i, "") : itemCode;
-
-
-    $.ajax({
-        url: "/purchase/getItemInfo",
-        type: "GET",
-        data: {itemcode},
-        dataType: "json",
-        success: function (result) {
-            console.log(result);
-            showPopup(result.list);
-        }
-    })
-});
+// $(document).on("click", ".dataInfo", function () {
+//     // 클릭한 tr중 dataInfo클래스를 찾아 첫번째 텍스트 반환
+//     const itemCode = $(this).closest('tr').find('td.dataInfo').first().text().trim();
+//
+//     // 파레트라벨인지
+//     const isPallet = itemCode.startsWith("(P)");
+//
+//     // 정규식으로 pno만 추출
+//     const itemcode = isPallet ? itemCode.replace(/^\s*\(\s*p\s*\)\s*/i, "") : itemCode;
+//
+//
+//     $.ajax({
+//         url: "/purchase/getItemInfo",
+//         type: "GET",
+//         data: {itemcode},
+//         dataType: "json",
+//         success: function (result) {
+//             console.log(result);
+//             showPopup(result.list);
+//         }
+//     })
+// });
 
 $(document).on("change blur", ".customer-select", function () {
     hideLoading();

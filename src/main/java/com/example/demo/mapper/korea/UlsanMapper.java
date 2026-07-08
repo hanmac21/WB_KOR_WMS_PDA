@@ -53,4 +53,6 @@ public interface UlsanMapper {
     List<Map<String, Object>> getTradebarcode(String barcode);
 
     List<Map<String, Object>> getItemList();
+
+    String getHeadrestInfo(String barcode);
 }

@@ -52,6 +52,7 @@
 				<thead>
 					<tr>
 						<th th:text="#{table.barcode}">바코드</th>
+						<th th:text="#{table.qty}">수량</th>
 						<th rowspan="2" th:text="#{btn.delete}">삭제</th>
 					</tr>
 				</thead>
@@ -64,7 +65,6 @@
 	<!-- 푸터 -->
 	<div class="footer">
 		<button id="allSendBtn" class="btn-primary"	onclick="saveBarcode2()" th:text="#{btn.saveBarcode}">전체 전송</button>
-		</div>
 	</div>
 	<!-- 로딩 스피너 -->
 	<div id="loading" class="loading hidden">
