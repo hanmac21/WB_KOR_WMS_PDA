@@ -24,7 +24,7 @@
   </style>
 </head>
 <body>
-	<div class= 'header-div'th:replace="fragments/header :: commonHeader(#{menu.logistics.title})"></div>
+	<div class= 'header-div'th:replace="fragments/header :: commonHeader('울산')"></div>
 	<div class="container">
         <div class="menu-grid">
             <button  class="sub-menu-item incoming" onclick="checkNetworkAndMove('/menu-ulsan/incoming')" th:text = "#{menu.incoming}">

@@ -1,17 +1,178 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- <link rel="stylesheet" th:href="@{/css/header.css(v=${T(java.lang.System).currentTimeMillis()})}"> -->
-    <title>로그인</title>
-    <link rel="stylesheet" th:href="@{/css/common.css(v=${T(java.lang.System).currentTimeMillis()})}">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
-    <style>
-    </style>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>로그인</title>
+<link rel="stylesheet" th:href="@{/css/common.css(v=${T(java.lang.System).currentTimeMillis()})}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<style>
+    /* 단계 표시 */
+    .step-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 0 8px;
+        gap: 6px;
+    }
+    .step-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        font-size: 13px;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    .step-badge.active  { background: #1e3a8a; color: white; }
+    .step-badge.done    { background: #059669; color: white; }
+    .step-badge.inactive{ background: #d1d5db; color: #6b7280; }
+
+    .step-label {
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .step-label.active  { color: #1e3a8a; }
+    .step-label.done    { color: #059669; }
+    .step-label.inactive{ color: #9ca3af; }
+
+    .step-line {
+        flex: 1;
+        height: 2px;
+        background: #d1d5db;
+        max-width: 40px;
+    }
+    .step-line.done { background: #059669; }
+
+    /* 대차 정보 카드 */
+    .carrier-card {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: border-color 0.2s;
+    }
+    .carrier-card.filled {
+        border-color: #059669;
+    }
+    .carrier-card-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        background: #f1f5f9;
+        font-size: 13px;
+        font-weight: 700;
+        color: #374151;
+        transition: background 0.2s, color 0.2s;
+    }
+    .carrier-card-header.filled {
+        background: #059669;
+        color: white;
+    }
+    .carrier-card-body {
+        padding: 10px 12px;
+    }
+    .carrier-empty {
+        text-align: center;
+        padding: 14px 0 8px;
+        color: #9ca3af;
+        font-size: 13px;
+    }
+
+    /* info grid */
+    .info-grid {
+        display: flex;
+        flex-direction: column;
+    }
+    .info-part {
+        display: flex;
+        align-items: flex-start;
+        padding: 5px 2px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .info-part:last-child { border-bottom: none; }
+    .info-label {
+        min-width: 80px;
+        font-size: 12px;
+        color: #6b7280;
+        font-weight: 500;
+        padding-top: 1px;
+        flex-shrink: 0;
+    }
+    .info-value {
+        font-size: 14px;
+        color: #1f2937;
+        font-weight: 700;
+        word-break: break-all;
+    }
+
+    /* 카운트 박스 */
+    .count-row {
+        display: flex;
+        gap: 10px;
+        margin: 10px 0 6px;
+    }
+    .count-box {
+        flex: 1;
+        border-radius: 10px;
+        padding: 16px 8px 12px;
+        text-align: center;
+        border: 2px solid #fca5a5;
+        background: #fff1f2;
+        transition: border-color 0.3s, background 0.3s;
+    }
+    .count-box.match {
+        border-color: #6ee7b7;
+        background: #f0fdf4;
+    }
+    .count-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: #6b7280;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+    }
+    .count-value {
+        font-size: 48px;
+        font-weight: 900;
+        line-height: 1;
+        color: #dc2626;
+        transition: color 0.3s;
+    }
+    .count-box.match .count-value {
+        color: #059669;
+    }
+
+    /* 마지막 스캔 결과 배너 */
+    .last-result {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        margin-top: 8px;
+        font-size: 14px;
+        font-weight: 700;
+    }
+    .last-result.ok { background: #d1fae5; color: #065f46; }
+    .last-result.ng { background: #fee2e2; color: #991b1b; }
+
+    /* 스캔 안내 텍스트 */
+    .scan-guide {
+        text-align: center;
+        font-size: 12px;
+        color: red;
+        padding: 4px 0 2px;
+    }
+</style>
 </head>
 <body data-page="addEntry">
     <div th:replace="fragments/header :: commonHeader('수출품 출고')"></div>
@@ -31,30 +192,67 @@
             </div>
             <div class="barcode-input">
                 <span th:text="#{search.barcode}">바코드 : </span>
-                <input type="text" id="barcodeInput" class="form-input" th:placeholder="#{info.barcode.scan}"
-                       autocomplete="off">
+                <input type="text" id="barcodeInput" class="form-input"
+                       th:placeholder="#{info.barcode.scan}" autocomplete="off">
                 <button id="scanBtn" class="scan-btn" onclick="addEntry()">스캔</button>
             </div>
         </div>
     </div>
+
+    <!-- 부품 스캔 카운트 -->
     <div class="form-container">
         <div class="table-header">
-            <span class="item-count" th:utext="#{table.total(${count} ?: 0)}">총 <span id="count">0</span>건</span>
+            <span style="font-size:14px; font-weight:700; color:#374151;" th:text="#{validation.parts.status}">부품 검증 현황</span>
+            <div class="scan-guide" id="scanGuide">기준 라벨을 먼저 스캔하세요</div>
         </div>
-        <div class="table-scroll-area">
-            <table class="data-table">
-                <thead>
-                <tr>
-                    <th th:text="#{table.barcode}">바코드</th>
-                    <th th:text="#{btn.delete}">삭제</th>
-                </tr>
-                </thead>
-                <tbody id="dataTableBody">
-                <!-- 동적으로 추가될 데이터 -->
-                </tbody>
-            </table>
+        <div class="count-row">
+            <div class="count-box" id="targetBox">
+                <div class="count-label">목표 수량</div>
+                <div class="count-value" id="targetQty">-</div>
+            </div>
+            <div class="count-box" id="scanBox">
+                <div class="count-label" th:text="#{btn.scanqty}">SCAN QTY</div>
+                <div class="count-value" id="count">0</div>
+            </div>
+        </div>
+        <div class="last-result" id="lastResult">
+            <span id="lastResultText"></span>
         </div>
     </div>
+
+    <!-- 대차 정보 -->
+    <div class="form-container">
+        <div class="carrier-card" id="carrierCard">
+            <div class="carrier-card-header" id="carrierCardHeader">
+                기준 라벨 정보
+            </div>
+            <div class="carrier-card-body">
+                <div class="carrier-empty" id="carrierEmpty">
+                   기준 라벨을 스캔하면 정보가 표시됩니다
+                </div>
+                <div class="info-grid" id="carrierInfoGrid" style="display:none;">
+                    <div class="info-part">
+                        <div class="info-label" th:text="#{table.barcode}">BARCODE</div>
+                        <div class="info-value"><span id="barcode">-</span></div>
+                    </div>
+                    <div class="info-part">
+                        <div class="info-label" th:text="#{table.itemcode}">ITEMCODE</div>
+                        <div class="info-value"><span id="itemcode">-</span></div>
+                    </div>
+                    <!--<div class="info-part">
+                        <div class="info-label" th:text="#{table.itemname}">ITEMNAME</div>
+                        <div class="info-value"><span id="itemname">-</span></div>
+                    </div>-->
+                    <div class="info-part">
+                        <div class="info-label" th:text="#{table.qty}">QTY</div>
+                        <div class="info-value"><span id="nowqty">-</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <!-- 푸터 -->
     <div class="footer">
         <button id="allSendBtn" class="btn-primary" onclick="saveBarcode()" th:text="#{btn.saveBarcode}">전체 전송</button>

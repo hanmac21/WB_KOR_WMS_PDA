@@ -50,7 +50,7 @@ function parseCarrierBarcode(barcode) {
 function parsePartBarcode(barcode) {
 	const parts = barcode.split('|');
 	if (parts.length < 4) return null;
-	const itemcode = parts[3];   // P89900R5000MDQ → 89900R5000MDQ
+	const itemcode = parts[3].substring(1);   // P89900R5000MDQ → 89900R5000MDQ
 	return { itemcode };
 }
 
