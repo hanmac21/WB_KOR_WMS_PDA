@@ -128,4 +128,10 @@ public class UlsanController {
     public List<String> getStorage(@RequestParam(required = false) String type){
         return ulsanService.getStorage(type);
     }
+
+    @PostMapping("/search-sequenceList")
+    public Map<String, Object> searchSequenceList(@RequestBody Map<String, Object> param, HttpServletRequest request){
+        log.info("search sequenceList");
+        return ulsanService.searchSequenceList(param);
+    }
 }

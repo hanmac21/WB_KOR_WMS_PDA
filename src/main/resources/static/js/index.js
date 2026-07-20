@@ -26,33 +26,33 @@ $(document).ready(function() {
 
 // 상태 데이터 조회 AJAX
 function getStatusData(selectedDate) {
-    showLoading(); // 로딩 표시
-    
-    $.ajax({
-        url: '/getStatus',
-        method: 'POST',
-        data: {
-            date: selectedDate,
-            factory: localStorage.getItem('rememberedFactory')
-        },
-        success: function(response) {
-        	//console.log(response);
-        	
-            updateStatusDisplay(response);
-            hideLoading();
-        },
-        error: function(xhr, status, error) {
-            console.error('상태 조회 실패:', error);
-            hideLoading();
-            // 에러 처리 - 필요시 사용자에게 알림
-            if (window.AndroidInterface) {
-                AndroidInterface.showToast('데이터 조회에 실패했습니다.');
-            } else {
-                alert('데이터 조회에 실패했습니다.');
-                }
-            }
-        });
-    }
+    // showLoading(); // 로딩 표시
+    //
+    // $.ajax({
+    //     url: '/getStatus',
+    //     method: 'POST',
+    //     data: {
+    //         date: selectedDate,
+    //         factory: localStorage.getItem('rememberedFactory')
+    //     },
+    //     success: function(response) {
+    //     	//console.log(response);
+    //
+    //         updateStatusDisplay(response);
+    //         hideLoading();
+    //     },
+    //     error: function(xhr, status, error) {
+    //         console.error('상태 조회 실패:', error);
+    //         hideLoading();
+    //         // 에러 처리 - 필요시 사용자에게 알림
+    //         if (window.AndroidInterface) {
+    //             AndroidInterface.showToast('데이터 조회에 실패했습니다.');
+    //         } else {
+    //             alert('데이터 조회에 실패했습니다.');
+    //         }
+    //     }
+    // });
+}
 
  // 상태 표시 업데이트 (서버 응답 데이터로 화면 갱신)
 function updateStatusDisplay(data) {

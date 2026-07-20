@@ -399,4 +399,47 @@
         </where>
         ORDER BY STORAGE
     </select>
+
+    <select id="searchSequenceList" resultType="map">
+        SELECT
+            A.SDATE,
+            A.COMPLETEYN,
+            A.HALC,
+            A.J,
+            A.SPEC,
+            A.ITEMNAME,
+            A.OP4,
+            A.TIME,
+            A.SEQ,
+            A.QTY,
+            B.COLORCODE,
+            B.ROW1_LH_CODE,
+            B.ROW1_RH_CODE,
+            B.ROW2_LH_CODE,
+            B.ROW2_RH_CODE,
+            B.ROW2_CTR_CODE,
+            B.ROW3_LH_CODE,
+            B.ROW3_RH_CODE,
+            B.ROW3_CTR_CODE
+        FROM T_WMS_SEQUENCE A
+        LEFT JOIN T_WMS_SEQUENCE_INFO B ON A.HALC = B.LX2_PE_CODE
+        WHERE A.USEYN = 'Y'
+        AND A.LINE = 'F'
+        AND UPPER(A.OP4) = UPPER(B.ROW1_HEADREST)
+        <!--<choose>
+            <when test='line != null and line == "F"'>
+                AND A.LINE = 'F'
+                AND UPPER(A.OP4) = UPPER(B.ROW1_HEADREST)
+            </when>
+            <when test='line != null and line == "R"'>
+                AND A.LINE = 'R'
+                AND UPPER(B.ROW2_HEADREST) LIKE '%' || UPPER(A.OP4) || '%'
+            </when>
+            <when test='line != null and line == "T"'>
+                AND A.LINE = 'T'
+                AND UPPER(A.OP4) LIKE '%' || UPPER(B.ROW3_HEADREST) || '%'
+            </when>
+        </choose>-->
+        ORDER BY A.TIME, A.SEQ
+    </select>
 </mapper>

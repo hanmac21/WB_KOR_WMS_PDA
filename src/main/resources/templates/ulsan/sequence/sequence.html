@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>서열 검수</title>
+    <link rel="stylesheet" th:href="@{/css/common.css(v=${T(java.lang.System).currentTimeMillis()})}">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* ============================================================
+           서열 검수 - 현재 세트 패널
+           좌 : LH / RH / CTR    우 : 수량 + SEQ / J / TIME
+           ============================================================ */
+        .table-scroll-area{
+            max-height: 250px;
+        }
+
+        .footer .btn-primary {
+            margin-top: 0;
+        }
+
+        .seq-panel {
+            display: flex;
+            align-items: stretch;
+            background: #fff;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        /* ================= 좌측 : LH / RH / CTR ================= */
+        .seq-panel-left {
+            flex: 1 1 auto;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .seq-part-row {
+            position: relative;
+            flex: 1 1 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 44px;
+            padding: 6px 8px 6px 11px;
+            border-bottom: 1px solid #f0f2f4;
+        }
+        .seq-part-row:last-child { border-bottom: none; }
+
+        /* 상태 표시 좌측 바 */
+        .seq-part-row::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            background: transparent;
+        }
+
+        .seq-part-label {
+            flex: 0 0 26px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #9aa1a9;
+            letter-spacing: 0.8px;
+        }
+
+        .seq-part-value {
+            flex: 1 1 auto;
+            min-width: 0;
+            font-size: 19px;
+            font-weight: 700;
+            color: #16181d;
+            letter-spacing: -0.4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .seq-part-check {
+            flex: 0 0 auto;
+            display: none;
+            font-size: 15px;
+            font-weight: 800;
+            color: #1f9c42;
+        }
+
+        /* --- 스캔 대상 --- */
+        .seq-part-row.is-target                 { background: #f2f6fd; }
+        .seq-part-row.is-target::before         { background: #0a58ca; }
+        .seq-part-row.is-target .seq-part-label { color: #0a58ca; }
+        .seq-part-row.is-target .seq-part-value { color: #0a3d8f; }
+
+        /* --- 수량 초과 --- */
+        .seq-part-row.is-over                   { background: #fdeeee; }
+        .seq-part-row.is-over::before           { background: #d0021b; }
+        .seq-part-row.is-over .seq-part-value   { color: #a30000; }
+
+        /* --- 대기 / 지나간 행 --- */
+        .seq-part-row.is-wait .seq-part-value,
+        .seq-part-row.is-done .seq-part-value   { color: #9aa1a9; font-weight: 600; }
+
+        /* --- 해당 없음 --- */
+        .seq-part-row.is-empty .seq-part-label,
+        .seq-part-row.is-empty .seq-part-value  { color: #c8ccd2; }
+
+
+        /* ================= 우측 : 수량 + 참고값 ================= */
+        .seq-panel-right {
+            flex: 0 0 46%;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #dfe3e8;
+            background: #fff;
+        }
+
+        /* 현재 스캔 수량 / 목표 수량 */
+        .seq-qty {
+            flex: 1 1 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            padding: 6px;
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+            height: 89px;
+        }
+        .seq-qty-scan  { font-size: 34px; font-weight: 800; color: #0a58ca; letter-spacing: -1px; }
+        .seq-qty-sep   { font-size: 22px; font-weight: 400; color: #c8ccd2; }
+        .seq-qty-total { font-size: 22px; font-weight: 700; color: #6b7280; }
+
+        .seq-qty.is-done .seq-qty-scan { color: #1f9c42; }
+        .seq-qty.is-over .seq-qty-scan { color: #d0021b; }
+        .seq-qty.is-idle .seq-qty-scan { color: #c8ccd2; }
+
+        /* SEQ / J / TIME */
+        .seq-meta {
+            flex: 0 0 auto;
+            display: flex;
+            border-top: 1px solid #dfe3e8;
+            background: #fafbfc;
+        }
+        .seq-meta-cell {
+            flex: 1 1 0;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 2px 6px;
+            border-left: 1px solid #e8ebee;
+        }
+        .seq-meta-cell:first-child { border-left: none; }
+
+        .seq-meta-label {
+            font-size: 9px;
+            font-weight: 700;
+            color: #9aa1a9;
+            letter-spacing: 0.6px;
+        }
+        .seq-meta-value {
+            font-size: 11px;
+            font-weight: 800;
+            color: #16181d;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+
+        /* ================= 서열 목록 행 상태 ================= */
+        /* 스캔 완료 */
+        .data-table tbody tr.is-complete td {
+            background: #a8e6b8 !important;
+            color: #14532d;
+            font-weight: 600;
+        }
+
+        /* 에러 */
+        .data-table tbody tr.is-error td {
+            background: #ffb3b3 !important;
+            color: #7f1d1d;
+            font-weight: 700;
+        }
+
+        /* 현재 선택 (완료/에러보다 우선) */
+        .data-table tbody tr.is-current td {
+            background: #0a58ca !important;
+            color: #fff !important;
+            font-weight: 700;
+        }
+
+        /* ================= 좁은 화면 ================= */
+        @media (max-width: 340px) {
+            .seq-panel-right { flex-basis: 44%; }
+            .seq-part-value  { font-size: 16px; }
+            .seq-qty-scan    { font-size: 27px; }
+            .seq-qty-total   { font-size: 18px; }
+            .seq-meta-value  { font-size: 13px; }
+        }
+    </style>
+</head>
+<body data-page="addEntry">
+<div th:replace="fragments/header :: commonHeader('서열 검수')"></div>
+
+<div class="form-container">
+    <div class="form-group">
+        <div class="storage-selector">
+            <span>라인</span>
+            <select class="line-select" id="lineSelect">
+                <option value="">라인 선택</option>
+                <option value="F">LINE F</option>
+                <option value="R">LINE R</option>
+                <option value="T">LINE T</option>
+            </select>
+        </div>
+        <div class="barcode-input">
+            <span th:text="#{search.barcode}">바코드 : </span>
+            <input type="text" id="barcodeInput" class="form-input" th:placeholder="#{info.barcode.scan}" autocomplete="off">
+            <button id="scanBtn" class="scan-btn" onclick="addEntry()" th:text="#{btn.scan}">스캔</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================= 현재 세트 ================= -->
+<div class="form-container">
+    <div class="table-header">
+        <span>서열정보</span>
+        <span class="count-value"><span id="completecount">0</span>/<span id="totalcount">0</span></span>
+    </div>
+
+    <div class="seq-panel" id="seqPanel">
+
+        <!-- 좌측 : LH / RH / CTR -->
+        <div class="seq-panel-left">
+            <div class="seq-part-row is-empty" data-pos="LH" id="rowLH">
+                <span class="seq-part-label">LH</span>
+                <span class="seq-part-value">—</span>
+                <span class="seq-part-check">✓</span>
+            </div>
+            <div class="seq-part-row is-empty" data-pos="RH" id="rowRH">
+                <span class="seq-part-label">RH</span>
+                <span class="seq-part-value">—</span>
+                <span class="seq-part-check">✓</span>
+            </div>
+            <div class="seq-part-row is-empty" data-pos="CTR" id="rowCTR">
+                <span class="seq-part-label">CTR</span>
+                <span class="seq-part-value">—</span>
+                <span class="seq-part-check">✓</span>
+            </div>
+        </div>
+
+        <!-- 우측 : 수량 + SEQ / J / TIME -->
+        <div class="seq-panel-right">
+            <div class="seq-qty is-idle" id="seqQty">
+                <span class="seq-qty-scan" id="scanQty">0</span>
+                <span class="seq-qty-sep">/</span>
+                <span class="seq-qty-total" id="targetQty">0</span>
+            </div>
+
+            <div class="seq-meta">
+                <div class="seq-meta-cell">
+                    <span class="seq-meta-label">TIME</span>
+                    <span class="seq-meta-value" id="infoTime">—</span>
+                </div>
+                <div class="seq-meta-cell">
+                    <span class="seq-meta-label">SEQ</span>
+                    <span class="seq-meta-value" id="infoSeq">—</span>
+                </div>
+                <div class="seq-meta-cell">
+                    <span class="seq-meta-label">J</span>
+                    <span class="seq-meta-value" id="infoJ">—</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ========================================== -->
+
+<div class="form-container">
+    <div class="table-scroll-area">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>번호</th>
+                <th>OP4</th>
+                <th>TIME</th>
+                <th>SEQ</th>
+                <th>QTY</th>
+                <th>COLOR</th>
+                <th>PN</th>
+                <th>LH</th>
+                <th>RH</th>
+                <th>CTR</th>
+                <th>ETC</th>
+            </tr>
+            </thead>
+            <tbody id="dataTableBody">
+            <!-- 동적으로 추가될 데이터 -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 푸터 -->
+<div class="footer">
+    <button id="allSendBtn" class="btn-primary" onclick="saveEntry()" th:text="#{btn.saveBarcode}">전체 전송</button>
+</div>
+<!-- 로딩 스피너 -->
+<div id="loading" class="loading hidden">
+    <div class="spinner"></div>
+    <div th:text="#{info.loading}">로딩중...</div>
+</div>
+
+<script th:src="@{/js/utils/common.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+<script th:src="@{/js/modules/ulsan/sequence/sequence.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+</body>
+</html>

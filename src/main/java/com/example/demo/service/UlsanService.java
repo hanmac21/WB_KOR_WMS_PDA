@@ -493,4 +493,16 @@ public class UlsanService {
     public List<Map<String, Object>> getItemList() {
         return ulsanMapper.getItemList();
     }
+
+    public Map<String, Object> searchSequenceList(Map<String, Object> param) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            List<Map<String, Object>> list = ulsanMapper.searchSequenceList(param);
+            result.put("list", list);
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", e.getMessage());
+        }
+        return result;
+    }
 }

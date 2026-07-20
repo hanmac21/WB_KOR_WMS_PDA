@@ -55,4 +55,6 @@ public interface UlsanMapper {
     List<Map<String, Object>> getItemList();
 
     String getHeadrestInfo(String barcode);
+
+    List<Map<String, Object>> searchSequenceList(Map<String, Object> param);
 }

@@ -264,6 +264,23 @@ public class MainController {
 		return "/ulsan/validation/validation_transys";
 	}
 
+	@GetMapping("/menu-ulsan/sequence")
+	public String menuUlsanSequence() {
+		log.info("menu-ulsan/sequence Page Load");
+		return "ulsan/menu/sequence";
+	}
+
+	@GetMapping("/ulsan/sequence/sequence")
+	public String ulsanSequence() {
+		log.info("sequence Page Load");
+		return "ulsan/sequence/sequence";
+	}
+
+	@GetMapping("/ulsan/sequence/summary")
+	public String ulsanSequenceSummary() {
+		log.info("sequence - summary page Load");
+		return "ulsan/sequence/summary";
+	}
 
 
 

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>로그인</title>
+<link rel="stylesheet" th:href="@{/css/common.css(v=${T(java.lang.System).currentTimeMillis()})}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+<style>
+  </style>
+</head>
+<body>
+	<div class= 'header-div'th:replace="fragments/header :: commonHeader('서열')"></div>
+	<div class="container">
+        <div class="menu-grid">
+            <button  class="sub-menu-item" onclick="checkNetworkAndMove('/ulsan/sequence/sequence')" th:text="'서열 검수'">
+                서열 검수
+            </button>
+<!--            <button  class="sub-menu-item" onclick="checkNetworkAndMove('/ulsan/sequence/summary')" th:text = "'서열 검수 내역'">-->
+            <button  class="sub-menu-item" onclick="Utils.showAlert('개발 중인 메뉴입니다.', 'info')">
+                서열 검수 내역
+            </button>
+        </div>
+    </div>
+
+    <!-- 푸터 -->
+    <div class="footer">
+        <div class="footer-text">WMS v1.0 | <span id="currentDate"></span></div>
+    </div>
+    
+     <!-- 로딩 스피너 -->
+    <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <div th:text= "#{info.loading}">로딩중...</div>
+    </div>
+    <script th:src="@{/js/utils/common.js(v=${T(java.lang.System).currentTimeMillis()})}"></script>
+	<script>
+	hideLoading();
+	window.addEventListener("pageshow", function(event) {
+	    hideLoading();
+	});
+	function checkNetworkAndMove(url) {
+		showLoading();
+		if (window.AndroidInterface && !AndroidInterface.isNetworkConnected()) {
+		    AndroidInterface.showNoInternetDialog();
+		    hideLoading();
+		    return;
+		}
+		location.href = url;
+	}
+	</script>
+</body>
+</html>
