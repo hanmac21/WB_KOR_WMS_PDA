@@ -114,6 +114,9 @@ $(document).ready(function () {
         let v = this.value.replace(/[^0-9]/g, '');
         if (v.length > 5) v = v.slice(0, 5);
         this.value = v;
+
+        // 변경된 수량 저장 (렌더 다시 그려도 유지됨)
+        saveQty($(this).attr('data-barcode'), v);
     });
 })
 
@@ -142,10 +145,11 @@ function addEntry() {			// 로컬스토리지 저장
         console.warn("현재 스캔 모드입니다.");
     }
 
-    // 울산 SCM
-    // 대차
-    // 부품
-    if (barcode.startsWith("M") || barcode.split(",").length === 6 || barcode.startsWith("[)>")) {
+    // 울산 SCM : M으로 시작
+    // 대차 : ,로 스플릿하면 6개
+    // 부품 : [)>로 시작
+    // 협력사용 부품식별표 : ,로 스플릿하면 5개
+    if (barcode.startsWith("M") || barcode.split(",").length === 6 || barcode.split(",").length === 5 || barcode.startsWith("[)>")) {
         let stored = [];
 
         if (window.localStorage && localStorage.getItem("barcodeListRealStock")) {
@@ -203,7 +207,7 @@ function saveBarcode2(status = 'ok', list = []) {					// 전체전송
     // barcodeList 순서대로 수량 구성
     let qtyList = barcodeList.map(function (barcode) {
         const parts = barcode.split(",");
-        if (parts.length !== 6) return "";
+        if (parts.length !== 6 && parts.length !== 5) return "";
 
         // 대차라벨 : 화면 input을 순회로 찾기
         let found = null;
@@ -244,6 +248,7 @@ function saveBarcode2(status = 'ok', list = []) {					// 전체전송
                 console.log("response : " + response)
                 if (response === "success") {
                     localStorage.removeItem('barcodeListRealStock');
+                    localStorage.removeItem("barcodeQtyRealStock");
                     $("#dataTableBody").empty();
                     $("#count").text("0");
                     playSound("complete");
@@ -304,7 +309,7 @@ function renderTable() {		//테이블그리기
         let parts = barcodeStr.split(',');
         let tbody = "";
         if (parts.length === 6) {       // 대차라벨인 경우
-            let qty = parseInt(parts[3], 10);
+            let qty = getQty(barcodeStr, parseInt(parts[3], 10));
 
             tbody = `
                 <tr class = "bar-row" data-barcode="${barcodeStr}">
@@ -314,7 +319,18 @@ function renderTable() {		//테이블그리기
                     </td>
                     <td><button class="delete-btn" onclick="deleteEntry(this)">${m("btn.delete")}</button></td>
                 </tr>`;
-        }else {
+        } else if (parts.length === 5) {       // 대차라벨인 경우
+            let qty = getQty(barcodeStr, parseInt(parts[3], 10));
+
+            tbody = `
+                <tr class = "bar-row" data-barcode="${barcodeStr}">
+                    <td class="dataInfo">${barcodeStr}</td>
+                    <td>
+                        <input type="number" class="input-qty keep-focus" min="0" value="${qty}" data-barcode="${barcodeStr}">
+                    </td>
+                    <td><button class="delete-btn" onclick="deleteEntry(this)">${m("btn.delete")}</button></td>
+                </tr>`;
+        } else {
             tbody = `
                 <tr class="bar-row" data-barcode="${barcodeStr}">
                     <td class="dataInfo" colspan="2">${barcodeStr}</td>
@@ -335,6 +351,7 @@ function deleteEntry(btn) {         // localstorage에서 특정데이터 삭제
         let barcodeArray = JSON.parse(localStorage.getItem("barcodeListRealStock") || "[]");
         let newArray = barcodeArray.filter(item => item !== bar);
         localStorage.setItem("barcodeListRealStock", JSON.stringify(newArray));
+        removeQty(bar);
         renderTable();
         Utils.showAlert(m("success.deleted"), 'success');
     })
@@ -353,6 +370,7 @@ function clearAll() {			//localstorage 전체삭제
         }
 
         localStorage.removeItem("barcodeListRealStock");
+        localStorage.removeItem("barcodeQtyRealStock");
         $("#dataTableBody").empty();
         $("#count").text("0");
         Utils.showAlert(m("success.deleted.all"), "success");
@@ -375,3 +393,21 @@ function clearAll() {			//localstorage 전체삭제
 //         }
 //     })
 // });
+
+// 수량을 별도 저장 (바코드 문자열은 그대로 유지)
+function saveQty(barcode, qty) {
+    let qtyMap = JSON.parse(localStorage.getItem("barcodeQtyRealStock") || "{}");
+    qtyMap[barcode] = qty;
+    localStorage.setItem("barcodeQtyRealStock", JSON.stringify(qtyMap));
+}
+
+function getQty(barcode, defaultQty) {
+    let qtyMap = JSON.parse(localStorage.getItem("barcodeQtyRealStock") || "{}");
+    return qtyMap.hasOwnProperty(barcode) ? parseInt(qtyMap[barcode], 10) : defaultQty;
+}
+
+function removeQty(barcode) {
+    let qtyMap = JSON.parse(localStorage.getItem("barcodeQtyRealStock") || "{}");
+    delete qtyMap[barcode];
+    localStorage.setItem("barcodeQtyRealStock", JSON.stringify(qtyMap));
+}

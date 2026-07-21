@@ -134,6 +134,17 @@ public class UlsanService {
                 } else {
                     m.put("qty", resolveBarcodeQty(barcode));
                 }
+            } else if (barcode.split(",").length == 5) {		 // 협력사용 부품바코드
+                String[] parts = barcode.split(",");
+                m.put("itemcode", parts[1]);
+                m.put("type", "CUST");
+
+                // 화면에서 보낸 수량이 있으면
+                if (qty != null && !qty.isEmpty()) {
+                    m.put("qty", qty);
+                } else {
+                    m.put("qty", resolveBarcodeQty(barcode));
+                }
             } else {
                 result.put("response", "fail4");
                 result.put("message", "지원되지 않는 바코드 형식: " + barcode);
@@ -273,6 +284,17 @@ public class UlsanService {
                 String[] parts = barcode.split(",", -1);
                 map.put("itemcode", parts[2]);
                 map.put("type", "cart");
+
+                // 화면에서 보낸 수량이 있으면
+                if (qty != null && !qty.isEmpty()) {
+                    map.put("qty", qty);
+                } else {
+                    map.put("qty", resolveBarcodeQty(barcode));
+                }
+            } else if (barcode.split(",",-1).length == 5){                  // 대차
+                String[] parts = barcode.split(",", -1);
+                map.put("itemcode", parts[1]);
+                map.put("type", "CUST");
 
                 // 화면에서 보낸 수량이 있으면
                 if (qty != null && !qty.isEmpty()) {

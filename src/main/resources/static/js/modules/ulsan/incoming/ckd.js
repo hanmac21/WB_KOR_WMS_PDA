@@ -93,6 +93,9 @@ $(document).ready(function () {
         let v = this.value.replace(/[^0-9]/g, '');
         if (v.length > 5) v = v.slice(0, 5);
         this.value = v;
+
+        // 변경된 수량 저장 (렌더 다시 그려도 유지됨)
+        saveQty($(this).attr('data-barcode'), v);
     });
 })
 
@@ -121,10 +124,11 @@ function addEntry() {			// 로컬스토리지 저장
         console.warn("현재 스캔 모드입니다.");
     }
 
-    // 울산 scm 바코드
-    // 울산 거래명세서 바코드
-    // 대차 라벨(출고 일반, 내부 일반, 내부 소형)
-    if(barcode.length === 11 || barcode.startsWith("M") || barcode.split(',').length === 6) {
+    // 울산 scm 바코드 : M으로 시작
+    // 울산 거래명세서 바코드 : 11자
+    // 대차 라벨(출고 일반, 내부 일반, 내부 소형) : ,로 스플릿 시 6개
+    // 협력사용 부품식별표 : ,로 스플릿 시 5개
+    if(barcode.length === 11 || barcode.startsWith("M") || barcode.split(',').length === 6 || barcode.split(',').length === 5) {
         let stored = [];
 
         if (window.localStorage && localStorage.getItem("barcodeListInCkd")) {
@@ -182,7 +186,7 @@ function saveBarcode() {					// 전체전송
     // barcodeList 순서대로 수량 구성
     let qtyList = barcodeList.map(function (barcode) {
         const parts = barcode.split(",");
-        if (parts.length !== 6) return "";
+        if (parts.length !== 6 && parts.length !== 5) return "";
 
         // 대차라벨 : 화면 input을 순회로 찾기
         let found = null;
@@ -202,60 +206,67 @@ function saveBarcode() {					// 전체전송
     });
 
 
-    let data = {
-        date: $("#datepicker").val(),
-        barcode: barcodeList,
-        qtys: qtyList,
-        source: "INCOMING",
-        storage: $('.storage-select').val(),
-        factory: localStorage.getItem('rememberedFactory'),
-        main: 'IN',
-        memo: $("#memo").val()
-    }
-    showLoading();
-    $.ajax({
-        url: `/ulsan/insInbound`,
-        method: 'POST',
-        contentType: "application/json",
-        data: JSON.stringify(data),
-        success: function (result) {
-            let response = result.response;
-            console.log("response : " + response)
-            if (response == "success") {
-                localStorage.removeItem('barcodeListInCkd');
-                $("#dataTableBody").empty();
-                $("#count").text("0");
-                $("#totalqty").text("0");
-                Utils.showAlert(m("info.barcode.sent"), "info");
-                playSound("complete");
-            } else {
-                const barcodeHtml = makeBarcodesClickable(result.barcode);
-                showAlert("", barcodeHtml + `<br>${m(result.response)}`, "warning");
-
-                highlightErrorRows(result.barcode);		// 에러바코드 배경 빨간색으로 바꿔주는 함수
-                playSound('error')
-            }
-            hideLoading();
-        },
-        error: function (request, status, error) {
-            console.log(error);
-            if (request.status == 200) {
-
-            } else if (request.status == 500) {
-                Utils.showAlert(m("error.generic"), 'warning');
-            } else if (request.status == 0) {
-                Utils.showAlert(m("error.offline"), 'warning');
-            } else {
-                Utils.showAlert("code: " + request.status + "<br>message: " + request.responseText + "<br>error: " + error, "warning");
-            }
-            hideLoading();
-        },
-        complete: function () {
-            hideLoading();
-            // ❗ AJAX 끝나면 초기화
-            isSaving = false;
-            console.log("isaving false 1 : " + isSaving);
+    Utils.showConfirm(m("confirm.send.all"), () => {
+        let data = {
+            date: $("#datepicker").val(),
+            barcode: barcodeList,
+            qtys: qtyList,
+            source: "INCOMING",
+            storage: $('.storage-select').val(),
+            factory: localStorage.getItem('rememberedFactory'),
+            main: 'IN',
+            memo: $("#memo").val()
         }
+        showLoading();
+        $.ajax({
+            url: `/ulsan/insInbound`,
+            method: 'POST',
+            contentType: "application/json",
+            data: JSON.stringify(data),
+            success: function (result) {
+                let response = result.response;
+                console.log("response : " + response)
+                if (response == "success") {
+                    localStorage.removeItem('barcodeListInCkd');
+                    localStorage.removeItem("barcodeQtyInCkd");
+                    $("#dataTableBody").empty();
+                    $("#count").text("0");
+                    $("#totalqty").text("0");
+                    Utils.showAlert(m("info.barcode.sent"), "info");
+                    playSound("complete");
+                } else {
+                    const barcodeHtml = makeBarcodesClickable(result.barcode);
+                    showAlert("", barcodeHtml + `<br>${m(result.response)}`, "warning");
+
+                    highlightErrorRows(result.barcode);		// 에러바코드 배경 빨간색으로 바꿔주는 함수
+                    playSound('error')
+                }
+                hideLoading();
+            },
+            error: function (request, status, error) {
+                console.log(error);
+                if (request.status == 200) {
+
+                } else if (request.status == 500) {
+                    Utils.showAlert(m("error.generic"), 'warning');
+                } else if (request.status == 0) {
+                    Utils.showAlert(m("error.offline"), 'warning');
+                } else {
+                    Utils.showAlert("code: " + request.status + "<br>message: " + request.responseText + "<br>error: " + error, "warning");
+                }
+                hideLoading();
+            },
+            complete: function () {
+                hideLoading();
+                // ❗ AJAX 끝나면 초기화
+                isSaving = false;
+                console.log("isaving false 1 : " + isSaving);
+            }
+        });
+    }, () => {
+        Utils.showAlert(m("success.cancel.sendAll"), "#008000");
+        isSaving = false;
+        hideLoading();
     });
 }
 
@@ -276,7 +287,7 @@ function renderTable() {		//테이블그리기
         let tbody = "";
 
         if (parts.length === 6) {
-            let qty = parseInt(parts[3], 10);
+            let qty = getQty(barcodeStr, parseInt(parts[3], 10));
 
             tbody = `
                 <tr class = "bar-row" data-barcode="${barcodeStr}">
@@ -286,7 +297,18 @@ function renderTable() {		//테이블그리기
                     </td>
                     <td><button class="delete-btn" onclick="deleteEntry(this)">${m('btn.delete')}</button></td>
                 </tr>`;
-        }else {
+        } else if (parts.length === 5) {
+            let qty = getQty(barcodeStr, parseInt(parts[3], 10));
+
+            tbody = `
+                <tr class = "bar-row" data-barcode="${barcodeStr}">
+                    <td class="dataInfo">${barcodeStr}</td>
+                    <td>
+                        <input type="number" class="input-qty keep-focus" min="0" value="${qty}" data-barcode="${barcodeStr}">
+                    </td>
+                    <td><button class="delete-btn" onclick="deleteEntry(this)">${m('btn.delete')}</button></td>
+                </tr>`;
+        } else {
             tbody = `
                 <tr class="bar-row" data-barcode="${barcodeStr}">
                     <td class="dataInfo" colspan="2">${barcodeStr}</td>
@@ -307,6 +329,7 @@ function deleteEntry(btn) {		// localstorage에서 특정데이터 삭제
         let barcodeArray = JSON.parse(localStorage.getItem("barcodeListInCkd") || "[]");
         let newArray = barcodeArray.filter(item => item !== bar);
         localStorage.setItem("barcodeListInCkd", JSON.stringify(newArray));
+        removeQty(bar);
         renderTable();
         Utils.showAlert(m("success.deleted"), 'success');
     })
@@ -325,6 +348,7 @@ function clearAll() {			//localstorage 전체삭제
         }
 
         localStorage.removeItem("barcodeListInCkd");
+        localStorage.removeItem('barcodeQtyInCkd');
         $("#dataTableBody").empty();
         $("#count").text("0");
         Utils.showAlert(m("success.deleted.all"), "success");
@@ -359,6 +383,24 @@ $(document).on("change blur", ".customer-select", function () {
     hideLoading();
 });
 
+
+// 수량을 별도 저장 (바코드 문자열은 그대로 유지)
+function saveQty(barcode, qty) {
+    let qtyMap = JSON.parse(localStorage.getItem("barcodeQtyInCkd") || "{}");
+    qtyMap[barcode] = qty;
+    localStorage.setItem("barcodeQtyInCkd", JSON.stringify(qtyMap));
+}
+
+function getQty(barcode, defaultQty) {
+    let qtyMap = JSON.parse(localStorage.getItem("barcodeQtyInCkd") || "{}");
+    return qtyMap.hasOwnProperty(barcode) ? parseInt(qtyMap[barcode], 10) : defaultQty;
+}
+
+function removeQty(barcode) {
+    let qtyMap = JSON.parse(localStorage.getItem("barcodeQtyInCkd") || "{}");
+    delete qtyMap[barcode];
+    localStorage.setItem("barcodeQtyInCkd", JSON.stringify(qtyMap));
+}
 
 
 
