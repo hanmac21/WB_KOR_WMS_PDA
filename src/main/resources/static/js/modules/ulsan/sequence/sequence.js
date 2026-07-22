@@ -124,7 +124,7 @@ function addEntry() {
         /* ---------------------------------------- */
         const cur = seqList[curIdx];
         const pos = POS[curIdx % POS.length];
-        const code = (cur['ROW1_' + pos + '_CODE'] || '').replace(/-/g, '');
+        const code = (cur[pos + '_CODE'] || '').replace(/-/g, '');
         const qty = toInt(cur.QTY);
 
         // 재스캔
@@ -251,9 +251,9 @@ function renderTable(list) {
                 <td>${data.QTY || '-'}</td>
                 <td>${data.COLORCODE || '-'}</td>
                 <td>${pos}</td>
-                <td>${data.ROW1_LH_CODE || '-'}</td>
-                <td>${data.ROW1_RH_CODE || '-'}</td>
-                <td>${data.ROW1_CTR_CODE || '-'}</td>
+                <td>${data.LH_CODE || '-'}</td>
+                <td>${data.RH_CODE || '-'}</td>
+                <td>${data.CTR_CODE || '-'}</td>
                 <td>${data.J || '-'}</td>
             </tr>
         `);
@@ -289,7 +289,7 @@ function renderPanel() {
             return;
         }
 
-        const code = row['ROW1_' + pos + '_CODE'] || '-';
+        const code = row[pos + '_CODE'] || '-';
 
         if (idx < curIdx)         setRow($row, 'is-done',   code);   // 검수 끝, 값 유지
         else if (idx === curIdx)  setRow($row, curScan > qty ? 'is-over' : 'is-target', code);

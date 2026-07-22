@@ -409,20 +409,29 @@
             A.SEQ,
             A.QTY,
             B.COLORCODE,
-            B.ROW1_LH_CODE,
-            B.ROW1_RH_CODE,
-            B.ROW2_LH_CODE,
-            B.ROW2_RH_CODE,
-            B.ROW2_CTR_CODE,
-            B.ROW3_LH_CODE,
-            B.ROW3_RH_CODE,
-            B.ROW3_CTR_CODE
+            <choose>
+                <when test='line != null and line == "F"'>
+                    B.ROW1_LH_CODE  AS LH_CODE,
+                    B.ROW1_RH_CODE  AS RH_CODE,
+                    NULL            AS CTR_CODE,
+                </when>
+                <when test='line != null and line == "R"'>
+                    B.ROW2_LH_CODE  AS LH_CODE,
+                    B.ROW2_RH_CODE  AS RH_CODE,
+                    B.ROW2_CTR_CODE AS CTR_CODE,
+                </when>
+                <when test='line != null and line == "T"'>
+                    B.ROW3_LH_CODE  AS LH_CODE,
+                    B.ROW3_RH_CODE  AS RH_CODE,
+                    B.ROW3_CTR_CODE AS CTR_CODE,
+                </when>
+            </choose>
+            A.LINE
         FROM T_WMS_SEQUENCE A
         LEFT JOIN T_WMS_SEQUENCE_INFO B ON A.HALC = B.LX2_PE_CODE
         WHERE A.USEYN = 'Y'
-        AND A.LINE = 'F'
-        AND UPPER(A.OP4) = UPPER(B.ROW1_HEADREST)
-        <!--<choose>
+        AND A.SDATE = TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+        <choose>
             <when test='line != null and line == "F"'>
                 AND A.LINE = 'F'
                 AND UPPER(A.OP4) = UPPER(B.ROW1_HEADREST)
@@ -435,7 +444,7 @@
                 AND A.LINE = 'T'
                 AND UPPER(A.OP4) LIKE '%' || UPPER(B.ROW3_HEADREST) || '%'
             </when>
-        </choose>-->
+        </choose>
         ORDER BY A.TIME, A.SEQ
     </select>
 </mapper>
