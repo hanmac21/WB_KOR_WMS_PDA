@@ -281,14 +281,12 @@
             ymdhms,
             loginid,
             itemcode,
-            seq,
             qty,
             source,
             source2,
             factory,
             custcode,
-            custname,
-            oitemcode
+            custname
         )
         VALUES  (
             #{date},
@@ -296,14 +294,12 @@
             TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS'),
             #{loginid},
             #{itemcode},
-            #{seq},
             #{qty},
             #{source},
             #{source2},
             #{factory},
             #{custcode},
-            #{custname},
-            #{oitemcode}
+            #{custname}
         )
     </insert>
 

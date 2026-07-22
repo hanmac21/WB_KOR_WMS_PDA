@@ -421,7 +421,7 @@ public class UlsanService {
             m.put("loginid", loginId);
             m.put("username", userName);
             m.put("source", source);
-            m.put("source2", "PURCHASE");
+            m.put("source2", "수출품");
             m.put("custcode", custcode);
             m.put("custname", shipTo);
             m.put("main", main);
@@ -433,7 +433,6 @@ public class UlsanService {
                 String[] parts = barcode.split(",", -1);
                 m.put("oitemcode", parts[1]);
                 m.put("itemcode", parts[2]);
-                m.put("seq", parts[4]);
                 m.put("qty", resolveBarcodeQty(barcode));
             } else {
                 result.put("response", "fail4");
@@ -444,16 +443,115 @@ public class UlsanService {
             m.put("dmemo","OUTPUT");
 
             int insOutbound = ulsanMapper.insOutput(m);
-            int affected = ulsanMapper.insertStockOutput(m);
             ulsanMapper.removeBarcode(m);
 
-            if (insOutbound == 0 || affected == 0) {
+            if (insOutbound == 0) {
                 result.put("response", "fail5");
                 result.put("message", "재고 반영 실패(동시성). 다시 시도: " + barcode);
                 throw new RuntimeException("STOCK_TXN_FAILED");
             }
         }
 
+        result.put("response", "success");
+        return result;
+    }
+
+    @Transactional(transactionManager = "koreaTransactionManager", rollbackFor = Exception.class)
+    public Map<String, Object> insOutputDomestic(BarcodeVO vo) {
+        Map<String, Object> result = new HashMap<>();
+        final String date = vo.getDate();
+        final String main = vo.getMain();
+        final String source = vo.getSource();
+        final String kind = vo.getKind();
+        String factory = vo.getFactory();
+        String memo = vo.getMemo();
+        System.out.println("memo @@@@ :"+memo);
+        final String loginId = vo.getLoginid();
+        final String userName = "username";
+
+        String shipTo = vo.getShipTo();		// 출고처
+        List<String> barcodes = vo.getBarcode();
+        List<String> qtys = vo.getQtys();
+
+        for (int i = 0; i < barcodes.size(); i++) {
+            String barcode = barcodes.get(i);
+            String qty = (qtys != null && i < qtys.size()) ? qtys.get(i) : null;
+
+            String custcode = "";
+            if("LEAR".equalsIgnoreCase(shipTo)){
+                custcode = "1981";
+            }else if("TRANSYS_".equalsIgnoreCase(shipTo)){
+                custcode = "1380";
+            }
+
+            Map<String, Object> m = new HashMap<>();
+            m.put("factory", factory);
+            m.put("date", date);
+            m.put("barcode", barcode);
+            m.put("loginid", loginId);
+            m.put("username", userName);
+            m.put("source", source);
+            m.put("custcode", custcode);
+            m.put("custname", shipTo);
+            m.put("main", main);
+            m.put("kind", kind);
+            m.put("memo", memo);
+            m.put("source2", "내수품");
+
+            // 바코드 파싱 (인라인)
+            if (barcode.startsWith("M")) {		                // SCM 바코드
+                Map<String, Object> item = ulsanMapper.getItemInfo(barcode);
+                m.put("itemcode", item.get("PNO"));
+                m.put("qty", resolveBarcodeQty(barcode));
+                m.put("type", "scm");
+            } else if (barcode.startsWith("[)>")){                  // 부품
+                String[] parts = barcode.split("\\|");
+                String spec = parts[3].substring(1);
+                String seq = parts[6].substring(parts[6].length() - 7);
+                String item = ulsanMapper.getHeadrestInfo(spec);
+                m.put("itemcode", item);
+                m.put("qty", "1");
+                m.put("type", "headrest");
+            } else if (barcode.split(",").length == 6) {		 // 대차 라벨
+                String[] parts = barcode.split(",");
+                m.put("itemcode", parts[2]);
+                m.put("type", "cart");
+
+                // 화면에서 보낸 수량이 있으면
+                if (qty != null && !qty.isEmpty()) {
+                    m.put("qty", qty);
+                } else {
+                    m.put("qty", resolveBarcodeQty(barcode));
+                }
+            } else if (barcode.split(",").length == 5) {		 // 협력사용 부품바코드
+                String[] parts = barcode.split(",");
+                m.put("itemcode", parts[1]);
+                m.put("type", "cust");
+
+                // 화면에서 보낸 수량이 있으면
+                if (qty != null && !qty.isEmpty()) {
+                    m.put("qty", qty);
+                } else {
+                    m.put("qty", resolveBarcodeQty(barcode));
+                }
+            } else {
+                result.put("response", "fail4");
+                result.put("message", "지원되지 않는 바코드 형식: " + barcode);
+                System.out.println("INVALID_BARCODE_FORMAT: " + barcode);
+                throw new RuntimeException("INVALID_BARCODE_FORMAT");
+            }
+
+            m.put("dmemo","OUTPUT");
+
+            int insOutbound = ulsanMapper.insOutput(m);
+            ulsanMapper.removeBarcode(m);
+
+            if (insOutbound == 0) {
+                result.put("response", "fail5");
+                result.put("message", "재고 반영 실패(동시성). 다시 시도: " + barcode);
+                throw new RuntimeException("STOCK_TXN_FAILED");
+            }
+        }
 
         result.put("response", "success");
         return result;

@@ -54,24 +54,6 @@ $(document).ready(function () {
 
     renderTable();
 
-    const savedBarcodes = JSON.parse(localStorage.getItem("barcodeListOut") || "[]");
-    if (savedBarcodes.length > 0) {
-        const first = savedBarcodes[0];
-        const detectedShipTo = first.startsWith("[)>") ? "ADNT" : "LEAR";
-        $(".shipto-select").val(detectedShipTo);
-    }
-
-    $('.shipto-select').on('change', function () {
-        const barcodeList = JSON.parse(localStorage.getItem("barcodeListOut") || "[]");
-        if (barcodeList.length > 0) {
-            $(this).val($(this).data('prev'));
-            Utils.showAlert(m("warning.shipto.locked"), 'warning');
-        } else {
-            $(this).data('prev', $(this).val());
-        }
-    }).each(function () {
-        $(this).data('prev', $(this).val());
-    });
 
     $('#barcodeInput').on('touchstart mousedown', function () {
         manualTouch = true;
@@ -99,6 +81,40 @@ $(document).ready(function () {
         }
     });
 
+    // 키보드 감지로 푸터 표시/숨김 (focus/blur 대신 이걸로 교체)
+    if (window.visualViewport) {
+        let baseHeight = window.visualViewport.height;
+
+        window.visualViewport.addEventListener('resize', function () {
+            // 화면 높이가 원래보다 많이 줄었으면 키보드가 올라온 상태로 판단
+            const shrink = baseHeight - window.visualViewport.height;
+
+            if (shrink > 150) {
+                $('.footer').hide();   // 키보드 올라옴
+            } else {
+                $('.footer').show();   // 키보드 내려감 (뒤로가기 포함)
+                baseHeight = window.visualViewport.height; // 기준 높이 갱신
+            }
+        });
+    }
+
+    // 수량칸: 마이너스 차단 + 최대 5자리 제한
+    $(document).on('keydown', '.input-qty', function (e) {
+        // 마이너스, e, +, . 입력 차단
+        if (['-', 'e', 'E', '+', '.'].includes(e.key)) {
+            e.preventDefault();
+        }
+    });
+
+    $(document).on('input', '.input-qty', function () {
+        // 숫자 이외 문자 제거 + 5자리 초과 자르기
+        let v = this.value.replace(/[^0-9]/g, '');
+        if (v.length > 5) v = v.slice(0, 5);
+        this.value = v;
+
+        // 변경된 수량 저장 (렌더 다시 그려도 유지됨)
+        saveQty($(this).attr('data-barcode'), v);
+    });
 })
 
 function addEntry() {			// 로컬스토리지 저장
@@ -123,27 +139,12 @@ function addEntry() {			// 로컬스토리지 저장
         console.warn("현재 스캔 모드입니다.");
     }
 
-    // 인보이스 바코드 제외 (이 화면은 단순 파트 스캔용)
-    if (barcode.includes("$$") || barcode.includes(":CY[")) {
-        let audio = new Audio('/sounds/buzzer.wav');
-        audio.play();
-        $("#barcodeInput").val("");
-        hideLoading();
-        Utils.showAlert(`${m("warning.barcode.invalid")}<br>${m("warning.check")}`, "warning");
-        return;
-    }
-
-    // 모든 거래처 파트바코드 허용
-    // ADIENT: [)> 시작 + | 포함
-    // TRANSYS: [)> 시작 + : 포함
-    // LEAR/WMS: 쉼표 5파트(WMSUSA 끝) 또는 P타입
-    // 박스바코드: 언더스코어 6파트
+    // 울산 scm 바코드 : M으로 시작
+    // 부품: [)> 시작 + | 포함
+    // 대차: ,로 스플릿했을 때 6개
+    // 협력사용 부품 식별표 : ,로 스플릿 했을때 5개
     const isValidBarcode =
-        (barcode.startsWith("[)>") && barcode.includes("|")) ||
-        (barcode.startsWith("[)>") && barcode.includes(":")) ||
-        barcode.split(",")[4] === "WMSUSA" ||
-        barcode.split(",")[3] === "WMSUSA" ||
-        barcode.split("_").length === 6;
+        (barcode.startsWith("M") || barcode.startsWith("[)>") && barcode.includes("|")) || barcode.split(",").length === 6 || barcode.split(",").length === 5;
 
     if (isValidBarcode) {
         let stored = [];
@@ -201,13 +202,35 @@ function saveBarcode() {					// 전체전송
         return;
     }
 
+    // barcodeList 순서대로 수량 구성
+    let qtyList = barcodeList.map(function (barcode) {
+        const parts = barcode.split(",");
+        if (parts.length !== 6 && parts.length !== 5) return "";
+
+        // 대차라벨 : 화면 input을 순회로 찾기
+        let found = null;
+        $('#dataTableBody .input-qty').each(function() {
+            if ($(this).attr('data-barcode') === barcode){
+                found = $(this);
+                return false;
+            }
+        });
+
+        if (found) {
+            let qty = parseInt(found.val(), 10);
+            if (isNaN(qty) || qty < 0) qty = 0;
+            return String(qty);
+        }
+        return String(parseInt(parts[3], 10));
+    });
+
     let data = {
         date: $("#datepicker").val(),
         barcode: barcodeList,
+        qtys: qtyList,
         source: "LOAD",
         main: "OUT",
         kind: "LOAD",
-        storage: $(".storage-select").val(),
         shipTo: $(".shipto-select").val(),
         factory: localStorage.getItem('rememberedFactory'),
         memo: "",
@@ -217,7 +240,7 @@ function saveBarcode() {					// 전체전송
     Utils.showConfirm(m("confirm.send.all"), () => {
             showLoading();
             $.ajax({
-                url: `/purchase/insOutputAll`,
+                url: `/ulsan/insOutputDomestic`,
                 method: 'POST',
                 contentType: "application/json",
                 data: JSON.stringify(data),
@@ -226,6 +249,7 @@ function saveBarcode() {					// 전체전송
                     console.log("response : " + response)
                     if (response === "success") {
                         localStorage.removeItem('barcodeListOut');
+                        localStorage.removeItem('barcodeQtyOut');
                         $("#dataTableBody").empty();
                         $("#count").text("0");
                         Utils.showAlert(m("info.barcode.sent"), "info");
@@ -283,65 +307,53 @@ function renderTable() {		//테이블그리기
     }
     table.empty();
     for (let i = 0; i < barcodeArray.length; i++) {
-        let barcodeOneArr = barcodeArray[i].split(",");
         let barcodeStr = barcodeArray[i];	// 전체 문자열
+        let parts = barcodeStr.split(',');
         let tbody = "";
-        if (barcodeOneArr.length === 5 && (barcodeStr.endsWith("MEX") || barcodeStr.endsWith("USA"))) {	// 정상 바코드
-            tbody = `<tr class = "bar_` + barcodeArray[i] + ` bar-row" data-barcode="${barcodeArray[i]}">
-							<td>` + barcodeOneArr[0] + `</td>
-							<td>` + Number(barcodeOneArr[3]) + `</td>
-							<td><button class="delete-btn" onclick="deleteEntry('` + barcodeArray[i] + `')">${m("btn.delete")}</button></td>
-						</tr>`
-        }else if (barcodeOneArr[0][0] === "P" && (barcodeStr.endsWith("MEX") || barcodeStr.endsWith("USA"))) {
-            tbody = `<tr class = "bar_` + barcodeArray[i] + ` bar-row" data-barcode="${barcodeArray[i]}">
-							<td>(P)` + barcodeOneArr[1] + `</td>
-							<td>` + Number(barcodeOneArr[2]) + `</td>
-							<td><button class="delete-btn" onclick="deleteEntry('` + barcodeArray[i] + `')">${m("btn.delete")}</button></td>
-						</tr>`
-        } else if(barcodeStr.split("_").length == 6){
-            tbody = `<tr class = "bar_` + barcodeArray[i] + ` bar-row" data-barcode="${barcodeArray[i]}">
-                            <td>` + barcodeStr.split("_")[3] + `</td>
-                            <td>` + Number(barcodeStr.split("_")[4]) + `</td>
-                            <td><button class="delete-btn" onclick="deleteEntry('` + barcodeArray[i] + `')">${m("btn.delete")}</button></td>
-                        </tr>`
-        } else if (barcodeStr.startsWith("[)>") && barcodeStr.includes("|")) {
-            // ADIENT: [)>|06|P{itemCode}|Q{qty}|...
-            let barcodeParts = barcodeArray[i].split("|");
-            console.log("barcodeParts:", barcodeParts);
-            let itemcode = barcodeParts[2] ? barcodeParts[2].substring(1) : "";
-            let qty = barcodeParts[3] ? barcodeParts[3].substring(1) : "0";
-            tbody = `<tr class = "bar_` + barcodeArray[i] + ` bar-row" data-barcode="${barcodeArray[i]}">
-							<td>` + itemcode + `</td>
-							<td>` + Number(qty) + `</td>
-							<td><button class="delete-btn" onclick="deleteEntry('` + barcodeArray[i] + `')">${m("btn.delete")}</button></td>
-						</tr>`
-        } else if (barcodeStr.startsWith("[)>") && barcodeStr.includes(":")) {
-            // TRANSYS: [)>*06:{serial}:P{itemCode}:5Q30:...  → parts[3]="5Q30", Q로 split 후 [1]이 수량
-            const parts = barcodeStr.split(":");
-            const itemCodePart = parts[2] || "";
-            const qtyPart = parts[3] || "";
-            const itemcode = itemCodePart.startsWith("P") ? itemCodePart.substring(1) : itemCodePart;
-            const qty = qtyPart.includes("Q") ? qtyPart.split("Q")[1] : "0";
-            tbody = `<tr class = "bar_` + barcodeArray[i] + ` bar-row" data-barcode="${barcodeArray[i]}">
-							<td>` + itemcode + `</td>
-							<td>` + Number(qty) + `</td>
-							<td><button class="delete-btn" onclick="deleteEntry('` + barcodeArray[i] + `')">${m("btn.delete")}</button></td>
-						</tr>`
+        if (parts.length === 6) {
+            let qty = getQty(barcodeStr, parseInt(parts[3], 10));
+
+            tbody = `
+                <tr class = "bar-row" data-barcode="${barcodeStr}">
+                    <td class="dataInfo">${barcodeStr}</td>
+                    <td>
+                        <input type="number" class="input-qty keep-focus" min="0" value="${qty}" data-barcode="${barcodeStr}">
+                    </td>
+                    <td><button class="delete-btn" onclick="deleteEntry(this)">${m('btn.delete')}</button></td>
+                </tr>`;
+        } else if (parts.length === 5) {
+            let qty = getQty(barcodeStr, parseInt(parts[3], 10));
+
+            tbody = `
+                <tr class = "bar-row" data-barcode="${barcodeStr}">
+                    <td class="dataInfo">${barcodeStr}</td>
+                    <td>
+                        <input type="number" class="input-qty keep-focus" min="0" value="${qty}" data-barcode="${barcodeStr}">
+                    </td>
+                    <td><button class="delete-btn" onclick="deleteEntry(this)">${m('btn.delete')}</button></td>
+                </tr>`;
+        } else {
+            tbody = `
+                <tr class="bar-row" data-barcode="${barcodeStr}">
+                    <td class="dataInfo" colspan="2">${barcodeStr}</td>
+                    <td><button class="delete-btn" onclick="deleteEntry(this)">${m('btn.delete')}</button></td>
+                </tr>`;
         }
         table.prepend(tbody);
     }
     $("#count").text(+barcodeArray.length)
 }
 
-function deleteEntry(bar) {		// localstorage에서 특정데이터 삭제
-    let className = "bar_" + bar;
+function deleteEntry(btn) {		// localstorage에서 특정데이터 삭제
+    const $row = $(btn).closest('tr');
+    const bar = $row.attr('data-barcode');
     console.log("삭제 바코드 : " + bar)
     Utils.showConfirm(m("confirm.delete.item"), () => {
         let barcodeArray = JSON.parse(localStorage.getItem("barcodeListOut") || "[]");
-        let newArray = barcodeArray.filter(item => item.toString().trim() !== bar.toString().trim());
+        let newArray = barcodeArray.filter(item => item !== bar);
         localStorage.setItem("barcodeListOut", JSON.stringify(newArray));
-        $("." + CSS.escape(className)).remove();
-        $("#count").text(newArray.length)
+        removeQty(bar);
+        renderTable();
         Utils.showAlert(m("success.deleted"), 'success');
     })
     focusWithoutKeyboard()
@@ -350,10 +362,34 @@ function deleteEntry(bar) {		// localstorage에서 특정데이터 삭제
 
 function clearAll() {			//localstorage 전체삭제
     Utils.showConfirm(m("confirm.delete.all"), () => {
+        const $tb = $('#dataTableBody');
+        if ($tb.children('tr').length === 0) {
+            Utils.showAlert(m('warning.data.delete.all'), "warning");
+            return;
+        }
         localStorage.removeItem("barcodeListOut");
+        localStorage.removeItem('barcodeQtyOut');
         $("#dataTableBody").empty();
         $("#count").text("0")
-        Utils.showAlert("전체 삭제되었습니다.", "success");
+        Utils.showAlert(m("success.deleted.all"), "success");
     })
     focusWithoutKeyboard()
+}
+
+// 수량을 별도 저장 (바코드 문자열은 그대로 유지)
+function saveQty(barcode, qty) {
+    let qtyMap = JSON.parse(localStorage.getItem("barcodeQtyOut") || "{}");
+    qtyMap[barcode] = qty;
+    localStorage.setItem("barcodeQtyOut", JSON.stringify(qtyMap));
+}
+
+function getQty(barcode, defaultQty) {
+    let qtyMap = JSON.parse(localStorage.getItem("barcodeQtyOut") || "{}");
+    return qtyMap.hasOwnProperty(barcode) ? parseInt(qtyMap[barcode], 10) : defaultQty;
+}
+
+function removeQty(barcode) {
+    let qtyMap = JSON.parse(localStorage.getItem("barcodeQtyOut") || "{}");
+    delete qtyMap[barcode];
+    localStorage.setItem("barcodeQtyOut", JSON.stringify(qtyMap));
 }

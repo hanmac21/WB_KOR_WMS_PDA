@@ -96,7 +96,7 @@ function parsePartBarcode(barcode) {
 function parseCarrierBarcode(barcode) {
     const parts = barcode.split(',');
     if (parts.length < 6) return null;
-    const itemcode = parts[1];         // 89370J6000VNB
+    const itemcode = parts[1].replace('-', '');         // 89370J6000VNB
     const qty      = Number(parts[3]); // 00100 → 100
     return { barcode, itemcode, qty };
 }
@@ -291,45 +291,45 @@ function saveBarcode() {
         : mf("confirm.send.qty.mismatch", targetQty, scanQty).replace('\\n', '<br>');
 
     Utils.showConfirm(confirmMsg, () => {
-            isSaving = true;
-            showLoading();
-            $.ajax({
-                url        : '/ulsan/insOutput',
-                method     : 'POST',
-                contentType: 'application/json',
-                data       : JSON.stringify(data),
-                success: function (res) {
-                    if (res.response === 'success') {
-                        Utils.showAlert(m("info.barcode.sent"), "info");
-                        playSound('complete');
-                        clearAll();
-                    } else {
-                        playSound('error');
-                        Utils.showAlert(res.message || m('error.generic'), 'warning', '');
-                    }
-                    hideLoading();
-                },
-                error: function (xhr) {
-                    hideLoading();
+        isSaving = true;
+        showLoading();
+        $.ajax({
+            url        : '/ulsan/insOutput',
+            method     : 'POST',
+            contentType: 'application/json',
+            data       : JSON.stringify(data),
+            success: function (res) {
+                if (res.response === 'success') {
+                    Utils.showAlert(m("info.barcode.sent"), "info");
+                    playSound('complete');
+                    clearAll();
+                } else {
                     playSound('error');
-                    if (xhr.status === 401) {
-                        Utils.showAlert("Your session has expired. Please log in again.", 'warning');
-                        window.location.href = "/login";
-                    } else if (xhr.status === 0) {
-                        Utils.showAlert(m("error.offline"), 'warning');
-                    } else {
-                        Utils.showAlert(m('error.generic'), 'warning', '');
-                    }
-                },
-                complete: function () {
-                    hideLoading();
-                    isSaving = false;
+                    Utils.showAlert(res.message || m('error.generic'), 'warning', '');
                 }
-            });
-        },
-        () => {
-            Utils.showAlert(m("success.cancel.sendAll"), "#008000");
+                hideLoading();
+            },
+            error: function (xhr) {
+                hideLoading();
+                playSound('error');
+                if (xhr.status === 401) {
+                    Utils.showAlert("Your session has expired. Please log in again.", 'warning');
+                    window.location.href = "/login";
+                } else if (xhr.status === 0) {
+                    Utils.showAlert(m("error.offline"), 'warning');
+                } else {
+                    Utils.showAlert(m('error.generic'), 'warning', '');
+                }
+            },
+            complete: function () {
+                hideLoading();
+                isSaving = false;
+            }
         });
+    },
+    () => {
+        Utils.showAlert(m("success.cancel.sendAll"), "#008000");
+    });
 }
 
 function clearAll() {

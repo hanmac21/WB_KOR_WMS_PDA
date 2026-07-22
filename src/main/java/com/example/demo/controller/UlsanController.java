@@ -109,6 +109,18 @@ public class UlsanController {
         return ulsanService.insOutput(vo);
     }
 
+    // 내수품 출고 insert
+    @PostMapping("/insOutputDomestic")
+    public Map<String, Object> insOutputDomestic(@RequestBody BarcodeVO vo, HttpServletRequest request2) {
+        log.info(" Outbound start");
+        HttpSession session = request2.getSession(false);
+        if (session != null) {
+            String loginid = (String) session.getAttribute("loginid");
+            vo.setLoginid(loginid); // 예: 등록자 세팅
+        }
+        return ulsanService.insOutputDomestic(vo);
+    }
+
 
     // 출고 - Detail
     @PostMapping("/search-load/detail")
